@@ -100,7 +100,7 @@ export function DateStrip({
                 exit={{ opacity: 0, transform: "scale(0.92)" }}
                 whileTap={press}
                 transition={{ duration: 0.18, ease: easeOut }}
-                className="me-1 min-h-8 rounded-full bg-red/12 px-3.5 text-[15px] font-semibold text-red"
+                className="me-1 min-h-8 rounded-full bg-today/10 px-3.5 text-[15px] font-semibold text-today"
               >
                 {dict.today.backToToday}
               </motion.button>
@@ -111,7 +111,7 @@ export function DateStrip({
             onClick={() => goWeek(-1)}
             disabled={selectedWeek === 0}
             aria-label={dict.today.previousWeek}
-            className="flex size-10 items-center justify-center rounded-full text-red transition-[opacity,scale] duration-100 ease-out active:scale-90 disabled:opacity-30"
+            className="flex size-10 items-center justify-center rounded-full text-accent transition-[opacity,scale] duration-100 ease-out active:scale-90 disabled:opacity-30"
           >
             <ChevronLeft aria-hidden size={22} strokeWidth={2.5} className="rtl:-scale-x-100" />
           </button>
@@ -120,7 +120,7 @@ export function DateStrip({
             onClick={() => goWeek(1)}
             disabled={selectedWeek === weeks.length - 1}
             aria-label={dict.today.nextWeek}
-            className="flex size-10 items-center justify-center rounded-full text-red transition-[opacity,scale] duration-100 ease-out active:scale-90 disabled:opacity-30"
+            className="flex size-10 items-center justify-center rounded-full text-accent transition-[opacity,scale] duration-100 ease-out active:scale-90 disabled:opacity-30"
           >
             <ChevronRight aria-hidden size={22} strokeWidth={2.5} className="rtl:-scale-x-100" />
           </button>
@@ -161,15 +161,15 @@ export function DateStrip({
                         <motion.span
                           layoutId={`week-${w}-selection`}
                           transition={spring.snappy}
-                          className={`absolute inset-0 rounded-full ${isToday ? "bg-red" : "bg-label"}`}
+                          className={`absolute inset-0 rounded-full ${isToday ? "bg-today" : "bg-label"}`}
                         />
                       )}
                       <span
                         className={`relative text-[19px] tabular-nums transition-colors duration-150 ${
                           isSelected
-                            ? `font-semibold ${isToday ? "text-white" : "text-bg"}`
+                            ? `font-semibold ${isToday ? "text-today-contrast" : "text-bg"}`
                             : isToday
-                              ? "font-semibold text-red"
+                              ? "font-semibold text-today"
                               : "text-label"
                         }`}
                       >

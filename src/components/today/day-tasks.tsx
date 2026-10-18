@@ -126,7 +126,7 @@ export function DayTasks({
           <h2 className="px-1 text-xl font-semibold tracking-tight">{heading}</h2>
           {isEmpty ? (
             <div className="rounded-card bg-surface shadow-card">
-              <EmptyState icon={CalendarCheck} illustration="/illustrations/free-day.jpg" tint="var(--green)" title={dict.today.noTasksForDay} hint={dict.today.noTasksForDayHint} />
+              <EmptyState icon={CalendarCheck} tint="var(--green)" title={dict.today.noTasksForDay} hint={dict.today.noTasksForDayHint} />
             </div>
           ) : (
             <LayoutGroup id={day}>

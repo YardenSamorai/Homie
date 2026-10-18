@@ -41,7 +41,7 @@ export function MonthGrid({
     <section aria-label={dict.calendar.title} className="flex flex-col gap-3 rounded-card bg-surface px-2 pb-3 pt-3 shadow-card">
       <div className="flex min-h-10 items-center justify-between ps-3 pe-1">
         <h2 className="text-[22px] font-bold tracking-tight">
-          <span className={isCurrentMonth ? "text-red" : undefined}>{monthName}</span>{" "}
+          <span className={isCurrentMonth ? "text-today" : undefined}>{monthName}</span>{" "}
           <span className="font-normal text-label-secondary">{monthDate.getFullYear()}</span>
         </h2>
         <div className="flex items-center">
@@ -55,7 +55,7 @@ export function MonthGrid({
                 exit={{ opacity: 0, transform: "scale(0.92)" }}
                 whileTap={press}
                 transition={{ duration: 0.18, ease: easeOut }}
-                className="me-1 min-h-8 rounded-full bg-red/12 px-3.5 text-[15px] font-semibold text-red"
+                className="me-1 min-h-8 rounded-full bg-today/10 px-3.5 text-[15px] font-semibold text-today"
               >
                 {dict.today.backToToday}
               </motion.button>
@@ -65,7 +65,7 @@ export function MonthGrid({
             type="button"
             onClick={() => onMonthChange(addMonths(month, -1))}
             aria-label={dict.calendar.previousMonth}
-            className="flex size-10 items-center justify-center rounded-full text-red transition-[scale] duration-100 ease-out active:scale-90"
+            className="flex size-10 items-center justify-center rounded-full text-accent transition-[scale] duration-100 ease-out active:scale-90"
           >
             <ChevronLeft aria-hidden size={22} strokeWidth={2.5} className="rtl:-scale-x-100" />
           </button>
@@ -73,7 +73,7 @@ export function MonthGrid({
             type="button"
             onClick={() => onMonthChange(addMonths(month, 1))}
             aria-label={dict.calendar.nextMonth}
-            className="flex size-10 items-center justify-center rounded-full text-red transition-[scale] duration-100 ease-out active:scale-90"
+            className="flex size-10 items-center justify-center rounded-full text-accent transition-[scale] duration-100 ease-out active:scale-90"
           >
             <ChevronRight aria-hidden size={22} strokeWidth={2.5} className="rtl:-scale-x-100" />
           </button>
@@ -122,15 +122,15 @@ export function MonthGrid({
                         <motion.span
                           layoutId={`month-${month}-selection`}
                           transition={spring.snappy}
-                          className={`absolute inset-0 rounded-full ${isToday ? "bg-red" : "bg-label"}`}
+                          className={`absolute inset-0 rounded-full ${isToday ? "bg-today" : "bg-label"}`}
                         />
                       )}
                       <span
                         className={`relative text-[18px] tabular-nums transition-colors duration-150 ${
                           isSelected
-                            ? `font-semibold ${isToday ? "text-white" : "text-bg"}`
+                            ? `font-semibold ${isToday ? "text-today-contrast" : "text-bg"}`
                             : isToday
-                              ? "font-semibold text-red"
+                              ? "font-semibold text-today"
                               : inMonth
                                 ? "text-label"
                                 : "text-label-tertiary"

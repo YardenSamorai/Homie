@@ -11,40 +11,50 @@
   color-scheme: light dark;
 }
 
-/* Every token resolves through light-dark(), so it follows the color-scheme above. */
+/* Every token resolves through light-dark(), so it follows the color-scheme set above. */
 :root {
-  /* Apple system colors (iOS, light / dark). */
-  --red: light-dark(#ff3b30, #ff453a);
-  --orange: light-dark(#ff9500, #ff9f0a);
-  --yellow: light-dark(#ffcc00, #ffd60a);
-  --green: light-dark(#34c759, #30d158);
-  --mint: light-dark(#00c7be, #63e6e2);
-  --teal: light-dark(#30b0c7, #40c8e0);
-  --cyan: light-dark(#32ade6, #64d2ff);
-  --blue: light-dark(#007aff, #0a84ff);
-  --indigo: light-dark(#5856d6, #5e5ce6);
-  --purple: light-dark(#af52de, #bf5af2);
-  --pink: light-dark(#ff2d55, #ff375f);
-  --brown: light-dark(#a2845e, #ac8e68);
+  /*
+   * Apple's system hues, muted toward the hero's painted world (light / dark). Every one carries a white
+   * glyph at 3:1 or better (check marks, initials, tiles); dark mode uses mid-tones rather than pastels so
+   * the same color also reads as text on the dark background.
+   */
+  --red: light-dark(#ad4438, #e2735f);
+  --orange: light-dark(#b8742e, #c2823a);
+  --yellow: light-dark(#a9852a, #b38f2e);
+  --green: light-dark(#5b8a5f, #66a06d);
+  --mint: light-dark(#4f9187, #59998f);
+  --teal: light-dark(#4a8696, #5f9aa9);
+  --cyan: light-dark(#4f8aad, #5f97bd);
+  --blue: light-dark(#3d5a80, #8fb0d9);
+  --indigo: light-dark(#5a5f94, #7d82c0);
+  --purple: light-dark(#7a6896, #9583b8);
+  --pink: light-dark(#b0647a, #c87488);
+  --brown: light-dark(#94755a, #a98a68);
+  /* The roof tiles: marks today wherever a date is shown. */
+  --terracotta: light-dark(#9e4d33, #e08a68);
 
-  --bg: light-dark(#f2f2f7, #000000);
-  --surface: light-dark(#ffffff, #1c1c1e);
-  --surface-raised: light-dark(#ffffff, #2c2c2e);
-  --fill: light-dark(rgb(120 120 128 / 0.12), rgb(120 120 128 / 0.24));
-  --label: light-dark(#000000, #ffffff);
-  --label-secondary: light-dark(rgb(60 60 67 / 0.6), rgb(235 235 245 / 0.6));
-  --label-tertiary: light-dark(rgb(60 60 67 / 0.3), rgb(235 235 245 / 0.3));
-  --separator: light-dark(rgb(60 60 67 / 0.18), rgb(84 84 88 / 0.6));
-  --hairline: light-dark(transparent, rgb(255 255 255 / 0.1));
-  --segment-thumb: light-dark(#ffffff, #636366);
+  --bg: light-dark(#f4f2ee, #0f1012);
+  --surface: light-dark(#fffefc, #1a1b1e);
+  --surface-raised: light-dark(#fffefc, #24252a);
+  --sheet: light-dark(#f4f2ee, #17181b);
+  --fill: light-dark(rgb(120 112 100 / 0.12), rgb(130 126 120 / 0.24));
+  --label: light-dark(#1c1b19, #f4f2ee);
+  /* Secondary text holds 4.5:1 on the background as well as on cards. */
+  --label-secondary: light-dark(rgb(62 58 52 / 0.74), rgb(236 232 224 / 0.6));
+  --label-tertiary: light-dark(rgb(62 58 52 / 0.34), rgb(236 232 224 / 0.3));
+  --separator: light-dark(rgb(62 58 52 / 0.14), rgb(236 232 224 / 0.14));
+  --hairline: light-dark(transparent, rgb(255 255 255 / 0.08));
+  --segment-thumb: light-dark(#fffefc, #3a3b40);
   --accent: var(--blue);
-  --accent-contrast: #ffffff;
+  --accent-contrast: light-dark(#ffffff, #0f1a2a);
+  --today: var(--terracotta);
+  --today-contrast: light-dark(#ffffff, #1f120b);
   --success: var(--green);
   --warning: var(--orange);
   --danger: var(--red);
-  --material: light-dark(rgb(249 249 249 / 0.78), rgb(30 30 30 / 0.72));
+  --material: light-dark(rgb(250 249 246 / 0.78), rgb(28 29 32 / 0.72));
   --shadow-card:
-    0 1px 2px light-dark(rgb(0 0 0 / 0.04), transparent), 0 8px 24px light-dark(rgb(0 0 0 / 0.04), transparent);
+    0 1px 2px light-dark(rgb(40 30 20 / 0.04), transparent), 0 8px 24px light-dark(rgb(40 30 20 / 0.05), transparent);
 }
 
 /*
@@ -104,12 +114,14 @@
   --color-purple: var(--purple);
   --color-pink: var(--pink);
   --color-brown: var(--brown);
+  --color-terracotta: var(--terracotta);
   --color-hairline: var(--hairline);
   --color-segment-thumb: var(--segment-thumb);
 
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
+  --color-sheet: var(--sheet);
   --color-fill: var(--fill);
   --color-label: var(--label);
   --color-label-secondary: var(--label-secondary);
@@ -117,6 +129,8 @@
   --color-separator: var(--separator);
   --color-accent: var(--accent);
   --color-accent-contrast: var(--accent-contrast);
+  --color-today: var(--today);
+  --color-today-contrast: var(--today-contrast);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);

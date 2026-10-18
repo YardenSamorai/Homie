@@ -63,14 +63,14 @@ export function TasksView() {
       {control}
       {groups.length === 0 ? (
         <div className="rounded-card bg-surface shadow-card">
-          <EmptyState icon={ListChecks} illustration="/illustrations/tasks.jpg" tint="var(--orange)" title={dict.tasks.empty} hint={dict.tasks.emptyHint} />
+          <EmptyState icon={ListChecks} title={dict.tasks.empty} hint={dict.tasks.emptyHint} />
         </div>
       ) : (
         groups.map((group) => (
           <section key={group.key} className="flex flex-col gap-2">
             <h2
               className={`section-label px-1 ${
-                group.key === "overdue" ? "text-red" : "text-label-secondary"
+                group.key === "overdue" ? "text-danger" : "text-label-secondary"
               }`}
             >
               {group.title}

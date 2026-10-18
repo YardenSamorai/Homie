@@ -31,10 +31,10 @@ export function EmptyState({
         </motion.div>
       ) : (
         <span
-          style={{ color: tint, backgroundColor: `color-mix(in oklab, ${tint} 14%, transparent)` }}
-          className="mb-1 flex size-12 items-center justify-center rounded-full"
+          style={{ color: tint, backgroundColor: `color-mix(in oklab, ${tint} 10%, transparent)` }}
+          className="mb-2 flex size-14 items-center justify-center rounded-full"
         >
-          <Icon aria-hidden size={24} strokeWidth={1.75} />
+          <Icon aria-hidden size={26} strokeWidth={1.5} />
         </span>
       )}
       <p className="text-[17px] font-semibold">{title}</p>

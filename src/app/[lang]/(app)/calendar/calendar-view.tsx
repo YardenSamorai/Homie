@@ -73,7 +73,7 @@ export function CalendarView() {
         <h2 className="px-1 text-xl font-semibold tracking-tight">{heading}</h2>
         <div className="overflow-hidden rounded-card bg-surface shadow-card">
           {dayEvents.length === 0 ? (
-            <EmptyState icon={CalendarDays} illustration="/illustrations/calendar.jpg" tint="var(--red)" title={dict.calendar.noEvents} hint={dict.calendar.noEventsHint} />
+            <EmptyState icon={CalendarDays} title={dict.calendar.noEvents} hint={dict.calendar.noEventsHint} />
           ) : (
             <ul>
               {dayEvents.map((event) => (

@@ -112,7 +112,7 @@ export function ShoppingView() {
 
       {shopping.length === 0 ? (
         <div className="rounded-card bg-surface shadow-card">
-          <EmptyState icon={ShoppingBasket} illustration="/illustrations/shopping.jpg" tint="var(--green)" title={dict.shopping.empty} hint={dict.shopping.emptyHint} />
+          <EmptyState icon={ShoppingBasket} title={dict.shopping.empty} hint={dict.shopping.emptyHint} />
         </div>
       ) : (
         <>

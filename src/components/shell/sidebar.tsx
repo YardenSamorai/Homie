@@ -25,7 +25,7 @@ export function Sidebar() {
         type="button"
         onClick={() => show(addKindFor(pathname, locale), selectedDay)}
         aria-haspopup="dialog"
-        className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-accent px-3 text-[15px] font-semibold text-white transition-[scale,filter] duration-150 ease-out hover:brightness-110 active:scale-[0.97]"
+        className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-accent px-3 text-[15px] font-semibold text-accent-contrast transition-[scale,filter] duration-150 ease-out hover:brightness-110 active:scale-[0.97]"
       >
         <Plus aria-hidden size={18} strokeWidth={2.5} />
         {dict.add.open}
