@@ -12,6 +12,7 @@ import {
   type CSSProperties,
   type Ref,
 } from "react";
+import { preload } from "react-dom";
 import { paintSky, skyAt } from "@/lib/sky";
 import { SkyFlyers, type SkyFlyersHandle } from "./sky-flyers";
 
@@ -25,6 +26,8 @@ function subscribeReducedMotion(onChange: () => void) {
   media.addEventListener("change", onChange);
   return () => media.removeEventListener("change", onChange);
 }
+
+const starry = () => document.documentElement.hasAttribute("data-starry");
 
 // Seeded, so the server and the browser draw the same stars, and rounded, because the browser keeps
 // only a few digits of inline styles and hydration would see a mismatch. Fewer and dimmer over the text.
@@ -126,6 +129,8 @@ function Ridges({ layers, id }: { layers: number[]; id: string }) {
 export function SkyScene({ ref }: { ref?: Ref<SkySceneHandle> }) {
   const id = "land" + useId().replace(/[^a-zA-Z0-9]/g, "");
   const root = useRef<HTMLDivElement>(null);
+  const starField = useRef<HTMLDivElement>(null);
+  const twinkles = useRef<Animation[]>([]);
   const flyers = useRef<SkyFlyersHandle>(null);
   const now = useRef(() => Date.now());
   const [offscreen, setOffscreen] = useState(false);
@@ -136,13 +141,41 @@ export function SkyScene({ ref }: { ref?: Ref<SkySceneHandle> }) {
   );
   const sky = useCallback(() => skyAt(now.current()), []);
 
+  // The house is drawn with CSS backgrounds and masks, which the browser finds only once the stylesheet
+  // applies and then fetches behind the scripts. It is the largest thing on the first screen. Masks are
+  // fetched in CORS mode, so a preload for one needs crossOrigin to be used rather than fetched twice.
+  preload("/illustrations/scene/house.webp", { as: "image", fetchPriority: "high" });
+  preload("/illustrations/scene/house-windows.webp", { as: "image", crossOrigin: "anonymous", fetchPriority: "high" });
+
+  // Web Animations rather than CSS keyframes: Chrome wakes the main thread at every keyframe and iteration
+  // of a CSS animation to time its events, which for thirty stars came to about twelve times a second.
+  // They run only while the stars are out and the card is on screen.
+  const twinkle = useCallback((run: boolean) => {
+    if (run === twinkles.current.length > 0) return;
+    for (const animation of twinkles.current) animation.cancel();
+    twinkles.current = run
+      ? [...starField.current!.children].map((star, i) => {
+          const { opacity, duration, delay } = stars[i];
+          return star.animate([{ opacity }, { opacity: opacity * 0.55 }, { opacity }], {
+            duration: duration * 1000,
+            delay: -delay * 1000,
+            iterations: Infinity,
+            easing: "ease-in-out",
+          });
+        })
+      : [];
+  }, []);
+
   useImperativeHandle(ref, () => ({ summon: () => flyers.current?.summon() }), []);
 
   // Layout effect: after a client-side navigation the sky can be hours old, and must not show for a frame.
   useLayoutEffect(() => {
     let timer = 0;
     let frame = 0;
-    const paint = () => paintSky(skyAt(now.current()));
+    const paint = () => {
+      paintSky(skyAt(now.current()));
+      twinkle(starry() && !root.current!.hasAttribute("data-paused"));
+    };
     // Development only: ?sky=05:40 pins the time, ?sky=lapse runs a day a minute.
     const pinned = process.env.NODE_ENV === "development" ? new URLSearchParams(location.search).get("sky") : null;
     if (pinned === "lapse") {
@@ -167,14 +200,17 @@ export function SkyScene({ ref }: { ref?: Ref<SkySceneHandle> }) {
       cancelAnimationFrame(frame);
       clearInterval(timer);
       document.removeEventListener("visibilitychange", paint);
+      twinkle(false);
     };
-  }, []);
+  }, [twinkle]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => setOffscreen(!entry.isIntersecting));
     observer.observe(root.current!);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => twinkle(!offscreen && starry()), [offscreen, twinkle]);
 
   // Painted with the house on the left; mirrored in LTR so the text side is always the start side.
   return (
@@ -186,22 +222,12 @@ export function SkyScene({ ref }: { ref?: Ref<SkySceneHandle> }) {
     >
       <div className="sky-gradient absolute inset-0" />
 
-      <div className="sky-stars">
+      <div ref={starField} className="sky-stars">
         {stars.map((star, i) => (
           <span
             key={i}
             className="sky-star"
-            style={
-              {
-                left: `${star.x}%`,
-                top: `${star.y}%`,
-                width: star.size,
-                height: star.size,
-                "--o": star.opacity,
-                animationDuration: `${star.duration}s`,
-                animationDelay: `${-star.delay}s`,
-              } as CSSProperties
-            }
+            style={{ left: `${star.x}%`, top: `${star.y}%`, width: star.size, height: star.size, opacity: star.opacity }}
           />
         ))}
       </div>
@@ -243,11 +269,10 @@ export function SkyScene({ ref }: { ref?: Ref<SkySceneHandle> }) {
         <div className="home" />
         <div className="home home-east" />
         <div className="home home-west" />
-        <div className="absolute inset-0 [opacity:var(--sky-windows)]">
-          {/* The blur sits on a wrapper: on the masked element itself it would blur before the mask cuts it. */}
-          <div className="absolute inset-0 opacity-70 blur-[1cqh]">
-            <div className="home-windows bg-[#ffb35c]" />
-          </div>
+        {/* The glow sits on a wrapper: on the masked element itself it would blur before the mask cuts it.
+            Clipped to the windows and their halo: unclipped, the filtered layer is the size of the whole
+            painting, and Chrome reports it as the page's largest paint once hydration repaints it. */}
+        <div className="absolute inset-0 [clip-path:inset(40.5%_55.75%_28.2%_15%)] [filter:drop-shadow(0_0_2cqh_rgb(255_179_92/0.7))] [opacity:var(--sky-windows)]">
           <div className="home-windows bg-[#ffd7a0]" />
         </div>
       </div>

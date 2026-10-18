@@ -326,11 +326,11 @@ body {
   :root[data-starry] .sky-stars {
     display: block;
   }
+  /* Twinkle: a slow, shallow shimmer rather than a blink, driven from sky-scene.tsx. */
   .sky-star {
     position: absolute;
     border-radius: 50%;
     background: #fff;
-    animation: sky-twinkle ease-in-out infinite;
   }
 
   /* Soft cloud shapes, lit from above, thinning out behind the greeting. */
@@ -537,16 +537,6 @@ body {
   }
 }
 
-/* A slow, shallow shimmer rather than a blink. */
-@keyframes sky-twinkle {
-  0%,
-  100% {
-    opacity: var(--o);
-  }
-  50% {
-    opacity: calc(var(--o) * 0.55);
-  }
-}
 @keyframes sky-drift {
   from {
     transform: translateX(-100%);
