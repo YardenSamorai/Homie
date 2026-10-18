@@ -10,7 +10,7 @@ export function EventRow({ event, caption }: { event: HouseEvent; caption?: stri
 
   return (
     <div className="flex min-h-14 items-stretch gap-3 px-4 py-2.5">
-      <span aria-hidden className="w-1 shrink-0 rounded-full bg-red" />
+      <span aria-hidden className="w-1 shrink-0 rounded-full bg-accent" />
       <div className="flex min-w-0 flex-1 flex-col justify-center">
         <span className="truncate text-[17px] font-medium">{event.title}</span>
         {event.prep && (

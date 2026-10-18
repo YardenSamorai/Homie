@@ -21,7 +21,7 @@ export function TabBar() {
       <div className="mx-auto flex max-w-lg items-center gap-2.5">
         <nav
           aria-label={dict.nav.main}
-          className="material pointer-events-auto flex-1 rounded-full p-1 shadow-[0_8px_30px_rgb(0_0_0/0.12),0_1px_2px_rgb(0_0_0/0.06)] ring-1 ring-[light-dark(rgb(0_0_0/0.04),rgb(255_255_255/0.1))]"
+          className="material pointer-events-auto flex-1 rounded-full p-1 shadow-[0_8px_30px_rgb(40_30_20/0.1),0_1px_2px_rgb(40_30_20/0.06)] ring-1 ring-[light-dark(rgb(40_30_20/0.05),rgb(255_255_255/0.1))]"
         >
           <ul className="flex">
             {navItems
@@ -41,7 +41,7 @@ export function TabBar() {
                         <motion.span
                           layoutId="tab-bar-active"
                           transition={spring.snappy}
-                          className="absolute inset-0 rounded-full bg-[light-dark(rgb(0_0_0/0.06),rgb(255_255_255/0.12))]"
+                          className="absolute inset-0 rounded-full bg-[light-dark(rgb(40_30_20/0.06),rgb(255_255_255/0.12))]"
                         />
                       )}
                       <motion.span
@@ -66,7 +66,7 @@ export function TabBar() {
           onClick={() => show(addKindFor(pathname, locale), selectedDay)}
           aria-label={dict.add.open}
           aria-haspopup="dialog"
-          className="pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full bg-accent text-white shadow-[0_8px_24px_color-mix(in_oklab,var(--accent)_40%,transparent),0_1px_2px_rgb(0_0_0/0.1)] transition-[scale] duration-150 ease-out active:scale-90"
+          className="pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full bg-accent text-accent-contrast shadow-[0_8px_24px_color-mix(in_oklab,var(--accent)_32%,transparent),0_1px_2px_rgb(40_30_20/0.1)] transition-[scale] duration-150 ease-out active:scale-95"
         >
           <Plus aria-hidden size={28} strokeWidth={2.5} />
         </button>

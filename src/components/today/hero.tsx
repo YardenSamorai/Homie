@@ -1,29 +1,22 @@
 "use client";
 
-import Image from "next/image";
+import { useRef, type MouseEvent } from "react";
 import Link from "next/link";
 import { Settings } from "lucide-react";
 import { motion } from "motion/react";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
-import { fromDayKey, type DayKey } from "@/lib/dates";
-import { Tilt } from "@/components/ui/tilt";
-import { enter, settle } from "@/lib/motion";
-
-type Period = "morning" | "afternoon" | "evening" | "night";
-
-function periodFor(hour: number): Period {
-  if (hour >= 5 && hour < 12) return "morning";
-  if (hour >= 12 && hour < 17) return "afternoon";
-  if (hour >= 17 && hour < 22) return "evening";
-  return "night";
-}
+import type { DayKey } from "@/lib/dates";
+import { enter } from "@/lib/motion";
+import { periodFor } from "@/lib/period";
+import { SkyScene, type SkySceneHandle } from "./sky-scene";
 
 const rise = {
   hidden: { opacity: 0, transform: "translateY(6px)", filter: "blur(3px)" },
   shown: { opacity: 1, transform: "translateY(0px)", filter: "blur(0px)" },
 };
 
+/** The household's house under a live sky that follows the real sun through the day. */
 export function Hero({
   name,
   today,
@@ -36,6 +29,7 @@ export function Hero({
   openCount: number;
 }) {
   const { locale, dict } = useI18n();
+  const scene = useRef<SkySceneHandle>(null);
   const ready = today !== null && hour !== null;
 
   const summary =
@@ -45,51 +39,56 @@ export function Hero({
         ? dict.today.summary.one
         : format(dict.today.summary.many, { count: openCount });
 
+  const summon = (event: MouseEvent) => {
+    if (!(event.target as Element).closest("a")) scene.current?.summon();
+  };
+
+  // overflow-clip rather than hidden: a scroll container would pin the aspect ratio and cut off large text instead of growing.
+  // Type scales with the card (cqw), and the column stops short of the house, which fills the other 45% of the painting.
   return (
-    <section className="relative isolate grid min-h-48 grid-cols-[1fr_44%] items-center overflow-hidden rounded-[28px] bg-[#fde8d1] text-[#2b2118] shadow-card ring-1 ring-hairline md:min-h-60">
+    <section
+      onClick={summon}
+      className="@container relative isolate aspect-[16/9] overflow-clip rounded-[28px] shadow-card ring-1 ring-hairline md:aspect-[21/9]"
+    >
+      <SkyScene ref={scene} />
+
       <motion.div
         initial="hidden"
         animate={ready ? "shown" : "hidden"}
         transition={{ staggerChildren: 0.04 }}
-        className="relative z-10 flex flex-col gap-1 py-6 ps-5 md:ps-8"
+        className="relative flex w-[54%] flex-col pb-4 ps-[clamp(16px,5.5cqw,32px)] pt-[clamp(16px,5.5cqw,32px)] transition-colors duration-1000 [color:var(--scene-ink)] [text-shadow:var(--scene-text-shadow)]"
       >
         <h1 className="flex flex-col">
-          <motion.span variants={rise} transition={enter()} className="text-[17px] font-medium text-[#2b2118]/65 md:text-xl">
+          <motion.span
+            variants={rise}
+            transition={enter()}
+            className="text-[length:clamp(0.875rem,4.4cqw,1.25rem)] leading-snug opacity-85"
+          >
             {ready ? `${dict.today.greeting[periodFor(hour)]},` : "\u00a0"}
           </motion.span>
-          <motion.span variants={rise} transition={enter()} className="text-[34px] font-bold leading-tight tracking-tight md:text-5xl">
-            {name}
+          <motion.span
+            variants={rise}
+            transition={enter()}
+            className="line-clamp-2 text-[length:clamp(1.75rem,9.4cqw,2.875rem)] font-semibold leading-[1.08] tracking-[-0.02em] [overflow-wrap:anywhere]"
+          >
+            <bdi>{name}</bdi>
           </motion.span>
         </h1>
-        <motion.p variants={rise} transition={enter()} className="mt-2 text-[15px] font-medium text-[#2b2118]/70">
+        <motion.p
+          variants={rise}
+          transition={enter()}
+          className="mt-[clamp(6px,2cqw,12px)] text-[length:clamp(0.8125rem,4.1cqw,1.0625rem)] leading-snug opacity-85"
+        >
           {ready ? summary : "\u00a0"}
         </motion.p>
-        <motion.p variants={rise} transition={enter()} className="text-[13px] text-[#2b2118]/50">
-          {ready
-            ? new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long" }).format(fromDayKey(today))
-            : "\u00a0"}
-        </motion.p>
-      </motion.div>
-
-      <motion.div {...settle} className="relative -me-3 aspect-square self-end md:-me-2">
-        <Tilt max={14} className="absolute inset-0">
-          <Image
-            src="/illustrations/home.jpg"
-            alt=""
-            fill
-            priority
-            sizes="(min-width: 768px) 300px, 45vw"
-            className="pointer-events-none object-contain [mask-image:radial-gradient(closest-side,black_72%,transparent)]"
-          />
-        </Tilt>
       </motion.div>
 
       <Link
         href={`/${locale}/settings`}
         aria-label={dict.nav.settings}
-        className="absolute end-3 top-3 z-20 flex size-9 items-center justify-center rounded-full bg-white/55 text-[#2b2118]/75 backdrop-blur-md transition-[scale,background-color] duration-150 ease-out active:scale-90 active:bg-white/80 md:hidden"
+        className="absolute end-3 top-3 flex size-9 items-center justify-center rounded-full ring-1 ring-white/25 backdrop-blur-md transition-[scale,color,background-color] duration-150 ease-out [background-color:var(--scene-glass)] [color:var(--scene-ink)] before:absolute before:-inset-1 active:scale-95 md:hidden"
       >
-        <Settings aria-hidden size={19} strokeWidth={2} />
+        <Settings aria-hidden size={18} strokeWidth={1.75} />
       </Link>
     </section>
   );

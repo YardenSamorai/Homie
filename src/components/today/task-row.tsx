@@ -7,6 +7,7 @@ import { CheckCircle } from "@/components/ui/check-circle";
 import { StrikeText } from "@/components/ui/strike-text";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
+import { completionHaptic } from "@/lib/haptics";
 import { spring } from "@/lib/motion";
 import type { Member, Task } from "@/lib/tasks";
 
@@ -39,7 +40,10 @@ export function TaskRow({
       ) : (
         <motion.button
           type="button"
-          onClick={() => onToggle(task)}
+          onClick={() => {
+            if (!done) completionHaptic();
+            onToggle(task);
+          }}
           whileTap={{ scale: 0.88 }}
           transition={spring.snappy}
           aria-label={format(done ? dict.today.markUndone : dict.today.markDone, { title: task.title })}

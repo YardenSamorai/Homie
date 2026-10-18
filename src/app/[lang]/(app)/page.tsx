@@ -11,22 +11,22 @@ export default async function TodayPage() {
   const dict = await getDictionary();
 
   return (
-    <div className="flex flex-col gap-8 pt-4 md:pt-10">
-      <TodayView />
-
-      <Card title={dict.today.shopping}>
-        <Link
-          href={`/${locale}/shopping`}
-          className="flex min-h-14 items-center gap-3 rounded-card px-4 transition-[background-color,scale] duration-150 ease-out active:scale-[0.98] active:bg-fill hover:bg-fill"
-        >
-          <IconTile icon={ShoppingBasket} color="var(--green)" />
-          <span className="flex flex-1 flex-col">
-            <span className="text-[17px]">{dict.today.openList}</span>
-            <ShoppingSummary />
-          </span>
-          <ChevronRight aria-hidden size={20} className="text-label-tertiary rtl:-scale-x-100" />
-        </Link>
-      </Card>
+    <div className="pt-4 md:pt-10">
+      <TodayView>
+        <Card title={dict.today.shopping}>
+          <Link
+            href={`/${locale}/shopping`}
+            className="flex min-h-14 items-center gap-3 rounded-card px-4 transition-[background-color,scale] duration-150 ease-out active:scale-[0.98] active:bg-fill hover:bg-fill"
+          >
+            <IconTile icon={ShoppingBasket} color="var(--green)" />
+            <span className="flex flex-1 flex-col">
+              <span className="text-[17px]">{dict.today.openList}</span>
+              <ShoppingSummary />
+            </span>
+            <ChevronRight aria-hidden size={20} className="text-label-tertiary rtl:-scale-x-100" />
+          </Link>
+        </Card>
+      </TodayView>
     </div>
   );
 }

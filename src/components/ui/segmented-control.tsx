@@ -28,13 +28,13 @@ export function SegmentedControl<T extends string>({
             role="radio"
             aria-checked={selected}
             onClick={() => onChange(option.value)}
-            className="relative min-h-8 flex-1 rounded-[7px] px-3 text-[13px] font-semibold"
+            className="relative min-h-8 flex-1 rounded-[7px] px-3 text-[13px] font-semibold before:absolute before:inset-x-0 before:-inset-y-1.5"
           >
             {selected && (
               <motion.span
                 layoutId={thumbId}
                 transition={spring.snappy}
-                className="absolute inset-0 rounded-[7px] bg-segment-thumb shadow-[0_3px_8px_rgb(0_0_0/0.12),0_3px_1px_rgb(0_0_0/0.04)]"
+                className="absolute inset-0 rounded-[7px] bg-segment-thumb shadow-[0_3px_8px_rgb(40_30_20/0.12),0_3px_1px_rgb(40_30_20/0.04)]"
               />
             )}
             <span className="relative z-10">{option.label}</span>

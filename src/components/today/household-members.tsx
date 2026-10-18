@@ -9,7 +9,7 @@ export function HouseholdMembers({ members }: { members: Member[] }) {
 
   return (
     <section aria-labelledby="household-title" className="flex flex-col gap-3">
-      <h2 id="household-title" className="px-1 text-[13px] font-semibold uppercase tracking-wide text-label-secondary">
+      <h2 id="household-title" className="section-label px-1 text-label-secondary">
         {dict.today.household}
       </h2>
       <ul className="flex gap-5 px-1">

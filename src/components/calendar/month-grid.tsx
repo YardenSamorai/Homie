@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect, useRef, type KeyboardEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { localeDirection } from "@/i18n/config";
 import { useI18n } from "@/i18n/dictionary-provider";
-import { addMonths, dayRange, fromDayKey, isWeekend, weekStart, type DayKey } from "@/lib/dates";
+import { addDays, addMonths, dayRange, fromDayKey, isWeekend, weekStart, type DayKey } from "@/lib/dates";
 import { easeOut, press, spring } from "@/lib/motion";
 
 /** Apple Calendar-style month: six weeks, red today, filled circle on the selected day, dots for events. */
@@ -33,15 +34,50 @@ export function MonthGrid({
   const weekdayFormat = new Intl.DateTimeFormat(locale, { weekday: "narrow" });
   const fullDate = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long" });
 
+  const rtl = localeDirection[locale] === "rtl";
   const forward = month >= previousMonth ? 1 : -1;
-  const shift = 20 * forward * (localeDirection[locale] === "rtl" ? -1 : 1);
+  const shift = 20 * forward * (rtl ? -1 : 1);
   const isCurrentMonth = month === today.slice(0, 7) + "-01";
+
+  const grid = useRef<HTMLDivElement>(null);
+  const refocus = useRef(false);
+
+  // One Tab stop for the month and arrows to move the day. The day may sit in a month that is only
+  // rendered next, and while the months slide the outgoing one still holds some of the same days.
+  useEffect(() => {
+    if (!refocus.current) return;
+    refocus.current = false;
+    grid.current?.querySelector<HTMLButtonElement>(`[data-month="${month}"] [data-day="${selected}"]`)?.focus();
+  }, [month, selected]);
+
+  const onDayKey = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === "PageUp" || event.key === "PageDown") {
+      event.preventDefault();
+      refocus.current = true;
+      onMonthChange(addMonths(month, event.key === "PageDown" ? 1 : -1));
+      return;
+    }
+    const targets: Record<string, DayKey | undefined> = {
+      ArrowRight: addDays(selected, rtl ? -1 : 1),
+      ArrowLeft: addDays(selected, rtl ? 1 : -1),
+      ArrowDown: addDays(selected, 7),
+      ArrowUp: addDays(selected, -7),
+      Home: weekStart(selected),
+      End: addDays(weekStart(selected), 6),
+    };
+    const target = targets[event.key];
+    if (!target) return;
+    event.preventDefault();
+    if (target === selected) return;
+    refocus.current = true;
+    onSelect(target);
+  };
 
   return (
     <section aria-label={dict.calendar.title} className="flex flex-col gap-3 rounded-card bg-surface px-2 pb-3 pt-3 shadow-card">
       <div className="flex min-h-10 items-center justify-between ps-3 pe-1">
         <h2 className="text-[22px] font-bold tracking-tight">
-          <span className={isCurrentMonth ? "text-red" : undefined}>{monthName}</span>{" "}
+          <span className={isCurrentMonth ? "text-today" : undefined}>{monthName}</span>{" "}
           <span className="font-normal text-label-secondary">{monthDate.getFullYear()}</span>
         </h2>
         <div className="flex items-center">
@@ -55,7 +91,7 @@ export function MonthGrid({
                 exit={{ opacity: 0, transform: "scale(0.92)" }}
                 whileTap={press}
                 transition={{ duration: 0.18, ease: easeOut }}
-                className="me-1 min-h-8 rounded-full bg-red/12 px-3.5 text-[15px] font-semibold text-red"
+                className="relative me-1 min-h-8 rounded-full bg-today/10 px-3.5 text-[15px] font-semibold text-today before:absolute before:inset-x-0 before:-inset-y-1.5"
               >
                 {dict.today.backToToday}
               </motion.button>
@@ -65,7 +101,7 @@ export function MonthGrid({
             type="button"
             onClick={() => onMonthChange(addMonths(month, -1))}
             aria-label={dict.calendar.previousMonth}
-            className="flex size-10 items-center justify-center rounded-full text-red transition-[scale] duration-100 ease-out active:scale-90"
+            className="relative flex size-10 items-center justify-center rounded-full text-accent transition-[scale] duration-100 ease-out before:absolute before:inset-x-0 before:-inset-y-0.5 active:scale-90"
           >
             <ChevronLeft aria-hidden size={22} strokeWidth={2.5} className="rtl:-scale-x-100" />
           </button>
@@ -73,25 +109,26 @@ export function MonthGrid({
             type="button"
             onClick={() => onMonthChange(addMonths(month, 1))}
             aria-label={dict.calendar.nextMonth}
-            className="flex size-10 items-center justify-center rounded-full text-red transition-[scale] duration-100 ease-out active:scale-90"
+            className="relative flex size-10 items-center justify-center rounded-full text-accent transition-[scale] duration-100 ease-out before:absolute before:inset-x-0 before:-inset-y-0.5 active:scale-90"
           >
             <ChevronRight aria-hidden size={22} strokeWidth={2.5} className="rtl:-scale-x-100" />
           </button>
         </div>
       </div>
 
-      <div aria-hidden className="grid grid-cols-7 text-center text-[11px] font-semibold text-label-secondary">
+      <div aria-hidden className="grid grid-cols-7 text-center text-[11px] font-semibold text-label">
         {cells.slice(0, 7).map((day) => (
-          <span key={day} className={isWeekend(day, locale) ? "text-label-tertiary" : undefined}>
+          <span key={day} className={isWeekend(day, locale) ? "text-label-secondary" : undefined}>
             {weekdayFormat.format(fromDayKey(day))}
           </span>
         ))}
       </div>
 
-      <div className="overflow-hidden">
+      <div ref={grid} className="overflow-hidden">
         <AnimatePresence mode="popLayout" initial={false} custom={shift}>
           <motion.ul
             key={month}
+            data-month={month}
             custom={shift}
             variants={{
               enter: (x: number) => ({ opacity: 0, transform: `translateX(${x}px)` }),
@@ -111,7 +148,10 @@ export function MonthGrid({
                 <li key={day} className="flex justify-center">
                   <button
                     type="button"
+                    data-day={day}
+                    tabIndex={isSelected ? 0 : -1}
                     onClick={() => onSelect(day)}
+                    onKeyDown={onDayKey}
                     aria-pressed={isSelected}
                     aria-label={fullDate.format(fromDayKey(day))}
                     aria-current={isToday ? "date" : undefined}
@@ -122,18 +162,18 @@ export function MonthGrid({
                         <motion.span
                           layoutId={`month-${month}-selection`}
                           transition={spring.snappy}
-                          className={`absolute inset-0 rounded-full ${isToday ? "bg-red" : "bg-label"}`}
+                          className={`absolute inset-0 rounded-full ${isToday ? "bg-today" : "bg-label"}`}
                         />
                       )}
                       <span
                         className={`relative text-[18px] tabular-nums transition-colors duration-150 ${
                           isSelected
-                            ? `font-semibold ${isToday ? "text-white" : "text-bg"}`
+                            ? `font-semibold ${isToday ? "text-today-contrast" : "text-bg"}`
                             : isToday
-                              ? "font-semibold text-red"
+                              ? "font-semibold text-today"
                               : inMonth
                                 ? "text-label"
-                                : "text-label-tertiary"
+                                : "text-label-secondary"
                         }`}
                       >
                         {fromDayKey(day).getDate()}
@@ -141,7 +181,7 @@ export function MonthGrid({
                     </span>
                     <span
                       aria-hidden
-                      className={`size-1.5 rounded-full ${marked.has(day) ? (inMonth ? "bg-label-tertiary" : "bg-separator") : ""}`}
+                      className={`size-1.5 rounded-full ${marked.has(day) ? (inMonth ? "bg-label-secondary" : "bg-label-tertiary") : ""}`}
                     />
                   </button>
                 </li>

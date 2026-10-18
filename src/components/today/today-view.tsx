@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { addDays, dayRange, type DayKey } from "@/lib/dates";
 import { useHousehold, useSelectedDay } from "@/lib/household-store";
 import { isProjectedOn, type Task } from "@/lib/tasks";
@@ -13,7 +13,8 @@ import { HouseholdMembers } from "./household-members";
 const DAYS_BACK = 30;
 const DAYS_AHEAD = 90;
 
-export function TodayView() {
+/** `children` render below the day's tasks, and only once they have: anything there earlier would jump down. */
+export function TodayView({ children }: { children?: ReactNode }) {
   const clock = useClock();
   const today = clock?.today ?? null;
   const { seeded, members, tasks, events, toggleTask } = useHousehold();
@@ -70,6 +71,7 @@ export function TodayView() {
             members={members}
             onToggle={(task) => toggleTask(task, today)}
           />
+          {children}
         </>
       ) : (
         <div aria-hidden className="h-[164px]" />

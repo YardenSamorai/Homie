@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type KeyboardEvent } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { localeDirection } from "@/i18n/config";
@@ -73,6 +73,25 @@ export function DateStrip({
     if (week) onSelect(week[selectedWeekday]);
   };
 
+  // One Tab stop for the strip and arrows to move the day: every week is in the DOM, and focusing a
+  // hidden one would scroll it in and select its day.
+  const onDayKey = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const targets: Record<string, DayKey | undefined> = {
+      ArrowRight: addDays(selected, rtl ? -1 : 1),
+      ArrowLeft: addDays(selected, rtl ? 1 : -1),
+      PageDown: addDays(selected, 7),
+      PageUp: addDays(selected, -7),
+      Home: weeks[selectedWeek][0],
+      End: weeks[selectedWeek][6],
+    };
+    const target = targets[event.key];
+    if (!target) return;
+    event.preventDefault();
+    if (target < weeks[0][0] || target > weeks[weeks.length - 1][6]) return;
+    onSelect(target);
+    scroller.current?.querySelector<HTMLButtonElement>(`[data-day="${target}"]`)?.focus({ preventScroll: true });
+  };
+
   return (
     <section aria-label={dict.today.pickDay} className="flex flex-col gap-3 rounded-card bg-surface px-2 pb-2 pt-3 shadow-card">
       <div className="flex min-h-10 items-center justify-between ps-3 pe-1">
@@ -100,7 +119,7 @@ export function DateStrip({
                 exit={{ opacity: 0, transform: "scale(0.92)" }}
                 whileTap={press}
                 transition={{ duration: 0.18, ease: easeOut }}
-                className="me-1 min-h-8 rounded-full bg-red/12 px-3.5 text-[15px] font-semibold text-red"
+                className="relative me-1 min-h-8 rounded-full bg-today/10 px-3.5 text-[15px] font-semibold text-today before:absolute before:inset-x-0 before:-inset-y-1.5"
               >
                 {dict.today.backToToday}
               </motion.button>
@@ -111,7 +130,7 @@ export function DateStrip({
             onClick={() => goWeek(-1)}
             disabled={selectedWeek === 0}
             aria-label={dict.today.previousWeek}
-            className="flex size-10 items-center justify-center rounded-full text-red transition-[opacity,scale] duration-100 ease-out active:scale-90 disabled:opacity-30"
+            className="relative flex size-10 items-center justify-center rounded-full text-accent transition-[opacity,scale] duration-100 ease-out before:absolute before:inset-x-0 before:-inset-y-0.5 active:scale-90 disabled:opacity-30"
           >
             <ChevronLeft aria-hidden size={22} strokeWidth={2.5} className="rtl:-scale-x-100" />
           </button>
@@ -120,16 +139,16 @@ export function DateStrip({
             onClick={() => goWeek(1)}
             disabled={selectedWeek === weeks.length - 1}
             aria-label={dict.today.nextWeek}
-            className="flex size-10 items-center justify-center rounded-full text-red transition-[opacity,scale] duration-100 ease-out active:scale-90 disabled:opacity-30"
+            className="relative flex size-10 items-center justify-center rounded-full text-accent transition-[opacity,scale] duration-100 ease-out before:absolute before:inset-x-0 before:-inset-y-0.5 active:scale-90 disabled:opacity-30"
           >
             <ChevronRight aria-hidden size={22} strokeWidth={2.5} className="rtl:-scale-x-100" />
           </button>
         </div>
       </div>
 
-      <div aria-hidden className="grid grid-cols-7 text-center text-[11px] font-semibold text-label-secondary">
+      <div aria-hidden className="grid grid-cols-7 text-center text-[11px] font-semibold text-label">
         {weeks[0].map((day) => (
-          <span key={day} className={isWeekend(day, locale) ? "text-label-tertiary" : undefined}>
+          <span key={day} className={isWeekend(day, locale) ? "text-label-secondary" : undefined}>
             {weekdayFormat.format(fromDayKey(day))}
           </span>
         ))}
@@ -150,7 +169,10 @@ export function DateStrip({
                 <li key={day} className="flex justify-center">
                   <button
                     type="button"
+                    data-day={day}
+                    tabIndex={isSelected ? 0 : -1}
                     onClick={() => onSelect(day)}
+                    onKeyDown={onDayKey}
                     aria-pressed={isSelected}
                     aria-label={fullDate.format(fromDayKey(day))}
                     aria-current={isToday ? "date" : undefined}
@@ -161,15 +183,15 @@ export function DateStrip({
                         <motion.span
                           layoutId={`week-${w}-selection`}
                           transition={spring.snappy}
-                          className={`absolute inset-0 rounded-full ${isToday ? "bg-red" : "bg-label"}`}
+                          className={`absolute inset-0 rounded-full ${isToday ? "bg-today" : "bg-label"}`}
                         />
                       )}
                       <span
                         className={`relative text-[19px] tabular-nums transition-colors duration-150 ${
                           isSelected
-                            ? `font-semibold ${isToday ? "text-white" : "text-bg"}`
+                            ? `font-semibold ${isToday ? "text-today-contrast" : "text-bg"}`
                             : isToday
-                              ? "font-semibold text-red"
+                              ? "font-semibold text-today"
                               : "text-label"
                         }`}
                       >
