@@ -70,28 +70,32 @@ export function skyAt(ms: number): Sky {
   const [sunX, sunY] = arc(dayProgress);
   const [moonX, moonY] = arc(nightProgress);
 
-  // Light keyed to the sun's elevation; dawn and dusk get their own palettes.
-  // [elevation, sky top, sky middle, horizon, glow, glow alpha, light on the house, clouds, sun, window glow]
-  type Frame = [number, string, string, string, string, number, string, string, string, number];
+  // Light keyed to the sun's elevation; dawn and dusk get their own palettes. The house is painted in
+  // neutral daylight: "ambient" tints all of it, "sun" the side facing the sun (the moon at night).
+  // [elevation, sky top, sky middle, horizon, glow, glow alpha, ambient, sun on the house, land, cloud lit,
+  //  cloud shade, sun disc, window glow]
+  type Frame = [number, string, string, string, string, number, string, string, string, string, string, string, number];
+  const nightFrame: Frame = [-18, "#070b1c", "#0c1430", "#172245", "#6a7ad0", 0, "#3a4362", "#5d6a99", "#060915", "#2c3458", "#141a36", "#ffc890", 1];
+  const noonFrame: Frame = [35, "#5f96cc", "#9dc0e2", "#d8e5ee", "#fffaf0", 0.22, "#f6f5f2", "#ffffff", "#6e7e7e", "#ffffff", "#e2e9f0", "#ffffff", 0];
   const dawn: Frame[] = [
-    [-18, "#060a1f", "#0c1538", "#1a2654", "#7888dc", 0, "#3e4b8a", "#36406f", "#ffb46b", 1],
-    [-10, "#0d1640", "#23306a", "#4a4f8c", "#a070a0", 0.12, "#4b5594", "#474b80", "#ffb46b", 1],
-    [-5, "#26336f", "#5d64a3", "#c58fa8", "#dc96aa", 0.3, "#7578ad", "#9a8bba", "#ffb46b", 0.9],
-    [-1.5, "#4c63a9", "#a59bcc", "#ffbfa0", "#ffb996", 0.55, "#b6a7c8", "#e6c5d2", "#ffb46b", 0.7],
-    [1.5, "#7d9ad3", "#e2c3d4", "#ffd2a8", "#ffcd9b", 0.7, "#ecd3c9", "#ffdcd2", "#ffb46b", 0.4],
-    [6, "#78aee3", "#cfdcee", "#ffe8c8", "#ffe8b9", 0.5, "#fcebdc", "#fff1e4", "#fff0c8", 0.1],
-    [15, "#6db2ec", "#a9d5f4", "#e5f3f5", "#fff8dc", 0.4, "#ffffff", "#ffffff", "#fffaf0", 0],
-    [35, "#69aeea", "#a6d3f3", "#dceef8", "#fffaeb", 0.35, "#ffffff", "#ffffff", "#ffffff", 0],
+    nightFrame,
+    [-11, "#0a1230", "#18234d", "#2e3866", "#8a6aa0", 0.08, "#434b6e", "#66709f", "#0c1127", "#3c4270", "#1e2446", "#ffc890", 1],
+    [-6, "#1b2652", "#3f4a7e", "#7d7298", "#c890a0", 0.22, "#5a6087", "#7a7fac", "#1f2342", "#7a7aa4", "#3c4068", "#ffc890", 0.95],
+    [-2, "#3a4f86", "#8b8fb4", "#d9a9a2", "#f2b494", 0.42, "#8a87a6", "#c9a9b4", "#4b4a68", "#e2b6b0", "#8d88aa", "#ffc890", 0.7],
+    [1.5, "#5f7fb4", "#b9b4c6", "#f0c49c", "#ffcf9e", 0.55, "#c4b2b2", "#ffd2a6", "#6b6476", "#ffd9b8", "#b8a8bc", "#ffd6a0", 0.3],
+    [6, "#6d97c8", "#b6c8dc", "#ecdcc6", "#ffe6bf", 0.38, "#e2d8d0", "#fff0dc", "#717a7e", "#fff6ea", "#d8d8e2", "#fff4e0", 0.05],
+    [15, "#6a9cd0", "#a6c4e0", "#dde6ec", "#fff6e0", 0.28, "#f0ede8", "#fffaf2", "#6f7d7c", "#ffffff", "#e0e6ee", "#fffaf0", 0],
+    noonFrame,
   ];
   const dusk: Frame[] = [
-    [-18, "#060a1f", "#0c1538", "#1a2654", "#7888dc", 0, "#3e4b8a", "#36406f", "#ff8c3a", 1],
-    [-10, "#0e1440", "#241f55", "#4a3064", "#a05a82", 0.12, "#4f5292", "#3e3a6a", "#ff8c3a", 1],
-    [-5, "#262a6c", "#5e3f80", "#b85a6a", "#c85a64", 0.3, "#7a6aa5", "#8a6795", "#ff8c3a", 0.9],
-    [-1.5, "#4a4f9a", "#b06a95", "#f0805a", "#f06e50", 0.55, "#b58aa8", "#d0899c", "#ff8c3a", 0.7],
-    [1.5, "#8b8fcf", "#eea7a6", "#ff9a52", "#ff8c46", 0.8, "#f6b796", "#ffb898", "#ff8c3a", 0.4],
-    [6, "#77a3d9", "#d2c6d6", "#ffd59c", "#ffcd8c", 0.55, "#ffe0c2", "#ffe6cf", "#ffd27e", 0.1],
-    [15, "#6aaae7", "#acd1ef", "#f1efe4", "#fff0cd", 0.4, "#fffaf2", "#fffaf3", "#fff6dc", 0],
-    [35, "#69aeea", "#a6d3f3", "#dceef8", "#fffaeb", 0.35, "#ffffff", "#ffffff", "#ffffff", 0],
+    nightFrame,
+    [-11, "#111a42", "#23295a", "#3d3a66", "#8c5a80", 0.08, "#453f6a", "#6a6698", "#0e1128", "#433f6c", "#20203f", "#ff9a50", 1],
+    [-5, "#222c62", "#4e4c80", "#9a6a7c", "#b8607a", 0.22, "#5e5a84", "#86789e", "#262341", "#a6708c", "#4a4670", "#ff9a50", 0.95],
+    [-1.5, "#3e4a86", "#9a7894", "#e08a68", "#ec8058", 0.42, "#8e7f9a", "#d8a0a0", "#4d4256", "#f0a08a", "#6e6488", "#ff9a50", 0.7],
+    [1.5, "#59689e", "#c89a94", "#eca06c", "#ff9a5a", 0.62, "#bba3a2", "#ffc68e", "#5d4f5a", "#ffbe8a", "#a2899c", "#ff9a50", 0.35],
+    [6, "#6a8cbf", "#c3c0c4", "#efd2a8", "#ffcf8e", 0.45, "#e2d4c6", "#ffe2b8", "#6e6662", "#fff0d8", "#d6d0d4", "#ffd58a", 0.05],
+    [15, "#6496ca", "#a8c2dc", "#e6e2d8", "#fff0d0", 0.3, "#f0ece6", "#fff8ee", "#6e7a78", "#fffaf2", "#dde2ea", "#fff6e0", 0],
+    noonFrame,
   ];
 
   const toLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
@@ -100,8 +104,8 @@ export function skyAt(ms: number): Sky {
     const n = parseInt(hex.slice(1), 16);
     return [n >> 16, (n >> 8) & 255, n & 255];
   };
-  const toLab = (hex: string) => {
-    const [r, gr, b] = parse(hex).map((c) => toLinear(c / 255));
+  const toLab = (rgb: number[]) => {
+    const [r, gr, b] = rgb.map((c) => toLinear(c / 255));
     const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * gr + 0.0514459929 * b);
     const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * gr + 0.1073969566 * b);
     const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * gr + 0.6299787005 * b);
@@ -127,28 +131,51 @@ export function skyAt(ms: number): Sky {
   while (i < frames.length - 2 && elevation > frames[i + 1][0]) i++;
   const [from, to] = [frames[i], frames[i + 1]];
   const t = clamp((elevation - from[0]) / (to[0] - from[0]));
-  const color = (k: number) => {
-    const a = toLab(from[k] as string);
-    const b = toLab(to[k] as string);
-    return fromLab(a.map((v, j) => v + (b[j] - v) * t));
+  const blend = (a: number[], b: number[], k: number) => {
+    const la = toLab(a), lb = toLab(b);
+    return fromLab(la.map((v, j) => v + (lb[j] - v) * k));
   };
+  const color = (k: number) => blend(parse(from[k] as string), parse(to[k] as string), t);
   const num = (k: number) => (from[k] as number) + ((to[k] as number) - (from[k] as number)) * t;
   const hex = (c: number[]) => "#" + c.map((v) => v.toString(16).padStart(2, "0")).join("");
 
   const top = color(1), mid = color(2), horizon = color(3), glow = color(4);
   const glowAlpha = num(5);
 
-  // Ink: dark navy or white, whichever needs the lighter veil to keep every text row at WCAG AA
-  // (the name is large text, 3:1). Rows sample the sky gradient (stops 0/58/86%) where the text sits.
+  // Atmospheric perspective: the farther the ridge, the more of the horizon's color it takes, and each
+  // ridge lightens toward its foot where haze collects in the valley.
+  const land = color(8);
+  const ridges = [0.3, 0.55, 0.8].map((depth) => {
+    const crest = blend(horizon, land, depth);
+    return [crest, blend(crest, horizon, 0.35)];
+  });
+
+  // Low sun lights the side of the house that faces it: the gable end in the morning (the sun rises on
+  // the left), the long side in the evening. At night the moon does the same, faintly.
+  const sunSide = clamp((elevation + 1) / 3) * (1 - smooth((elevation - 6) / 26));
+  const moonSide = nightProgress >= 0 ? 0.55 * Math.sin(Math.PI * nightProgress) * smooth((-elevation - 4) / 6) : 0;
+  const east = (rising ? sunSide : 0) + (nightProgress >= 0 && nightProgress < 0.5 ? moonSide : 0);
+  const west = (rising ? 0 : sunSide) + (nightProgress >= 0.5 ? moonSide : 0);
+
+  // Ink: dark navy or white, whichever needs the lighter veil to keep every text row at WCAG AA, with a 4%
+  // margin for what this doesn't model (clouds, antialiasing). The name is large text, 3:1. Rows sample the sky gradient (stops 0/58/86%) at the top edge of each
+  // line (greeting, name, summary, and a summary pushed down by a two-line name), plus as much of the sun's
+  // glow as reaches the text column (x 85%). The veil fades out toward the house, so the lower lines,
+  // which run longer, only get 80% of it at their far end.
   const luminance = (c: number[]) =>
     0.2126 * toLinear(c[0] / 255) + 0.7152 * toLinear(c[1] / 255) + 0.0722 * toLinear(c[2] / 255);
   const mix = (a: number[], b: number[], k: number) => a.map((v, j) => v + (b[j] - v) * k);
   const contrast = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  const low = clamp(1 - elevation / 18);
+  const glowAt = (y: number) => {
+    const d = Math.hypot((85 - sunX) / (30 + 40 * low), (y - Math.min(sunY, 84)) / (28 + 32 * low));
+    return glowAlpha * (d < 0.45 ? 1 - (0.6 * d) / 0.45 : Math.max(0, 0.4 * (1 - (d - 0.45) / 0.55)));
+  };
   const rows: [number[], number, number][] = [
-    [mix(mix(top, mid, 0.21), glow, glowAlpha * 0.15), 4.5, 0],
-    [mix(mix(top, mid, 0.52), glow, glowAlpha * 0.2), 3, 0],
-    [mix(mix(top, mid, 0.83), glow, glowAlpha * 0.35), 4.5, 1],
-    [mix(mix(mid, horizon, 0.07), glow, glowAlpha * 0.45), 4.5, 1],
+    [mix(mix(top, mid, 0.14), glow, glowAt(8)), 4.5, 0],
+    [mix(mix(top, mid, 0.29), glow, glowAt(17)), 3, 0],
+    [mix(mix(top, mid, 0.72), glow, glowAt(42)), 4.5, 1],
+    [mix(mix(mid, horizon, 0.07), glow, glowAt(60)), 4.5, 1],
   ];
   // Dark mode dims the daylight sky so the card doesn't glare (.sky-dim); the veil holds on both skies.
   const dim = 0.14 * smooth((elevation + 4) / 10);
@@ -158,8 +185,9 @@ export function skyAt(ms: number): Sky {
     for (const shade of [1, 1 - dim]) {
       for (const [row, ratio, region] of rows) {
         const lit = row.map((v) => v * shade);
+        const reach = region ? 0.8 : 1;
         let a = 0;
-        while (a < 0.6 && contrast(luminance(mix(lit, wash, a)), luminance(ink)) < ratio) a += 0.02;
+        while (a < 0.6 && contrast(luminance(mix(lit, wash, a * reach)), luminance(ink)) < ratio * 1.04) a += 0.02;
         need[region] = Math.max(need[region], a);
       }
     }
@@ -171,8 +199,6 @@ export function skyAt(ms: number): Sky {
   const [veilTop, veilLow] = dark ? darkVeil : lightVeil;
   const wash = dark ? "255 255 255" : "20 16 48";
 
-  const low = clamp(1 - elevation / 18);
-  const windows = num(9);
   const pct = (v: number) => v.toFixed(2) + "%";
 
   return {
@@ -189,7 +215,7 @@ export function skyAt(ms: number): Sky {
       "--sky-glow-y": pct(Math.min(sunY, 84)),
       "--sky-glow-w": pct(30 + 40 * low),
       "--sky-glow-h": pct(28 + 32 * low),
-      "--sky-sun": hex(color(8)),
+      "--sky-sun": hex(color(11)),
       "--sky-sun-x": pct(sunX),
       "--sky-sun-y": pct(sunY),
       "--sky-sun-a": clamp((elevation + 2.5) / 3).toFixed(3),
@@ -198,11 +224,20 @@ export function skyAt(ms: number): Sky {
       "--sky-moon-y": pct(moonY),
       "--sky-moon-a": clamp((3 - elevation) / 8).toFixed(3),
       "--sky-stars": smooth((-elevation - 4) / 8).toFixed(3),
-      "--sky-house": hex(color(6)),
-      "--sky-cloud": hex(color(7)),
-      "--sky-windows": windows.toFixed(3),
-      "--sky-smoke": (0.15 + 0.45 * windows).toFixed(3),
+      "--sky-windows": num(12).toFixed(3),
       "--sky-dim": dim.toFixed(3),
+      "--cloud-lit": hex(color(9)),
+      "--cloud-shade": hex(color(10)),
+      "--land-1": hex(ridges[0][0]),
+      "--land-1-foot": hex(ridges[0][1]),
+      "--land-2": hex(ridges[1][0]),
+      "--land-2-foot": hex(ridges[1][1]),
+      "--land-3": hex(ridges[2][0]),
+      "--land-3-foot": hex(ridges[2][1]),
+      "--home-ambient": hex(color(6)),
+      "--home-sun": hex(color(7)),
+      "--home-east": east.toFixed(3),
+      "--home-west": west.toFixed(3),
       "--scene-ink": dark ? "#0f2a44" : "#ffffff",
       "--scene-glass": dark ? "rgb(255 255 255 / 0.45)" : "rgb(255 255 255 / 0.16)",
       "--scene-text-shadow": dark ? "none" : "0 1px 2px rgb(0 0 0 / 0.3)",

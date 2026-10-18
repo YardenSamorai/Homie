@@ -52,33 +52,42 @@
  * the values here are a clear midday for when scripts don't run.
  */
 :root {
-  --sky-top: #69aeea;
-  --sky-mid: #a6d3f3;
-  --sky-horizon: #dceef8;
-  --sky-glow: 255 250 235;
-  --sky-glow-a: 0.35;
-  --sky-glow-x: 36%;
-  --sky-glow-y: 13%;
+  --sky-top: #5f96cc;
+  --sky-mid: #9dc0e2;
+  --sky-horizon: #d8e5ee;
+  --sky-glow: 255 250 240;
+  --sky-glow-a: 0.22;
+  --sky-glow-x: 32%;
+  --sky-glow-y: 13.5%;
   --sky-glow-w: 30%;
   --sky-glow-h: 28%;
   --sky-sun: #ffffff;
-  --sky-sun-x: 36%;
-  --sky-sun-y: 13%;
+  --sky-sun-x: 32%;
+  --sky-sun-y: 13.5%;
   --sky-sun-a: 1;
   --sky-sun-scale: 1;
-  --sky-moon-x: 58%;
-  --sky-moon-y: 120%;
+  --sky-moon-x: 1%;
+  --sky-moon-y: 224%;
   --sky-moon-a: 0;
   --sky-stars: 0;
-  --sky-house: #ffffff;
-  --sky-cloud: #ffffff;
   --sky-windows: 0;
-  --sky-smoke: 0.15;
   --sky-dim: 0.14;
+  --cloud-lit: #ffffff;
+  --cloud-shade: #e2e9f0;
+  --land-1: #b7c5cb;
+  --land-1-foot: #c2d0d7;
+  --land-2: #9cabaf;
+  --land-2-foot: #b1bfc5;
+  --land-3: #829293;
+  --land-3-foot: #9faeb2;
+  --home-ambient: #f6f5f2;
+  --home-sun: #ffffff;
+  --home-east: 0;
+  --home-west: 0;
   --scene-ink: #0f2a44;
   --scene-glass: rgb(255 255 255 / 0.45);
   --scene-text-shadow: none;
-  --scene-veil-top: transparent;
+  --scene-veil-top: rgb(255 255 255 / 0.08);
   --scene-veil-low: transparent;
 }
 
@@ -264,37 +273,34 @@ body {
   .sky-sun {
     left: var(--sky-sun-x);
     top: var(--sky-sun-y);
-    width: 8cqh;
+    width: 7cqh;
     scale: var(--sky-sun-scale);
     opacity: var(--sky-sun-a);
-    background: radial-gradient(circle, #fffef6 40%, color-mix(in oklab, var(--sky-sun) 75%, #fffef6));
+    background: radial-gradient(circle, #fffef8 45%, color-mix(in oklab, var(--sky-sun) 80%, #fffef8));
     box-shadow:
-      0 0 2cqh 0.5cqh color-mix(in oklab, var(--sky-sun) 85%, transparent),
-      0 0 10cqh 3cqh color-mix(in oklab, var(--sky-sun) 35%, transparent);
+      0 0 1.5cqh 0.3cqh color-mix(in oklab, var(--sky-sun) 70%, transparent),
+      0 0 9cqh 2cqh color-mix(in oklab, var(--sky-sun) 22%, transparent);
   }
   .sky-moon {
     left: var(--sky-moon-x);
     top: var(--sky-moon-y);
-    width: 7.5cqh;
+    width: 6.5cqh;
     opacity: var(--sky-moon-a);
   }
   .sky-moon::before {
     content: "";
     position: absolute;
-    inset: -170%;
+    inset: -160%;
     border-radius: 50%;
-    background: radial-gradient(closest-side, rgb(222 230 255 / 0.4), rgb(222 230 255 / 0.12) 45%, transparent);
+    background: radial-gradient(closest-side, rgb(214 224 250 / 0.22), rgb(214 224 250 / 0.07) 45%, transparent);
   }
   .sky-moon::after {
     content: "";
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    box-shadow: inset 1.7cqh -1cqh 0 0 #fff4d6;
-    filter: drop-shadow(0 0 1cqh rgb(255 241 210 / 0.85));
-  }
-  :root[data-starry] .sky-moon::before {
-    animation: sky-breathe 6s ease-in-out infinite alternate;
+    box-shadow: inset 1.4cqh -0.8cqh 0 0 #f1ede2;
+    filter: drop-shadow(0 0 0.8cqh rgb(236 232 220 / 0.6));
   }
 
   .sky-stars {
@@ -312,51 +318,56 @@ body {
     background: #fff;
     animation: sky-twinkle ease-in-out infinite;
   }
-  .sky-sparkle {
-    position: absolute;
-    translate: -50% -50%;
-    color: #fff;
-    animation: sky-sparkle ease-in-out infinite;
-  }
 
+  /* Soft cloud shapes, lit from above, thinning out behind the greeting. */
+  .sky-clouds {
+    position: absolute;
+    inset: 0;
+    mask-image: linear-gradient(to right, black 38%, rgb(0 0 0 / 0.15) 64%);
+  }
   .sky-cloud {
     position: absolute;
     left: 0;
-    background-color: var(--sky-cloud);
-    background-size: 100% 100%;
-    background-blend-mode: multiply;
+    background: linear-gradient(to bottom, var(--cloud-lit) 20%, var(--cloud-shade) 90%);
     mask-size: 100% 100%;
     animation: sky-drift linear infinite;
     /* --sky-now is set once per page load, so the clouds pick up where they would be instead of starting over. */
     animation-delay: calc((var(--sky-now, 0) + var(--phase)) * -1s);
   }
 
-  .sky-house {
+  /* Ridgelines fading into the distance; fills come from --land-* (src/lib/sky.ts). */
+  .sky-land {
     position: absolute;
     inset: 0;
-    background: var(--sky-house) url("/illustrations/sky/house.webp") center / 100% 100%;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* The house is painted in neutral daylight: ambient light tints all of it, and the side facing the sun
+     (or the moon) gets its own light through a mask of the surfaces that face that way. */
+  .home {
+    position: absolute;
+    inset: 0;
+    background: var(--home-light, var(--home-ambient)) url("/illustrations/scene/house.webp") center / 100% 100%;
     background-blend-mode: multiply;
-    mask: url("/illustrations/sky/house.webp") center / 100% 100%;
+    mask: url("/illustrations/scene/house.webp") center / 100% 100%;
   }
-  .sky-windows {
+  .home-east,
+  .home-west {
+    --home-light: var(--home-sun);
+  }
+  .home-east {
+    mask-image: url("/illustrations/scene/house-east.webp");
+    opacity: var(--home-east);
+  }
+  .home-west {
+    mask-image: url("/illustrations/scene/house-west.webp");
+    opacity: var(--home-west);
+  }
+  .home-windows {
     position: absolute;
     inset: 0;
-    mask: url("/illustrations/sky/house-windows.webp") center / 100% 100%;
-  }
-  .sky-smoke {
-    position: absolute;
-    left: 35.2%;
-    top: 25.5%;
-    opacity: var(--sky-smoke);
-  }
-  .sky-puff {
-    position: absolute;
-    width: 5cqh;
-    height: 5cqh;
-    margin: -2.5cqh;
-    border-radius: 50%;
-    background: radial-gradient(closest-side, rgb(255 255 255 / 0.9), rgb(255 255 255 / 0));
-    animation: sky-smoke 7.2s ease-out infinite;
+    mask: url("/illustrations/scene/house-windows.webp") center / 100% 100%;
   }
 
   /* Dark mode tones the daylight sky down so the card doesn't glare; src/lib/sky.ts sets how much. */
@@ -503,42 +514,20 @@ body {
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .sky-cloud,
-    .sky-puff,
-    .sky-sparkle {
+    .sky-cloud {
       animation-play-state: paused;
     }
   }
 }
 
+/* A slow, shallow shimmer rather than a blink. */
 @keyframes sky-twinkle {
   0%,
   100% {
     opacity: var(--o);
   }
   50% {
-    opacity: calc(var(--o) * 0.3);
-  }
-}
-@keyframes sky-sparkle {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(0.55) rotate(0deg);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1) rotate(30deg);
-  }
-}
-@keyframes sky-breathe {
-  from {
-    opacity: 0.7;
-    transform: scale(0.94);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1.04);
+    opacity: calc(var(--o) * 0.55);
   }
 }
 @keyframes sky-drift {
@@ -547,19 +536,6 @@ body {
   }
   to {
     transform: translateX(100cqw);
-  }
-}
-@keyframes sky-smoke {
-  from {
-    opacity: 0;
-    transform: translate(0, 0) scale(0.35);
-  }
-  15% {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-    transform: translate(5cqh, -17cqh) scale(2);
   }
 }
 @keyframes sky-fly {
