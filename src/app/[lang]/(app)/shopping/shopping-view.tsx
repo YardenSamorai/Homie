@@ -124,7 +124,7 @@ export function ShoppingView() {
                 <button
                   type="button"
                   onClick={clearBought}
-                  className="min-h-8 px-1 text-[15px] font-medium text-accent transition-opacity active:opacity-60"
+                  className="relative min-h-8 px-1 text-[15px] font-medium text-accent transition-opacity before:absolute before:-inset-x-2 before:-inset-y-1.5 active:opacity-60"
                 >
                   {dict.shopping.clearBought}
                 </button>
