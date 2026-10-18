@@ -66,7 +66,7 @@ export function TabBar() {
           onClick={() => show(addKindFor(pathname, locale), selectedDay)}
           aria-label={dict.add.open}
           aria-haspopup="dialog"
-          className="pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full bg-accent text-white shadow-[0_8px_24px_color-mix(in_oklab,var(--accent)_40%,transparent),0_1px_2px_rgb(0_0_0/0.1)] transition-[scale] duration-150 ease-out active:scale-90"
+          className="pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full bg-accent text-white shadow-[0_8px_24px_color-mix(in_oklab,var(--accent)_40%,transparent),0_1px_2px_rgb(0_0_0/0.1)] transition-[scale] duration-150 ease-out active:scale-95"
         >
           <Plus aria-hidden size={28} strokeWidth={2.5} />
         </button>

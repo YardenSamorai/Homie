@@ -41,9 +41,9 @@ export function ConnectionBanner() {
         {state && (
           <motion.div
             key={state}
-            initial={{ opacity: 0, y: -12, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -12, scale: 0.96 }}
+            initial={{ opacity: 0, transform: "translateY(-12px) scale(0.96)" }}
+            animate={{ opacity: 1, transform: "translateY(0px) scale(1)" }}
+            exit={{ opacity: 0, transform: "translateY(-12px) scale(0.96)" }}
             transition={{ type: "spring", stiffness: 420, damping: 32 }}
             className={`mx-4 mt-2 flex max-w-md items-center gap-2.5 rounded-2xl bg-surface-raised/95 px-4 py-2.5 text-[13px] font-medium shadow-[0_8px_30px_rgb(0_0_0/0.18)] ring-1 ring-separator backdrop-blur-xl ${
               state === "offline" ? "text-label" : "text-success"

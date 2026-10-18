@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { StrikeText } from "@/components/ui/strike-text";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
+import { completionHaptic } from "@/lib/haptics";
 import type { ShoppingItem } from "@/lib/household";
 import { useHousehold } from "@/lib/household-store";
 import { easeOut, spring } from "@/lib/motion";
@@ -26,7 +27,10 @@ function ItemRow({ item }: { item: ShoppingItem }) {
     <div className="flex min-h-14 items-center gap-3 px-4 py-2.5">
       <motion.button
         type="button"
-        onClick={() => toggleShoppingItem(item.id)}
+        onClick={() => {
+          if (!bought) completionHaptic();
+          toggleShoppingItem(item.id);
+        }}
         whileTap={{ scale: 0.88 }}
         transition={spring.snappy}
         aria-pressed={bought}
@@ -116,7 +120,7 @@ export function ShoppingView() {
           {bought.length > 0 && (
             <section className="flex flex-col gap-2">
               <div className="flex items-center justify-between px-1">
-                <h2 className="text-[13px] font-semibold uppercase tracking-wide text-label-secondary">{dict.shopping.bought}</h2>
+                <h2 className="section-label text-label-secondary">{dict.shopping.bought}</h2>
                 <button
                   type="button"
                   onClick={clearBought}

@@ -31,7 +31,7 @@ function Group({
   return (
     <motion.section layout="position" transition={spring.gentle} className="flex flex-col gap-2">
       {title && (
-        <h3 className="px-1 text-[13px] font-semibold uppercase tracking-wide text-label-secondary">{title}</h3>
+        <h3 className="section-label px-1 text-label-secondary">{title}</h3>
       )}
       <ul className="overflow-hidden rounded-card bg-surface shadow-card">
         <AnimatePresence initial={false}>
@@ -132,7 +132,7 @@ export function DayTasks({
             <LayoutGroup id={day}>
               {dayEvents.length > 0 && (
                 <section className="flex flex-col gap-2">
-                  <h3 className="px-1 text-[13px] font-semibold uppercase tracking-wide text-label-secondary">
+                  <h3 className="section-label px-1 text-label-secondary">
                     {dict.events.title}
                   </h3>
                   <ul className="overflow-hidden rounded-card bg-surface shadow-card">

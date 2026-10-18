@@ -69,7 +69,7 @@ export function TasksView() {
         groups.map((group) => (
           <section key={group.key} className="flex flex-col gap-2">
             <h2
-              className={`px-1 text-[13px] font-semibold uppercase tracking-wide ${
+              className={`section-label px-1 ${
                 group.key === "overdue" ? "text-red" : "text-label-secondary"
               }`}
             >

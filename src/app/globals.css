@@ -47,6 +47,41 @@
     0 1px 2px light-dark(rgb(0 0 0 / 0.04), transparent), 0 8px 24px light-dark(rgb(0 0 0 / 0.04), transparent);
 }
 
+/*
+ * Today hero sky. src/lib/sky.ts writes these onto <html> before first paint and every 30 seconds after;
+ * the values here are a clear midday for when scripts don't run.
+ */
+:root {
+  --sky-top: #69aeea;
+  --sky-mid: #a6d3f3;
+  --sky-horizon: #dceef8;
+  --sky-glow: 255 250 235;
+  --sky-glow-a: 0.35;
+  --sky-glow-x: 36%;
+  --sky-glow-y: 13%;
+  --sky-glow-w: 30%;
+  --sky-glow-h: 28%;
+  --sky-sun: #ffffff;
+  --sky-sun-x: 36%;
+  --sky-sun-y: 13%;
+  --sky-sun-a: 1;
+  --sky-sun-scale: 1;
+  --sky-moon-x: 58%;
+  --sky-moon-y: 120%;
+  --sky-moon-a: 0;
+  --sky-stars: 0;
+  --sky-house: #ffffff;
+  --sky-cloud: #ffffff;
+  --sky-windows: 0;
+  --sky-smoke: 0.15;
+  --sky-dim: 0.14;
+  --scene-ink: #0f2a44;
+  --scene-glass: rgb(255 255 255 / 0.45);
+  --scene-text-shadow: none;
+  --scene-veil-top: transparent;
+  --scene-veil-low: transparent;
+}
+
 @theme inline {
   --color-red: var(--red);
   --color-orange: var(--orange);
@@ -109,6 +144,32 @@
   -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
 
+/* Grouped-list header. Tracking helps Latin capitals; Hebrew has no case and reads worse spaced out. */
+@utility section-label {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  &:lang(he) {
+    letter-spacing: 0;
+  }
+}
+
+/* iOS 26 scroll edge: content softens into the background where floating chrome sits over it. */
+@utility scroll-edge-top {
+  background: linear-gradient(to bottom, var(--bg) var(--edge-solid, 35%), transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  mask-image: linear-gradient(to bottom, black var(--edge-solid, 35%), transparent);
+}
+
+@utility scroll-edge-bottom {
+  background: linear-gradient(to top, color-mix(in oklab, var(--bg) 85%, transparent) 30%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  mask-image: linear-gradient(to top, black 30%, transparent);
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
@@ -134,7 +195,9 @@ a,
   :root {
     --material: var(--surface);
   }
-  .material {
+  .material,
+  .scroll-edge-top,
+  .scroll-edge-bottom {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
@@ -150,4 +213,563 @@ body {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/*
+ * Today hero scene (src/components/today/sky-scene.tsx). The picture is laid out in physical coordinates
+ * with the house on the left and mirrored as a whole in LTR, so left/right here are deliberate.
+ * Lengths are container units: of the hero inside .sky, of the 16:9 painting inside .sky-frame.
+ */
+@layer components {
+  .sky {
+    container-type: size;
+  }
+  .sky[data-paused] *,
+  .sky[data-paused] *::before,
+  .sky[data-paused] *::after {
+    animation-play-state: paused;
+  }
+  .sky-gradient {
+    background: linear-gradient(to bottom, var(--sky-top), var(--sky-mid) 58%, var(--sky-horizon) 86%);
+  }
+
+  /* Covers the hero with the 16:9 painting, anchored low so the ground is never cropped. */
+  .sky-frame {
+    position: absolute;
+    left: 0;
+    top: calc((100cqh - max(100cqw, 177.78cqh) * 0.5625) * 0.8);
+    width: max(100cqw, 177.78cqh);
+    aspect-ratio: 16 / 9;
+    container-type: size;
+  }
+
+  .sky-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      var(--sky-glow-w) var(--sky-glow-h) at var(--sky-glow-x) var(--sky-glow-y),
+      rgb(var(--sky-glow) / var(--sky-glow-a)),
+      rgb(var(--sky-glow) / calc(var(--sky-glow-a) * 0.4)) 45%,
+      transparent
+    );
+  }
+
+  .sky-sun,
+  .sky-moon {
+    position: absolute;
+    aspect-ratio: 1;
+    translate: -50% -50%;
+    border-radius: 50%;
+  }
+  .sky-sun {
+    left: var(--sky-sun-x);
+    top: var(--sky-sun-y);
+    width: 8cqh;
+    scale: var(--sky-sun-scale);
+    opacity: var(--sky-sun-a);
+    background: radial-gradient(circle, #fffef6 40%, color-mix(in oklab, var(--sky-sun) 75%, #fffef6));
+    box-shadow:
+      0 0 2cqh 0.5cqh color-mix(in oklab, var(--sky-sun) 85%, transparent),
+      0 0 10cqh 3cqh color-mix(in oklab, var(--sky-sun) 35%, transparent);
+  }
+  .sky-moon {
+    left: var(--sky-moon-x);
+    top: var(--sky-moon-y);
+    width: 7.5cqh;
+    opacity: var(--sky-moon-a);
+  }
+  .sky-moon::before {
+    content: "";
+    position: absolute;
+    inset: -170%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(222 230 255 / 0.4), rgb(222 230 255 / 0.12) 45%, transparent);
+  }
+  .sky-moon::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    box-shadow: inset 1.7cqh -1cqh 0 0 #fff4d6;
+    filter: drop-shadow(0 0 1cqh rgb(255 241 210 / 0.85));
+  }
+  :root[data-starry] .sky-moon::before {
+    animation: sky-breathe 6s ease-in-out infinite alternate;
+  }
+
+  .sky-stars {
+    position: absolute;
+    inset: 0;
+    display: none;
+    opacity: var(--sky-stars);
+  }
+  :root[data-starry] .sky-stars {
+    display: block;
+  }
+  .sky-star {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff;
+    animation: sky-twinkle ease-in-out infinite;
+  }
+  .sky-sparkle {
+    position: absolute;
+    translate: -50% -50%;
+    color: #fff;
+    animation: sky-sparkle ease-in-out infinite;
+  }
+
+  .sky-cloud {
+    position: absolute;
+    left: 0;
+    background-color: var(--sky-cloud);
+    background-size: 100% 100%;
+    background-blend-mode: multiply;
+    mask-size: 100% 100%;
+    animation: sky-drift linear infinite;
+    /* --sky-now is set once per page load, so the clouds pick up where they would be instead of starting over. */
+    animation-delay: calc((var(--sky-now, 0) + var(--phase)) * -1s);
+  }
+
+  .sky-house {
+    position: absolute;
+    inset: 0;
+    background: var(--sky-house) url("/illustrations/sky/house.webp") center / 100% 100%;
+    background-blend-mode: multiply;
+    mask: url("/illustrations/sky/house.webp") center / 100% 100%;
+  }
+  .sky-windows {
+    position: absolute;
+    inset: 0;
+    mask: url("/illustrations/sky/house-windows.webp") center / 100% 100%;
+  }
+  .sky-smoke {
+    position: absolute;
+    left: 35.2%;
+    top: 25.5%;
+    opacity: var(--sky-smoke);
+  }
+  .sky-puff {
+    position: absolute;
+    width: 5cqh;
+    height: 5cqh;
+    margin: -2.5cqh;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(255 255 255 / 0.9), rgb(255 255 255 / 0));
+    animation: sky-smoke 7.2s ease-out infinite;
+  }
+
+  /* Dark mode tones the daylight sky down so the card doesn't glare; src/lib/sky.ts sets how much. */
+  .sky-dim {
+    position: absolute;
+    inset: 0;
+    background-color: light-dark(transparent, #000);
+    opacity: var(--sky-dim);
+  }
+
+  .sky-veil {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      var(--scene-veil-top) 32%,
+      var(--scene-veil-low) 46% 64%,
+      transparent 82%
+    );
+    mask-image: linear-gradient(to left, black 38%, transparent 72%);
+  }
+
+  /* Things that cross the sky, one at a time (sky-flyers.tsx). */
+  .sky-fly,
+  .sky-ufo,
+  .sky-kite,
+  .sky-paraglider,
+  .sky-balloon {
+    position: absolute;
+    left: 0;
+    top: 0;
+    animation-fill-mode: forwards;
+  }
+  .sky-fly {
+    animation-name: sky-fly;
+    animation-timing-function: linear;
+  }
+  .sky-sprite {
+    background: center / contain no-repeat;
+  }
+  .sky-bird {
+    display: block;
+    color: rgb(34 40 58 / 0.7);
+  }
+  .sky-bob {
+    animation: sky-bob ease-in-out infinite alternate;
+  }
+  .sky-flap {
+    transform-origin: 50% 70%;
+    animation: sky-flap ease-in-out infinite alternate;
+  }
+  .sky-flap-glide {
+    transform-origin: 50% 70%;
+    animation: sky-flap-glide ease-in-out infinite;
+  }
+  .sky-sway {
+    transform-origin: 50% 0;
+    animation: sky-sway ease-in-out infinite alternate;
+  }
+  .sky-contrail {
+    position: absolute;
+    right: 88%;
+    top: 47%;
+    width: 32cqh;
+    height: 0.55cqh;
+    border-radius: 1cqh;
+    background: linear-gradient(to left, rgb(255 255 255 / 0.75), rgb(255 255 255 / 0));
+  }
+  .sky-light {
+    position: absolute;
+    width: 0.8cqh;
+    height: 0.8cqh;
+    border-radius: 50%;
+    box-shadow: 0 0 1cqh 0.2cqh rgb(255 255 255 / 0.35);
+  }
+  .sky-blink {
+    animation: sky-blink 1.4s linear infinite;
+  }
+  .sky-strobe {
+    animation: sky-strobe 1.4s linear infinite;
+  }
+  .sky-satellite {
+    display: block;
+    width: 0.7cqh;
+    height: 0.7cqh;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 0.8cqh rgb(255 255 255 / 0.8);
+    animation: sky-satellite linear forwards;
+  }
+  .sky-meteor {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 0.4cqh;
+    border-radius: 1cqh;
+    background: linear-gradient(to right, rgb(255 255 255 / 0), rgb(255 255 255 / 0.95));
+    transform-origin: right;
+    animation: sky-meteor 1.1s linear forwards;
+  }
+  .sky-ufo {
+    animation-name: sky-ufo;
+    animation-duration: 6.5s;
+  }
+  .sky-beam {
+    position: absolute;
+    left: 50%;
+    top: 45%;
+    width: 9cqh;
+    height: 20cqh;
+    translate: -50% 0;
+    clip-path: polygon(36% 0, 64% 0, 100% 100%, 0 100%);
+    background: linear-gradient(to bottom, rgb(196 255 226 / 0.5), rgb(196 255 226 / 0));
+    transform-origin: top;
+    animation: sky-beam 6.5s ease-in-out forwards;
+  }
+  .sky-kite {
+    animation-name: sky-kite;
+    animation-duration: 26s;
+  }
+  .sky-flutter {
+    transform-origin: 50% 30%;
+    animation: sky-flutter 1.4s ease-in-out infinite alternate;
+  }
+  .sky-string {
+    position: absolute;
+    left: 50%;
+    top: 30%;
+    width: max(1px, 0.25cqh);
+    height: 75cqh;
+    background: rgb(255 255 255 / 0.6);
+    transform-origin: top;
+    rotate: -14deg;
+  }
+  .sky-paraglider {
+    animation-name: sky-paraglider;
+    animation-duration: 34s;
+    animation-timing-function: linear;
+  }
+  .sky-balloon {
+    animation-name: sky-balloon;
+    animation-duration: 46s;
+    animation-timing-function: linear;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sky-cloud,
+    .sky-puff,
+    .sky-sparkle {
+      animation-play-state: paused;
+    }
+  }
+}
+
+@keyframes sky-twinkle {
+  0%,
+  100% {
+    opacity: var(--o);
+  }
+  50% {
+    opacity: calc(var(--o) * 0.3);
+  }
+}
+@keyframes sky-sparkle {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.55) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(30deg);
+  }
+}
+@keyframes sky-breathe {
+  from {
+    opacity: 0.7;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+@keyframes sky-drift {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100cqw);
+  }
+}
+@keyframes sky-smoke {
+  from {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.35);
+  }
+  15% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: translate(5cqh, -17cqh) scale(2);
+  }
+}
+@keyframes sky-fly {
+  from {
+    transform: translate(var(--x0), var(--y0));
+  }
+  to {
+    transform: translate(var(--x1), var(--y1));
+  }
+}
+@keyframes sky-bob {
+  from {
+    transform: translateY(-0.8cqh);
+  }
+  to {
+    transform: translateY(0.8cqh);
+  }
+}
+@keyframes sky-flap {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(-0.5);
+  }
+}
+/* Two beats, then a glide: the rhythm of big soaring birds. */
+@keyframes sky-flap-glide {
+  0%,
+  30%,
+  60%,
+  100% {
+    transform: scaleY(1);
+  }
+  15%,
+  45% {
+    transform: scaleY(-0.45);
+  }
+}
+@keyframes sky-sway {
+  from {
+    rotate: calc(var(--sway, 4deg) * -1);
+  }
+  to {
+    rotate: var(--sway, 4deg);
+  }
+}
+@keyframes sky-flutter {
+  from {
+    rotate: -8deg;
+  }
+  to {
+    rotate: 6deg;
+  }
+}
+@keyframes sky-blink {
+  0%,
+  20%,
+  100% {
+    opacity: 0.15;
+  }
+  6%,
+  14% {
+    opacity: 1;
+  }
+}
+@keyframes sky-strobe {
+  0%,
+  7%,
+  15%,
+  100% {
+    opacity: 0;
+  }
+  3%,
+  11% {
+    opacity: 1;
+  }
+}
+/* A satellite catches the sun once on its way across. */
+@keyframes sky-satellite {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  8%,
+  44%,
+  56%,
+  92% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.9);
+  }
+}
+@keyframes sky-meteor {
+  0% {
+    opacity: 0;
+    transform: translateX(0) scaleX(0.1);
+  }
+  15%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(var(--d)) scaleX(1);
+  }
+}
+/* Darts in, hovers over the house for a look, and is gone. */
+@keyframes sky-ufo {
+  0% {
+    transform: translate(-14cqw, calc(var(--hy) - 8cqh)) scale(0.6);
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  14%,
+  80% {
+    transform: translate(var(--hx), var(--hy)) scale(1);
+    animation-timing-function: cubic-bezier(0.7, 0, 0.84, 0);
+  }
+  100% {
+    transform: translate(118cqw, -24cqh) scale(0.35);
+  }
+}
+@keyframes sky-beam {
+  0%,
+  26%,
+  76%,
+  100% {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  38%,
+  66% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+/* Rises from behind the hill between the house and the text, hangs there, and is reeled back in. */
+@keyframes sky-kite {
+  0% {
+    transform: translate(57cqw, 106cqh);
+    animation-timing-function: cubic-bezier(0.22, 0.8, 0.36, 1);
+  }
+  24% {
+    transform: translate(50cqw, 38cqh);
+    animation-timing-function: ease-in-out;
+  }
+  42% {
+    transform: translate(47.5cqw, 43cqh);
+    animation-timing-function: ease-in-out;
+  }
+  60% {
+    transform: translate(50.5cqw, 36cqh);
+    animation-timing-function: ease-in-out;
+  }
+  76% {
+    transform: translate(48.5cqw, 41cqh);
+    animation-timing-function: cubic-bezier(0.55, 0, 0.75, 0.4);
+  }
+  100% {
+    transform: translate(56cqw, 106cqh);
+  }
+}
+/* Glides in over the roof and lands behind the hill. */
+@keyframes sky-paraglider {
+  0% {
+    transform: translate(-12cqw, 2cqh);
+  }
+  20% {
+    transform: translate(10.4cqw, 3.7cqh);
+  }
+  40% {
+    transform: translate(27.8cqw, 12.3cqh);
+  }
+  60% {
+    transform: translate(40.9cqw, 29.5cqh);
+  }
+  80% {
+    transform: translate(50.4cqw, 56.9cqh);
+  }
+  100% {
+    transform: translate(57cqw, 96cqh);
+  }
+}
+/* Rises from behind the far hills, drifts under the text and climbs out between the house and the text. */
+@keyframes sky-balloon {
+  0% {
+    transform: translate(74.3cqw, 92.8cqh);
+  }
+  10.3% {
+    transform: translate(67.9cqw, 84.3cqh);
+  }
+  19.9% {
+    transform: translate(61.5cqw, 77.8cqh);
+  }
+  29.4% {
+    transform: translate(55.4cqw, 70.5cqh);
+  }
+  39.7% {
+    transform: translate(50.2cqw, 59.6cqh);
+  }
+  53.2% {
+    transform: translate(46.4cqw, 42.4cqh);
+  }
+  72.3% {
+    transform: translate(44.5cqw, 16.2cqh);
+  }
+  100% {
+    transform: translate(45cqw, -22cqh);
+  }
 }
