@@ -1,0 +1,135 @@
+{
+  "meta": {
+    "title": "Homie",
+    "description": "Run your shared home: shopping, tasks, events and what's happening today."
+  },
+  "nav": {
+    "today": "Today",
+    "calendar": "Calendar",
+    "shopping": "Shopping",
+    "tasks": "Tasks",
+    "settings": "Settings",
+    "main": "Main navigation"
+  },
+  "today": {
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening",
+      "night": "Good night"
+    },
+    "summary": {
+      "none": "No open tasks today",
+      "one": "1 open task today",
+      "many": "{count} open tasks today"
+    },
+    "household": "Household",
+    "pickDay": "Pick a day",
+    "backToToday": "Today",
+    "previousWeek": "Previous week",
+    "nextWeek": "Next week",
+    "overdue": "Overdue",
+    "projected": "Upcoming",
+    "recurrence": {
+      "daily": "Every day",
+      "weekly": "Every week"
+    },
+    "assignedTo": "Assigned to {name}",
+    "markDone": "Mark \"{title}\" as done",
+    "markUndone": "Mark \"{title}\" as not done",
+    "noTasksForDay": "Nothing on this day",
+    "noTasksForDayHint": "A free day. Enjoy it.",
+    "shopping": "Shopping",
+    "shoppingEmpty": "The list is empty",
+    "shoppingOne": "1 item to buy",
+    "shoppingLeft": "{count} items to buy",
+    "openList": "Open shopping list",
+    "quickAdd": "Quick add"
+  },
+  "events": {
+    "title": "Events",
+    "allDay": "All day",
+    "prep": "To prepare"
+  },
+  "calendar": {
+    "title": "Calendar",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "noEvents": "No events on this day",
+    "noEventsHint": "Tap + to add an event.",
+    "prepare": "Get ready",
+    "prepareHint": "Events in the next two weeks that need something done beforehand."
+  },
+  "add": {
+    "open": "Add",
+    "cancel": "Cancel",
+    "submit": "Add",
+    "kinds": {
+      "task": "Task",
+      "shopping": "Shopping",
+      "event": "Event"
+    },
+    "titles": {
+      "task": "New task",
+      "shopping": "New item",
+      "event": "New event"
+    },
+    "taskTitle": "What needs doing?",
+    "assignee": "Assigned to",
+    "date": "Date",
+    "repeat": "Repeat",
+    "repeatNone": "Never",
+    "itemName": "What to buy?",
+    "itemNote": "Quantity or note",
+    "eventTitle": "Event name",
+    "allDay": "All day",
+    "time": "Time",
+    "prep": "What to prepare",
+    "prepPlaceholder": "Gift, cake, documents…"
+  },
+  "shopping": {
+    "title": "Shopping",
+    "empty": "The list is empty",
+    "emptyHint": "Items you add show up here for both of you.",
+    "bought": "Bought",
+    "clearBought": "Clear",
+    "mark": "Mark \"{name}\" as bought",
+    "unmark": "Mark \"{name}\" as not bought",
+    "addedBy": "Added by {name}"
+  },
+  "tasks": {
+    "title": "Tasks",
+    "mine": "Mine",
+    "all": "All",
+    "today": "Today",
+    "upcoming": "Upcoming",
+    "noDate": "No date",
+    "earlier": "Earlier",
+    "showDone": "Show completed",
+    "hideDone": "Hide completed",
+    "empty": "No tasks",
+    "emptyHint": "Tasks you add will show up here."
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "appearance": "Appearance",
+    "themes": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "Automatic"
+    },
+    "languageNames": {
+      "he": "עברית",
+      "en": "English"
+    }
+  },
+  "connection": {
+    "offline": "You're offline. Your changes will be saved when the connection is back.",
+    "online": "Back online"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "back": "Back to Today"
+  }
+}

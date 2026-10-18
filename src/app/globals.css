@@ -1,0 +1,153 @@
+@import "tailwindcss";
+
+/* Appearance is chosen in Settings and stored by src/lib/theme.ts; light is the default. */
+:root {
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+:root[data-theme="system"] {
+  color-scheme: light dark;
+}
+
+/* Every token resolves through light-dark(), so it follows the color-scheme above. */
+:root {
+  /* Apple system colors (iOS, light / dark). */
+  --red: light-dark(#ff3b30, #ff453a);
+  --orange: light-dark(#ff9500, #ff9f0a);
+  --yellow: light-dark(#ffcc00, #ffd60a);
+  --green: light-dark(#34c759, #30d158);
+  --mint: light-dark(#00c7be, #63e6e2);
+  --teal: light-dark(#30b0c7, #40c8e0);
+  --cyan: light-dark(#32ade6, #64d2ff);
+  --blue: light-dark(#007aff, #0a84ff);
+  --indigo: light-dark(#5856d6, #5e5ce6);
+  --purple: light-dark(#af52de, #bf5af2);
+  --pink: light-dark(#ff2d55, #ff375f);
+  --brown: light-dark(#a2845e, #ac8e68);
+
+  --bg: light-dark(#f2f2f7, #000000);
+  --surface: light-dark(#ffffff, #1c1c1e);
+  --surface-raised: light-dark(#ffffff, #2c2c2e);
+  --fill: light-dark(rgb(120 120 128 / 0.12), rgb(120 120 128 / 0.24));
+  --label: light-dark(#000000, #ffffff);
+  --label-secondary: light-dark(rgb(60 60 67 / 0.6), rgb(235 235 245 / 0.6));
+  --label-tertiary: light-dark(rgb(60 60 67 / 0.3), rgb(235 235 245 / 0.3));
+  --separator: light-dark(rgb(60 60 67 / 0.18), rgb(84 84 88 / 0.6));
+  --hairline: light-dark(transparent, rgb(255 255 255 / 0.1));
+  --segment-thumb: light-dark(#ffffff, #636366);
+  --accent: var(--blue);
+  --accent-contrast: #ffffff;
+  --success: var(--green);
+  --warning: var(--orange);
+  --danger: var(--red);
+  --material: light-dark(rgb(249 249 249 / 0.78), rgb(30 30 30 / 0.72));
+  --shadow-card:
+    0 1px 2px light-dark(rgb(0 0 0 / 0.04), transparent), 0 8px 24px light-dark(rgb(0 0 0 / 0.04), transparent);
+}
+
+@theme inline {
+  --color-red: var(--red);
+  --color-orange: var(--orange);
+  --color-yellow: var(--yellow);
+  --color-green: var(--green);
+  --color-mint: var(--mint);
+  --color-teal: var(--teal);
+  --color-cyan: var(--cyan);
+  --color-blue: var(--blue);
+  --color-indigo: var(--indigo);
+  --color-purple: var(--purple);
+  --color-pink: var(--pink);
+  --color-brown: var(--brown);
+  --color-hairline: var(--hairline);
+  --color-segment-thumb: var(--segment-thumb);
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-fill: var(--fill);
+  --color-label: var(--label);
+  --color-label-secondary: var(--label-secondary);
+  --color-label-tertiary: var(--label-tertiary);
+  --color-separator: var(--separator);
+  --color-accent: var(--accent);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-material: var(--material);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-heebo), system-ui, sans-serif;
+
+  --radius-card: 1.375rem;
+  --shadow-card: var(--shadow-card);
+
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@custom-variant hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @slot;
+    }
+  }
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+@utility material {
+  background-color: var(--material);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+input,
+textarea,
+select {
+  font-size: max(16px, 1em);
+}
+
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --material: var(--surface);
+  }
+  .material {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--label);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

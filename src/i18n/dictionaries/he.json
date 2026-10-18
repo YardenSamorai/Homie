@@ -1,0 +1,135 @@
+{
+  "meta": {
+    "title": "Homie",
+    "description": "ניהול הבית המשותף: קניות, משימות, אירועים ומה שקורה היום."
+  },
+  "nav": {
+    "today": "היום",
+    "calendar": "יומן",
+    "shopping": "קניות",
+    "tasks": "משימות",
+    "settings": "הגדרות",
+    "main": "ניווט ראשי"
+  },
+  "today": {
+    "greeting": {
+      "morning": "בוקר טוב",
+      "afternoon": "צהריים טובים",
+      "evening": "ערב טוב",
+      "night": "לילה טוב"
+    },
+    "summary": {
+      "none": "אין משימות פתוחות היום",
+      "one": "משימה אחת פתוחה היום",
+      "many": "{count} משימות פתוחות היום"
+    },
+    "household": "בני הבית",
+    "pickDay": "בחירת יום",
+    "backToToday": "היום",
+    "previousWeek": "השבוע הקודם",
+    "nextWeek": "השבוע הבא",
+    "overdue": "באיחור",
+    "projected": "צפוי",
+    "recurrence": {
+      "daily": "כל יום",
+      "weekly": "כל שבוע"
+    },
+    "assignedTo": "באחריות {name}",
+    "markDone": "סימון \"{title}\" כבוצעה",
+    "markUndone": "ביטול הסימון של \"{title}\"",
+    "noTasksForDay": "אין משימות ביום הזה",
+    "noTasksForDayHint": "יום פנוי. אפשר לנשום.",
+    "shopping": "קניות",
+    "shoppingEmpty": "הרשימה ריקה",
+    "shoppingOne": "פריט אחד לקנות",
+    "shoppingLeft": "{count} פריטים לקנות",
+    "openList": "לרשימת הקניות",
+    "quickAdd": "הוספה מהירה"
+  },
+  "events": {
+    "title": "אירועים",
+    "allDay": "כל היום",
+    "prep": "להכין"
+  },
+  "calendar": {
+    "title": "יומן",
+    "previousMonth": "החודש הקודם",
+    "nextMonth": "החודש הבא",
+    "noEvents": "אין אירועים ביום הזה",
+    "noEventsHint": "לחצו על + כדי להוסיף אירוע.",
+    "prepare": "להתכונן",
+    "prepareHint": "אירועים בשבועיים הקרובים שצריך להכין להם משהו מראש."
+  },
+  "add": {
+    "open": "הוספה",
+    "cancel": "ביטול",
+    "submit": "הוספה",
+    "kinds": {
+      "task": "משימה",
+      "shopping": "קניות",
+      "event": "אירוע"
+    },
+    "titles": {
+      "task": "משימה חדשה",
+      "shopping": "פריט חדש",
+      "event": "אירוע חדש"
+    },
+    "taskTitle": "מה צריך לעשות?",
+    "assignee": "באחריות",
+    "date": "תאריך",
+    "repeat": "חזרה",
+    "repeatNone": "ללא",
+    "itemName": "מה לקנות?",
+    "itemNote": "כמות או הערה",
+    "eventTitle": "שם האירוע",
+    "allDay": "כל היום",
+    "time": "שעה",
+    "prep": "מה צריך להכין",
+    "prepPlaceholder": "מתנה, עוגה, מסמכים…"
+  },
+  "shopping": {
+    "title": "קניות",
+    "empty": "הרשימה ריקה",
+    "emptyHint": "פריטים שתוסיפו יופיעו כאן אצל שניכם.",
+    "bought": "נקנו",
+    "clearBought": "ניקוי",
+    "mark": "סימון \"{name}\" כנקנה",
+    "unmark": "ביטול הסימון של \"{name}\"",
+    "addedBy": "נוסף על ידי {name}"
+  },
+  "tasks": {
+    "title": "משימות",
+    "mine": "שלי",
+    "all": "הכל",
+    "today": "היום",
+    "upcoming": "בהמשך",
+    "noDate": "ללא תאריך",
+    "earlier": "קודם",
+    "showDone": "הצגת משימות שבוצעו",
+    "hideDone": "הסתרת משימות שבוצעו",
+    "empty": "אין משימות",
+    "emptyHint": "משימות שתוסיפו יופיעו כאן."
+  },
+  "settings": {
+    "title": "הגדרות",
+    "language": "שפה",
+    "appearance": "מראה",
+    "themes": {
+      "light": "בהיר",
+      "dark": "כהה",
+      "system": "אוטומטי"
+    },
+    "languageNames": {
+      "he": "עברית",
+      "en": "English"
+    }
+  },
+  "connection": {
+    "offline": "אין חיבור לאינטרנט. השינויים שלך יישמרו כשהחיבור יחזור.",
+    "online": "מחובר שוב"
+  },
+  "notFound": {
+    "title": "הדף לא נמצא",
+    "back": "חזרה להיום"
+  }
+}
