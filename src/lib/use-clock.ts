@@ -14,7 +14,10 @@ const subscribe = (onChange: () => void) => {
 
 const snapshot = () => {
   const now = new Date();
-  return `${toDayKey(now)}|${now.getHours()}`;
+  // Development only: ?sky=HH:MM pins the greeting along with the sky.
+  const pinned =
+    process.env.NODE_ENV === "development" ? /^(\d{1,2}):\d{2}$/.exec(new URLSearchParams(location.search).get("sky") ?? "") : null;
+  return `${toDayKey(now)}|${pinned ? Number(pinned[1]) : now.getHours()}`;
 };
 
 /** Current day and hour, read only in the browser (null during server render and hydration). */

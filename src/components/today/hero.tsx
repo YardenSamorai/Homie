@@ -6,7 +6,7 @@ import { Settings } from "lucide-react";
 import { motion } from "motion/react";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
-import { fromDayKey, type DayKey } from "@/lib/dates";
+import type { DayKey } from "@/lib/dates";
 import { enter } from "@/lib/motion";
 import { periodFor } from "@/lib/period";
 import { SkyScene, type SkySceneHandle } from "./sky-scene";
@@ -44,10 +44,11 @@ export function Hero({
   };
 
   // overflow-clip rather than hidden: a scroll container would pin the aspect ratio and cut off large text instead of growing.
+  // Type scales with the card (cqw), and the column stops short of the house, which fills the other 45% of the painting.
   return (
     <section
       onClick={summon}
-      className="relative isolate aspect-[16/9] overflow-clip rounded-[28px] shadow-card ring-1 ring-hairline md:aspect-[21/9]"
+      className="@container relative isolate aspect-[16/9] overflow-clip rounded-[28px] shadow-card ring-1 ring-hairline md:aspect-[21/9]"
     >
       <SkyScene ref={scene} />
 
@@ -55,27 +56,30 @@ export function Hero({
         initial="hidden"
         animate={ready ? "shown" : "hidden"}
         transition={{ staggerChildren: 0.04 }}
-        className="relative flex w-[60%] flex-col py-5 ps-5 transition-colors duration-1000 [color:var(--scene-ink)] [text-shadow:var(--scene-text-shadow)] md:py-8 md:ps-8"
+        className="relative flex w-[54%] flex-col pb-4 ps-[clamp(16px,5.5cqw,32px)] pt-[clamp(16px,5.5cqw,32px)] transition-colors duration-1000 [color:var(--scene-ink)] [text-shadow:var(--scene-text-shadow)]"
       >
         <h1 className="flex flex-col">
-          <motion.span variants={rise} transition={enter()} className="text-[15px] font-semibold opacity-80 md:text-xl">
+          <motion.span
+            variants={rise}
+            transition={enter()}
+            className="text-[length:clamp(0.875rem,4.4cqw,1.25rem)] leading-snug opacity-85"
+          >
             {ready ? `${dict.today.greeting[periodFor(hour)]},` : "\u00a0"}
           </motion.span>
           <motion.span
             variants={rise}
             transition={enter()}
-            className="truncate text-[32px] font-bold leading-[1.15] tracking-tight md:text-5xl"
+            className="line-clamp-2 text-[length:clamp(1.75rem,9.4cqw,2.875rem)] font-semibold leading-[1.08] tracking-[-0.02em] [overflow-wrap:anywhere]"
           >
-            {name}
+            <bdi>{name}</bdi>
           </motion.span>
         </h1>
-        <motion.p variants={rise} transition={enter()} className="mt-1.5 text-[15px] font-medium opacity-90 md:text-[17px]">
+        <motion.p
+          variants={rise}
+          transition={enter()}
+          className="mt-[clamp(6px,2cqw,12px)] text-[length:clamp(0.8125rem,4.1cqw,1.0625rem)] leading-snug opacity-85"
+        >
           {ready ? summary : "\u00a0"}
-        </motion.p>
-        <motion.p variants={rise} transition={enter()} className="text-[13px] font-medium opacity-75 md:text-[15px]">
-          {ready
-            ? new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long" }).format(fromDayKey(today))
-            : "\u00a0"}
         </motion.p>
       </motion.div>
 
@@ -84,7 +88,7 @@ export function Hero({
         aria-label={dict.nav.settings}
         className="absolute end-3 top-3 flex size-9 items-center justify-center rounded-full ring-1 ring-white/25 backdrop-blur-md transition-[scale,color,background-color] duration-150 ease-out [background-color:var(--scene-glass)] [color:var(--scene-ink)] before:absolute before:-inset-1 active:scale-95 md:hidden"
       >
-        <Settings aria-hidden size={19} strokeWidth={2} />
+        <Settings aria-hidden size={18} strokeWidth={1.75} />
       </Link>
     </section>
   );
