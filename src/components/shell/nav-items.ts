@@ -5,7 +5,7 @@ export type NavItem = {
   key: "today" | "calendar" | "shopping" | "tasks" | "settings";
   path: string;
   icon: LucideIcon;
-  /** Shown in the phone tab bar; settings is reached from the Today screen instead. */
+  /** Shown in the phone tab bar. */
   inTabBar: boolean;
   /** What "+" creates by default on this screen. */
   addKind: AddKind;
@@ -13,10 +13,10 @@ export type NavItem = {
 
 export const navItems: NavItem[] = [
   { key: "today", path: "", icon: House, inTabBar: true, addKind: "task" },
-  { key: "calendar", path: "/calendar", icon: CalendarDays, inTabBar: true, addKind: "event" },
-  { key: "shopping", path: "/shopping", icon: ShoppingBasket, inTabBar: true, addKind: "shopping" },
   { key: "tasks", path: "/tasks", icon: ListChecks, inTabBar: true, addKind: "task" },
-  { key: "settings", path: "/settings", icon: Settings, inTabBar: false, addKind: "task" },
+  { key: "shopping", path: "/shopping", icon: ShoppingBasket, inTabBar: true, addKind: "shopping" },
+  { key: "calendar", path: "/calendar", icon: CalendarDays, inTabBar: true, addKind: "event" },
+  { key: "settings", path: "/settings", icon: Settings, inTabBar: true, addKind: "task" },
 ];
 
 export function isActive(pathname: string, locale: string, path: string) {

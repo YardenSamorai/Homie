@@ -21,7 +21,7 @@
   --red: light-dark(#ad4438, #e2735f);
   --orange: light-dark(#b8742e, #c2823a);
   --yellow: light-dark(#a9852a, #b38f2e);
-  --green: light-dark(#5b8a5f, #66a06d);
+  --green: light-dark(#527a67, #7eae98);
   --mint: light-dark(#4f9187, #59998f);
   --teal: light-dark(#4a8696, #5f9aa9);
   --cyan: light-dark(#4f8aad, #5f97bd);
@@ -33,30 +33,36 @@
   /* The roof tiles: marks today wherever a date is shown. */
   --terracotta: light-dark(#9e4d33, #e08a68);
 
-  --bg: light-dark(#f4f2ee, #0f1012);
-  --surface: light-dark(#fffefc, #1a1b1e);
-  --surface-raised: light-dark(#fffefc, #24252a);
-  --sheet: light-dark(#f4f2ee, #17181b);
-  --fill: light-dark(rgb(120 112 100 / 0.12), rgb(130 126 120 / 0.24));
-  --label: light-dark(#1c1b19, #f4f2ee);
-  /* Secondary text holds 4.5:1 on the background as well as on cards. */
-  --label-secondary: light-dark(rgb(62 58 52 / 0.74), rgb(236 232 224 / 0.6));
-  --label-tertiary: light-dark(rgb(62 58 52 / 0.34), rgb(236 232 224 / 0.3));
-  --separator: light-dark(rgb(62 58 52 / 0.14), rgb(236 232 224 / 0.14));
+  --sage: light-dark(#527a67, #8fbfab);
+  --sage-dark: light-dark(#254f41, #d7ebe3);
+  --sage-light: light-dark(#e5efe7, #24302b);
+  --coral: light-dark(#e8a27f, #e8a27f);
+  --peach: light-dark(#fbe7de, #3a2c26);
+  --lavender: light-dark(#eee8f8, #2c2836);
+
+  --bg: light-dark(#f8f7f2, #121614);
+  --surface: light-dark(#ffffff, #1c2420);
+  --surface-raised: light-dark(#ffffff, #24302b);
+  --sheet: light-dark(#f8f7f2, #161c19);
+  --fill: light-dark(#e5efe7, rgb(143 191 171 / 0.18));
+  --label: light-dark(#1f2d28, #f3f6f4);
+  /* Secondary text holds 4.5:1 on the cream background and on white cards. */
+  --label-secondary: light-dark(#6c7a73, #a8b5ae);
+  --label-tertiary: light-dark(rgb(108 122 115 / 0.55), rgb(168 181 174 / 0.45));
+  --separator: light-dark(#e8ebe6, rgb(255 255 255 / 0.1));
   --hairline: light-dark(transparent, rgb(255 255 255 / 0.08));
-  --segment-thumb: light-dark(#fffefc, #3a3b40);
-  --accent: var(--blue);
-  --accent-contrast: light-dark(#ffffff, #0f1a2a);
-  --today: var(--terracotta);
-  --today-contrast: light-dark(#ffffff, #1f120b);
+  --segment-thumb: light-dark(#ffffff, #314038);
+  --accent: var(--sage);
+  --accent-contrast: light-dark(#ffffff, #10211a);
+  --today: var(--sage);
+  --today-contrast: light-dark(#ffffff, #10211a);
   --success: var(--green);
   --warning: var(--orange);
   --danger: var(--red);
   --material: light-dark(rgb(250 249 246 / 0.78), rgb(28 29 32 / 0.72));
   --shadow-card:
-    0 1px 2px light-dark(rgb(40 30 20 / 0.04), transparent),
-    0 8px 24px light-dark(rgb(40 30 20 / 0.05), transparent),
-    inset 0 1px 0 light-dark(rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.06));
+    0 1px 2px light-dark(rgb(37 79 65 / 0.04), transparent),
+    0 10px 28px light-dark(rgb(37 79 65 / 0.06), transparent);
 }
 
 /*
@@ -117,6 +123,12 @@
   --color-pink: var(--pink);
   --color-brown: var(--brown);
   --color-terracotta: var(--terracotta);
+  --color-sage: var(--sage);
+  --color-sage-dark: var(--sage-dark);
+  --color-sage-light: var(--sage-light);
+  --color-coral: var(--coral);
+  --color-peach: var(--peach);
+  --color-lavender: var(--lavender);
   --color-hairline: var(--hairline);
   --color-segment-thumb: var(--segment-thumb);
 
@@ -140,10 +152,11 @@
 
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-heebo), system-ui, sans-serif;
 
-  --radius-card: 1.375rem;
+  --radius-card: 1.5rem;
   --shadow-card: var(--shadow-card);
 
   --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
@@ -201,6 +214,31 @@ html {
   overscroll-behavior: none;
 }
 
+/*
+ * Invite / onboarding half-sheet. Rare first-time motion, so 500ms is the Apple drawer settle
+ * (same curve as AddSheet), not a daily UI animation. Reduced motion keeps the fade.
+ */
+.onboard-sheet {
+  transform: translateY(0);
+  transition: transform 500ms var(--ease-drawer);
+}
+@starting-style {
+  .onboard-sheet {
+    transform: translateY(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .onboard-sheet {
+    transition: opacity 200ms var(--ease-out-strong);
+  }
+  @starting-style {
+    .onboard-sheet {
+      opacity: 0;
+      transform: none;
+    }
+  }
+}
+
 input,
 textarea,
 select {
@@ -245,8 +283,9 @@ body {
  * with the house on the left and mirrored as a whole in LTR, so left/right here are deliberate.
  * Lengths are container units: of the hero inside .sky, of the 16:9 painting inside .sky-frame.
  */
-@layer components {
-  .sky {
+/* Unlayered on purpose: Tailwind v4 emits an empty `@layer components` and drops these rules if they
+   live there, which left the hero as a blank card with only the greeting. */
+.sky {
     container-type: size;
   }
   .sky[data-paused] *,
@@ -532,10 +571,9 @@ body {
     animation-timing-function: linear;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .sky-cloud {
-      animation-play-state: paused;
-    }
+@media (prefers-reduced-motion: reduce) {
+  .sky-cloud {
+    animation-play-state: paused;
   }
 }
 

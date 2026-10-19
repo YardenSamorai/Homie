@@ -44,35 +44,27 @@ export function HouseholdMembers({
   const { dict } = useI18n();
 
   return (
-    <section aria-labelledby="household-title" className="flex flex-col gap-2">
-      <h2 id="household-title" className="section-label px-1 text-label-secondary">
-        {dict.today.household}
-      </h2>
-      <ul className="grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] overflow-hidden rounded-card bg-surface shadow-card ring-1 ring-[light-dark(rgb(40_30_20/0.04),rgb(255_255_255/0.06))]">
-        {members.map((member, index) => {
+    <section aria-label={dict.today.household}>
+      <ul className="flex justify-center gap-6 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {members.map((member) => {
           const load = today ? loadForMember(tasks, member.id, today) : null;
           const caption = load ? captionFor(load, dict.today) : null;
           const ringColor = load && load.open === 0 ? "var(--green)" : member.color;
           return (
-            <li
-              key={member.id}
-              className={`flex items-center gap-3 px-4 py-3.5 ${
-                members.length > 1 && index === 0 ? "border-e border-separator" : ""
-              }`}
-            >
+            <li key={member.id} className="flex w-[4.75rem] shrink-0 flex-col items-center gap-1.5">
               {load ? (
-                <ProgressRing value={load.progress} size={48} stroke={2.75} color={ringColor}>
-                  <Avatar member={member} size={38} />
+                <ProgressRing value={load.progress} size={52} stroke={2.5} color={ringColor}>
+                  <Avatar member={member} size={40} />
                 </ProgressRing>
               ) : (
                 <Avatar member={member} size={44} />
               )}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[17px] font-medium leading-tight">
+              <div className="min-w-0 max-w-full text-center">
+                <p className="truncate text-[13px] font-medium leading-tight">
                   <bdi>{member.name}</bdi>
                 </p>
                 {caption && (
-                  <p className={`mt-0.5 truncate text-[13px] ${caption.tone}`}>{caption.text}</p>
+                  <p className={`truncate text-[12px] leading-snug ${caption.tone}`}>{caption.text}</p>
                 )}
               </div>
             </li>

@@ -77,10 +77,8 @@ function ItemList({ items }: { items: ShoppingItem[] }) {
 
 export function ShoppingView() {
   const { dict } = useI18n();
-  const { seeded, shopping, addShoppingItem, clearBought } = useHousehold();
+  const { shopping, addShoppingItem, clearBought } = useHousehold();
   const [name, setName] = useState("");
-
-  if (!seeded) return <div aria-hidden className="h-64" />;
 
   const toBuy = shopping.filter((item) => !item.checkedAt);
   const bought = shopping.filter((item) => item.checkedAt);

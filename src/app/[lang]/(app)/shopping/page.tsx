@@ -13,7 +13,7 @@ export default async function ShoppingPage() {
 
   return (
     <>
-      <PageHeader title={dict.shopping.title} meta={<ShoppingMeta />} />
+      <PageHeader title={dict.shopping.title} subtitle={dict.shopping.lead} meta={<ShoppingMeta />} />
       <ShoppingView />
     </>
   );

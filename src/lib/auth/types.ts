@@ -1,0 +1,18 @@
+export type InviteStatus = "ok" | "expired" | "revoked" | "used" | "full" | "missing";
+
+export type InvitePreview = {
+  status: InviteStatus;
+  token: string;
+  householdName: string | null;
+  inviterName: string | null;
+  expiresAt: string | null;
+};
+
+export type AuthSession = {
+  userId: string;
+  email: string;
+  displayName: string | null;
+  householdId: string | null;
+  householdName: string | null;
+  role: "admin" | "member" | null;
+};

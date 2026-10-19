@@ -17,11 +17,20 @@ export function TabBar() {
   const selectedDay = useSelectedDay((s) => s.day);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(env(safe-area-inset-bottom),12px)] md:hidden">
-      <div className="mx-auto flex max-w-lg items-center gap-2.5">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),10px)] md:hidden">
+      <div className="relative mx-auto max-w-lg">
+        <button
+          type="button"
+          onClick={() => show(addKindFor(pathname, locale), selectedDay)}
+          aria-label={dict.add.open}
+          aria-haspopup="dialog"
+          className="pointer-events-auto absolute inset-x-0 top-0 z-10 mx-auto flex size-12 -translate-y-1/2 items-center justify-center rounded-full bg-coral text-white shadow-[0_8px_20px_rgb(232_162_127/0.45)] transition-[scale] duration-150 ease-out active:scale-95"
+        >
+          <Plus aria-hidden size={24} strokeWidth={2.5} />
+        </button>
         <nav
           aria-label={dict.nav.main}
-          className="material pointer-events-auto flex-1 rounded-full p-1 shadow-[0_8px_30px_rgb(40_30_20/0.1),0_1px_2px_rgb(40_30_20/0.06)] ring-1 ring-[light-dark(rgb(40_30_20/0.05),rgb(255_255_255/0.1))]"
+          className="pointer-events-auto rounded-[28px] bg-surface px-1 pb-1 pt-7 shadow-[0_10px_30px_rgb(37_79_65/0.1)]"
         >
           <ul className="flex">
             {navItems
@@ -33,15 +42,15 @@ export function TabBar() {
                     <Link
                       href={`/${locale}${path}`}
                       aria-current={active ? "page" : undefined}
-                      className={`relative flex h-14 flex-col items-center justify-center gap-0.5 rounded-full text-[10px] font-semibold transition-[color,scale] duration-150 ease-out active:scale-95 ${
-                        active ? "text-accent" : "text-label"
+                      className={`relative flex h-12 flex-col items-center justify-center gap-0.5 rounded-2xl text-[10px] font-semibold transition-[color,scale] duration-150 ease-out active:scale-95 ${
+                        active ? "text-accent" : "text-label-secondary"
                       }`}
                     >
                       {active && (
                         <motion.span
                           layoutId="tab-bar-active"
                           transition={spring.snappy}
-                          className="absolute inset-0 rounded-full bg-[light-dark(rgb(40_30_20/0.06),rgb(255_255_255/0.12))]"
+                          className="absolute inset-0 rounded-2xl bg-sage-light"
                         />
                       )}
                       <motion.span
@@ -51,25 +60,15 @@ export function TabBar() {
                         transition={spring.pop}
                         className="relative"
                       >
-                        <Icon aria-hidden size={23} strokeWidth={active ? 2.25 : 1.85} />
+                        <Icon aria-hidden size={20} strokeWidth={active ? 2.25 : 1.85} />
                       </motion.span>
-                      <span className="relative">{dict.nav[key]}</span>
+                      <span className="relative max-w-full truncate px-0.5">{dict.nav[key]}</span>
                     </Link>
                   </li>
                 );
               })}
           </ul>
         </nav>
-
-        <button
-          type="button"
-          onClick={() => show(addKindFor(pathname, locale), selectedDay)}
-          aria-label={dict.add.open}
-          aria-haspopup="dialog"
-          className="pointer-events-auto flex size-16 shrink-0 items-center justify-center rounded-full bg-accent text-accent-contrast shadow-[0_8px_24px_color-mix(in_oklab,var(--accent)_32%,transparent),0_1px_2px_rgb(40_30_20/0.1),inset_0_1px_0_rgb(255_255_255/0.28)] transition-[scale] duration-150 ease-out active:scale-95"
-        >
-          <Plus aria-hidden size={28} strokeWidth={2.5} />
-        </button>
       </div>
     </div>
   );

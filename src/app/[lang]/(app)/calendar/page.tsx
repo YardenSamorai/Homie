@@ -13,7 +13,7 @@ export default async function CalendarPage() {
 
   return (
     <>
-      <PageHeader title={dict.calendar.title} meta={<CalendarMeta />} />
+      <PageHeader title={dict.calendar.title} subtitle={dict.calendar.lead} meta={<CalendarMeta />} />
       <CalendarView />
     </>
   );

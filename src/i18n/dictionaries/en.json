@@ -8,7 +8,7 @@
     "calendar": "Calendar",
     "shopping": "Shopping",
     "tasks": "Tasks",
-    "settings": "Settings",
+    "settings": "Home",
     "main": "Main navigation"
   },
   "today": {
@@ -54,7 +54,25 @@
     "shoppingOne": "1 item to buy",
     "shoppingLeft": "{count} items to buy",
     "openList": "Open shopping list",
-    "quickAdd": "Quick add"
+    "quickAdd": "Quick add",
+    "quickAddHint": "What needs adding?",
+    "waitingNone": "Nothing waiting for you",
+    "waitingOne": "1 task waiting for you",
+    "waitingMany": "{count} tasks waiting for you",
+    "waitingOverdueOne": "One of them is already late",
+    "waitingOverdue": "{count} of them are already late",
+    "tileToday": "Due today",
+    "tileShopLeft": "Left to buy",
+    "tileOverdueOne": "1 overdue",
+    "tileOverdue": "{count} overdue",
+    "tileEventsClear": "Nothing on today",
+    "tilePrepSoon": "In the next two weeks",
+    "tilePrepClear": "Nothing to prepare",
+    "houseTitle": "Our home today",
+    "houseCalm": "A calm day starts with a tidy home",
+    "atHome": "Around the house",
+    "nextEvent": "Next event",
+    "noNextEvent": "Nothing coming up"
   },
   "events": {
     "title": "Events",
@@ -63,6 +81,7 @@
   },
   "calendar": {
     "title": "Calendar",
+    "lead": "What's waiting in the days ahead",
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
     "noEvents": "No events on this day",
@@ -102,6 +121,7 @@
   },
   "shopping": {
     "title": "Shopping",
+    "lead": "Everything the house needs, in one place",
     "empty": "The list is empty",
     "emptyHint": "Items you add show up here for both of you.",
     "bought": "Bought",
@@ -116,6 +136,7 @@
   },
   "tasks": {
     "title": "Tasks",
+    "lead": "Let's put the house in order",
     "mine": "Mine",
     "all": "All",
     "today": "Today",
@@ -134,9 +155,80 @@
     "metaOpenOne": "1 open",
     "metaOpen": "{count} open"
   },
+  "auth": {
+    "loginTitle": "Welcome back",
+    "loginLead": "Your email, then a code. No password.",
+    "registerTitle": "Welcome home",
+    "registerLead": "A personal account for two parents. No password — just email.",
+    "email": "Email",
+    "emailPlaceholder": "name@example.com",
+    "continue": "Continue",
+    "codeTitle": "Check your email",
+    "codeLead": "We sent a 6-digit code to {email}",
+    "changeEmail": "Fix the email",
+    "resend": "Send a new code",
+    "resendIn": "You can resend in {seconds}s",
+    "verify": "Verify",
+    "demoHint": "Until Supabase is connected, the code is 123456.",
+    "hasAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "noAccount": "New here?",
+    "createAccount": "Create an account",
+    "nameTitle": "What should we call you?",
+    "nameLead": "This name shows up for the household, on tasks and shopping.",
+    "displayName": "Display name",
+    "saveName": "Save",
+    "setupTitle": "Your home",
+    "setupLead": "One household, two parents. Create it now, or join with an invite link.",
+    "createHome": "Create a household",
+    "homeName": "Household name",
+    "homeNamePlaceholder": "e.g. Yarden and Yana’s home",
+    "askInvite": "I have an invite link",
+    "askInviteHint": "Ask your partner for a link and open it from the message.",
+    "inviteTitle": "Invite your partner",
+    "inviteLead": "Send this link to the other parent. It expires in seven days.",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "skip": "Maybe later",
+    "newLink": "New link",
+    "newLinkHint": "A new link cancels the previous one.",
+    "skyCaption": "One home, two parents",
+    "youreInvited": "You’re invited home",
+    "emptySeat": "Open seat",
+    "twoParents": "Two parents",
+    "linkReady": "The link is ready to send",
+    "joinTitle": "Join {name}",
+    "joinLead": "{inviter} is inviting you to the shared home.",
+    "join": "Join household",
+    "joinSignIn": "Sign in to join",
+    "alreadyHome": "You’re already in a household",
+    "alreadyHomeHint": "Leave your current household before joining a new one. This invite isn’t used up.",
+    "invalidTitle": "This invite isn’t valid",
+    "inviteExpired": "This invite has expired. Ask for a new link.",
+    "inviteRevoked": "This invite was cancelled.",
+    "inviteUsed": "This invite has already been used.",
+    "inviteFull": "This household is full. V1 has room for two parents.",
+    "inviteMissing": "We couldn’t find that invite.",
+    "staleInvite": "This invite is no longer valid. You can create a household instead.",
+    "goHome": "Go home",
+    "createInstead": "Create a household",
+    "errors": {
+      "email": "That email doesn’t look right",
+      "code": "That code is incorrect",
+      "expired": "The code expired. Send a new one.",
+      "tooMany": "Too many tries. Wait {seconds}s and try again.",
+      "send": "We couldn’t send the email. Try again.",
+      "offline": "You’re offline. This needs an internet connection.",
+      "generic": "Something went wrong. Try again.",
+      "name": "Add a name the household will see."
+    }
+  },
   "settings": {
-    "title": "Settings",
+    "title": "Our home",
+    "lead": "The place you share",
     "household": "Household",
+    "invite": "Invite to the household",
+    "inviteHint": "A one-time link for the other parent, valid for seven days.",
     "language": "Language",
     "appearance": "Appearance",
     "themes": {
@@ -152,6 +244,33 @@
   "connection": {
     "offline": "You're offline. Your changes will be saved when the connection is back.",
     "online": "Back online"
+  },
+  "guides": {
+    "next": "Next",
+    "back": "Back",
+    "done": "Done",
+    "skip": "Skip",
+    "replay": "Show the guides again",
+    "today": {
+      "title": "This is where the day starts",
+      "body": "The greeting, the week, and the illustrated home show what's waiting. Pick a day to see its tasks and events."
+    },
+    "tasks": {
+      "title": "Everything in one place",
+      "body": "The household's tasks live here. Check one off when it's done, or add a new one with the plus button."
+    },
+    "shopping": {
+      "title": "One list for both of you",
+      "body": "Write what to buy, check off what's in the basket, and clear the bought items when you're home."
+    },
+    "calendar": {
+      "title": "The household calendar",
+      "body": "Pick a date to see that day, and add an event with anything you need to prepare."
+    },
+    "settings": {
+      "title": "Your home",
+      "body": "See who's here, invite the other parent, and change the language and appearance."
+    }
   },
   "notFound": {
     "title": "Page not found",

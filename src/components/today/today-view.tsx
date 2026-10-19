@@ -1,23 +1,28 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { addDays, dayRange, type DayKey } from "@/lib/dates";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { addDays, fromDayKey, dayRange, type DayKey } from "@/lib/dates";
 import { useHousehold, useSelectedDay } from "@/lib/household-store";
+import { periodFor } from "@/lib/period";
 import { isProjectedOn, type Task } from "@/lib/tasks";
 import { useClock } from "@/lib/use-clock";
+import { useI18n } from "@/i18n/dictionary-provider";
+import { Avatar } from "@/components/ui/avatar";
+import { DomainTiles } from "./briefing";
 import { DateStrip } from "./date-strip";
 import { DayTasks } from "./day-tasks";
-import { Hero } from "./hero";
+import { HouseCard } from "./house-card";
 import { HouseholdMembers } from "./household-members";
 
 const DAYS_BACK = 30;
 const DAYS_AHEAD = 90;
 
-/** `children` render below the day's tasks, and only once they have: anything there earlier would jump down. */
-export function TodayView({ children }: { children?: ReactNode }) {
+export function TodayView() {
+  const { locale, dict } = useI18n();
   const clock = useClock();
   const today = clock?.today ?? null;
-  const { seeded, members, tasks, events, toggleTask } = useHousehold();
+  const { members, tasks, events, toggleTask } = useHousehold();
   const setSharedDay = useSelectedDay((s) => s.setDay);
   const currentUser = members[0];
 
@@ -47,35 +52,59 @@ export function TodayView({ children }: { children?: ReactNode }) {
   const openToday = today ? tasks.filter((t) => !t.completedAt && t.dueDate && t.dueDate <= today).length : 0;
 
   const select = (day: DayKey) => setSelection((s) => ({ day, previous: s.day ?? today }));
+  const greeting = clock && clock.hour != null ? dict.today.greeting[periodFor(clock.hour)] : "";
+  const dateLine = selected
+    ? new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long" }).format(fromDayKey(selected))
+    : "";
 
   return (
-    <div className="flex flex-col gap-8">
-      <Hero name={currentUser.name} today={today} hour={clock?.hour ?? null} openCount={openToday} />
-      <HouseholdMembers members={members} tasks={tasks} today={today} />
-      {today && selected && seeded ? (
-        <>
-          <DateStrip
-            from={days[0]}
-            to={days[days.length - 1]}
-            today={today}
-            selected={selected}
-            markers={markers}
-            onSelect={select}
-          />
-          <DayTasks
-            day={selected}
-            previousDay={selection.previous ?? selected}
-            today={today}
-            tasks={tasks}
-            events={events}
-            members={members}
-            onToggle={(task) => toggleTask(task, today)}
-          />
-          {children}
-        </>
+    <div className="flex flex-col gap-5 pt-4 md:pt-8">
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-[32px] font-bold leading-[1.1] tracking-tight">
+            <bdi>{currentUser ? `${greeting}, ${currentUser.name}` : greeting || "\u00a0"}</bdi>
+          </h1>
+          <p className="mt-1 text-[15px] capitalize text-label-secondary">{dateLine || "\u00a0"}</p>
+        </div>
+        <Link href={`/${locale}/settings`} aria-label={dict.nav.settings} className="mt-1 shrink-0">
+          {currentUser ? (
+            <Avatar member={currentUser} size={44} />
+          ) : (
+            <span className="block size-11 rounded-full bg-sage-light" />
+          )}
+        </Link>
+      </header>
+      {members.length > 1 && <HouseholdMembers members={members} tasks={tasks} today={today} />}
+      {today && selected ? (
+        <DateStrip
+          compact
+          from={days[0]}
+          to={days[days.length - 1]}
+          today={today}
+          selected={selected}
+          markers={markers}
+          onSelect={select}
+        />
       ) : (
-        <div aria-hidden className="h-[164px]" />
+        <div aria-hidden className="h-16" />
       )}
+      <HouseCard openCount={openToday} day={selected} />
+      {today && <DomainTiles today={today} />}
+      {today && selected ? (
+          <>
+            <DayTasks
+              day={selected}
+              previousDay={selection.previous ?? selected}
+              today={today}
+              tasks={tasks}
+              events={events}
+              members={members}
+              onToggle={(task) => toggleTask(task, today)}
+            />
+          </>
+        ) : (
+          <div aria-hidden className="h-[164px]" />
+        )}
     </div>
   );
 }

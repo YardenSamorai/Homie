@@ -16,6 +16,7 @@ export function DateStrip({
   selected,
   markers,
   onSelect,
+  compact = false,
 }: {
   from: DayKey;
   to: DayKey;
@@ -24,6 +25,8 @@ export function DateStrip({
   /** Colors of the members who have something on each day. */
   markers: Map<DayKey, string[]>;
   onSelect: (day: DayKey) => void;
+  /** Flat week under a page greeting, without the month heading. */
+  compact?: boolean;
 }) {
   const { locale, dict } = useI18n();
   const rtl = localeDirection[locale] === "rtl";
@@ -93,8 +96,18 @@ export function DateStrip({
   };
 
   return (
-    <section aria-label={dict.today.pickDay} className="flex flex-col gap-3 rounded-card bg-surface px-2 pb-2 pt-3 shadow-card ring-1 ring-[light-dark(rgb(40_30_20/0.04),rgb(255_255_255/0.06))]">
-      <div className="flex min-h-10 items-center justify-between ps-3 pe-1">
+    <section
+      aria-label={dict.today.pickDay}
+      className={
+        compact
+          ? "flex flex-col gap-1"
+          : "flex flex-col gap-1.5 rounded-card bg-surface px-2 pb-1.5 pt-2 shadow-card"
+      }
+    >
+      <div className={`flex items-center justify-between ${compact ? "min-h-8 pe-1" : "min-h-10 ps-3 pe-1"}`}>
+        {compact ? (
+          <span className="ps-1 text-[13px] font-semibold text-label-secondary">{month}</span>
+        ) : (
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.h2
             key={`${month}-${year}`}
@@ -107,6 +120,7 @@ export function DateStrip({
             {month} <span className="font-normal text-label-secondary">{year}</span>
           </motion.h2>
         </AnimatePresence>
+        )}
 
         <div className="flex items-center">
           <AnimatePresence>
@@ -146,13 +160,13 @@ export function DateStrip({
         </div>
       </div>
 
-      <div aria-hidden className="grid grid-cols-7 text-center text-[11px] font-semibold text-label">
+      {!compact && <div aria-hidden className="grid grid-cols-7 text-center text-[11px] font-semibold text-label">
         {weeks[0].map((day) => (
           <span key={day} className={isWeekend(day, locale) ? "text-label-secondary" : undefined}>
             {weekdayFormat.format(fromDayKey(day))}
           </span>
         ))}
-      </div>
+      </div>}
 
       <div
         ref={scroller}
@@ -178,21 +192,25 @@ export function DateStrip({
                     aria-current={isToday ? "date" : undefined}
                     className="group flex min-h-12 w-full flex-col items-center gap-1 py-1"
                   >
+                    {compact && (
+                      <span className={`text-[11px] font-semibold ${isSelected ? "text-accent" : "text-label-secondary"}`}>
+                        {weekdayFormat.format(fromDayKey(day))}
+                      </span>
+                    )}
                     <span className="relative flex size-9 items-center justify-center transition-[scale] duration-100 ease-out group-active:scale-90">
                       {isSelected && (
                         <motion.span
                           layoutId={`week-${w}-selection`}
                           transition={spring.snappy}
-                          className={`absolute inset-0 rounded-full ${isToday ? "bg-today" : "bg-label"}`}
+                          className="absolute inset-0 rounded-full bg-accent"
                         />
                       )}
+                      {!isSelected && isToday && (
+                        <span className="absolute inset-0 rounded-full ring-2 ring-accent" />
+                      )}
                       <span
-                        className={`relative text-[19px] tabular-nums transition-colors duration-150 ${
-                          isSelected
-                            ? `font-semibold ${isToday ? "text-today-contrast" : "text-bg"}`
-                            : isToday
-                              ? "font-semibold text-today"
-                              : "text-label"
+                        className={`relative text-[17px] tabular-nums transition-colors duration-150 ${
+                          isSelected ? "font-semibold text-accent-contrast" : isToday ? "font-semibold text-accent" : "text-label"
                         }`}
                       >
                         {fromDayKey(day).getDate()}

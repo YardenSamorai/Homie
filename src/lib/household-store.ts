@@ -2,7 +2,6 @@
 
 import { create } from "zustand";
 import type { DayKey } from "./dates";
-import { demoCurrentUserId, demoEvents, demoMembers, demoShopping, demoTasks } from "./demo-household";
 import type { HouseEvent, ShoppingItem } from "./household";
 import { completeTask, uncompleteTask, type Member, type Task } from "./tasks";
 
@@ -10,14 +9,16 @@ type NewTask = Pick<Task, "title" | "assigneeId" | "dueDate" | "recurrence">;
 type NewShoppingItem = Pick<ShoppingItem, "name" | "note">;
 type NewEvent = Pick<HouseEvent, "title" | "date" | "time" | "prep">;
 
+/** SPEC §8: first parent indigo, second pink. */
+export const MEMBER_COLORS = ["var(--indigo)", "var(--pink)"] as const;
+
 type HouseholdState = {
-  seeded: boolean;
   currentUserId: string;
   members: Member[];
   tasks: Task[];
   shopping: ShoppingItem[];
   events: HouseEvent[];
-  seed: (today: DayKey) => void;
+  syncSelf: (self: Member | null) => void;
   toggleTask: (task: Task, today: DayKey) => void;
   addTask: (task: NewTask) => void;
   toggleShoppingItem: (id: string) => void;
@@ -29,18 +30,18 @@ type HouseholdState = {
 const now = () => new Date().toISOString();
 
 /** Client-side household data. Stands in for Supabase until the backend is wired (SPEC §9). */
-export const useHousehold = create<HouseholdState>()((set, get) => ({
-  seeded: false,
-  currentUserId: demoCurrentUserId,
-  members: [...demoMembers].sort((a, b) => Number(b.id === demoCurrentUserId) - Number(a.id === demoCurrentUserId)),
+export const useHousehold = create<HouseholdState>()((set) => ({
+  currentUserId: "",
+  members: [],
   tasks: [],
   shopping: [],
   events: [],
 
-  seed: (today) => {
-    if (get().seeded) return;
-    set({ seeded: true, tasks: demoTasks(today), shopping: demoShopping(), events: demoEvents(today) });
-  },
+  syncSelf: (self) =>
+    set({
+      currentUserId: self?.id ?? "",
+      members: self ? [self] : [],
+    }),
 
   toggleTask: (task, today) =>
     set(({ tasks }) => ({

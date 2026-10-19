@@ -13,7 +13,7 @@ export default async function TasksPage() {
 
   return (
     <>
-      <PageHeader title={dict.tasks.title} meta={<TasksMeta />} />
+      <PageHeader title={dict.tasks.title} subtitle={dict.tasks.lead} meta={<TasksMeta />} />
       <TasksView />
     </>
   );

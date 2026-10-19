@@ -19,7 +19,7 @@ const separator =
 export function TasksView() {
   const { locale, dict } = useI18n();
   const today = useClock()?.today ?? null;
-  const { seeded, tasks, members, currentUserId, toggleTask } = useHousehold();
+  const { tasks, members, currentUserId, toggleTask } = useHousehold();
   const [scope, setScope] = useState<Scope>("all");
   const [showDone, setShowDone] = useState(false);
   const shortDate = new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short" });
@@ -36,7 +36,7 @@ export function TasksView() {
     />
   );
 
-  if (!today || !seeded) {
+  if (!today) {
     return <div className="flex flex-col gap-6">{control}</div>;
   }
 

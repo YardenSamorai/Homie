@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { Repeat } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
 import { CheckCircle } from "@/components/ui/check-circle";
 import { StrikeText } from "@/components/ui/strike-text";
 import { useI18n } from "@/i18n/dictionary-provider";
@@ -30,9 +29,14 @@ export function TaskRow({
   const done = kind === "done";
   const projected = kind === "projected";
   const color = assignee?.color ?? "var(--accent)";
+  const meta = [
+    caption ? { text: caption, danger: kind === "overdue" } : null,
+    projected ? { text: dict.today.projected, danger: false } : null,
+    task.recurrence !== "none" ? { text: dict.today.recurrence[task.recurrence], danger: false, repeat: true } : null,
+  ].filter(Boolean) as { text: string; danger: boolean; repeat?: boolean }[];
 
   return (
-    <div className={`flex min-h-14 items-center gap-3 px-4 py-2.5 ${projected ? "opacity-55" : ""}`}>
+    <div className={`flex min-h-[52px] items-center gap-3 px-4 py-2 ${projected ? "opacity-55" : ""} ${done ? "opacity-70" : ""}`}>
       {projected ? (
         <span aria-hidden className="flex size-11 shrink-0 items-center justify-center">
           <span className="size-[26px] rounded-full border-2 border-dashed border-label-tertiary" />
@@ -56,25 +60,28 @@ export function TaskRow({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <StrikeText done={done}>{task.title}</StrikeText>
-        {(caption || task.recurrence !== "none" || projected) && (
-          <span className="flex items-center gap-1.5 text-[13px] text-label-secondary">
-            {caption && <span className={kind === "overdue" ? "text-danger" : undefined}>{caption}</span>}
-            {projected && <span>{dict.today.projected}</span>}
-            {task.recurrence !== "none" && (
-              <span className="flex items-center gap-1">
-                <Repeat aria-hidden size={12} />
-                {dict.today.recurrence[task.recurrence]}
+        {meta.length > 0 && (
+          <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[13px] text-label-secondary">
+            {meta.map((item, index) => (
+              <span key={item.text} className="flex min-w-0 items-center gap-1.5">
+                {index > 0 && <span aria-hidden className="text-label-tertiary">·</span>}
+                <span className={`flex min-w-0 items-center gap-1 ${item.danger ? "text-danger" : ""}`}>
+                  {item.repeat && <Repeat aria-hidden size={11} strokeWidth={2.25} />}
+                  <span className="truncate">{item.text}</span>
+                </span>
               </span>
-            )}
+            ))}
           </span>
         )}
       </div>
 
       {assignee && (
-        <span title={format(dict.today.assignedTo, { name: assignee.name })} className="flex">
-          <Avatar member={assignee} size={26} />
-          <span className="sr-only">{format(dict.today.assignedTo, { name: assignee.name })}</span>
-        </span>
+        <span
+          title={format(dict.today.assignedTo, { name: assignee.name })}
+          aria-label={format(dict.today.assignedTo, { name: assignee.name })}
+          style={{ backgroundColor: color }}
+          className="size-2.5 shrink-0 rounded-full"
+        />
       )}
     </div>
   );

@@ -17,7 +17,7 @@ const separator =
 export function CalendarView() {
   const { locale, dict } = useI18n();
   const today = useClock()?.today ?? null;
-  const { seeded, events } = useHousehold();
+  const { events } = useHousehold();
   const setSharedDay = useSelectedDay((s) => s.setDay);
 
   const [picked, setPicked] = useState<DayKey | null>(null);
@@ -35,7 +35,7 @@ export function CalendarView() {
   const longDate = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long" });
   const shortDate = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" });
 
-  if (!today || !selected || !month || !seeded) return <div aria-hidden className="h-[420px]" />;
+  if (!today || !selected || !month) return <div aria-hidden className="h-[420px]" />;
 
   const goToMonth = (next: DayKey) => setMonths({ current: next, previous: month });
   const select = (day: DayKey) => {

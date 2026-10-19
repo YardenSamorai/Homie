@@ -5,8 +5,7 @@ import { useHousehold } from "@/lib/household-store";
 
 export function HouseholdCard() {
   const members = useHousehold((s) => s.members);
-  const seeded = useHousehold((s) => s.seeded);
-  if (!seeded) return <div aria-hidden className="h-14" />;
+  if (members.length === 0) return <div aria-hidden className="h-14" />;
 
   return (
     <ul>

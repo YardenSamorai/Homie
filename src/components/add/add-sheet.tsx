@@ -212,10 +212,8 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
 export function AddSheet() {
   const { open, day, setOpen } = useAddSheet();
   const today = useClock()?.today;
-  const seeded = useHousehold((s) => s.seeded);
-
   return (
-    <Drawer.Root open={open && seeded} onOpenChange={setOpen}>
+    <Drawer.Root open={open} onOpenChange={setOpen}>
       <Drawer.VirtualKeyboardProvider>
         <Drawer.Portal>
           <Drawer.Backdrop className="fixed inset-0 z-50 min-h-dvh bg-black opacity-[calc(0.3*(1-var(--drawer-swipe-progress)))] transition-opacity duration-[450ms] ease-[var(--ease-ios)] data-swiping:duration-0 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)]" />
