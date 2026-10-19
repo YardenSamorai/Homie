@@ -16,9 +16,11 @@ let tossId = 0;
 
 export function CartBanner({
   history,
+  inCart,
   onAdd,
 }: {
   history: GroceryHint[];
+  inCart: { id: string; name: string }[];
   onAdd: (name: string, note: string | null, from: Point) => void;
 }) {
   const { dict, locale } = useI18n();
@@ -98,7 +100,7 @@ export function CartBanner({
   return (
     <div className="flex flex-col gap-2">
       <div className="relative mx-auto h-52 w-full max-w-md">
-        <CartModel />
+        <CartModel items={inCart} />
         <span ref={basketRef} className="pointer-events-none absolute h-[28%] w-[34%]" style={{ left: "33%", top: "22%" }} />
       </div>
       <form ref={formRef} onSubmit={submit} className="relative flex items-center gap-1 rounded-card bg-surface px-1.5 shadow-card">

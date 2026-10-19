@@ -87,6 +87,7 @@ export function ShoppingView() {
     <div className="flex flex-col gap-6">
       <CartBanner
         history={shopping.map((item) => ({ name: item.name, note: item.note }))}
+        inCart={toBuy.map((item) => ({ id: item.id, name: item.name }))}
         onAdd={(name, note, from) => {
           addShoppingItem({ name, note });
           dropInCart({ name: note ? `${name} ${note}` : name, from });
