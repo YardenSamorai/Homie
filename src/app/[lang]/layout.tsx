@@ -40,7 +40,7 @@ export default async function RootLayout({ children }: LayoutProps<"/[lang]">) {
 
   return (
     <html lang={locale} dir={localeDirection[locale]} className={`${heebo.variable} h-full`} suppressHydrationWarning>
-      <body className="min-h-full">
+      <body className="min-h-full" suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script dangerouslySetInnerHTML={{ __html: skyScript }} />
         <Providers locale={locale} dict={dict}>

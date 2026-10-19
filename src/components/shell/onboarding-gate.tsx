@@ -45,6 +45,10 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     };
   }, [ready, session, locale, router]);
 
-  if (!allowed) return <div className="min-h-dvh bg-bg" />;
-  return children;
+  return (
+    <>
+      {children}
+      {!allowed && <div aria-hidden className="fixed inset-0 z-[60] bg-bg" />}
+    </>
+  );
 }

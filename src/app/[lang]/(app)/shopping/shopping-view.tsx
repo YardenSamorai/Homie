@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Plus, ShoppingBasket } from "lucide-react";
+import { ShoppingBasket } from "lucide-react";
+import { CartBanner } from "@/components/shopping/cart-banner";
 import { Avatar } from "@/components/ui/avatar";
 import { CheckCircle } from "@/components/ui/check-circle";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StrikeText } from "@/components/ui/strike-text";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
+import { dropInCart } from "@/lib/cart-drop";
 import { completionHaptic } from "@/lib/haptics";
 import type { ShoppingItem } from "@/lib/household";
 import { useHousehold } from "@/lib/household-store";
@@ -78,39 +79,19 @@ function ItemList({ items }: { items: ShoppingItem[] }) {
 export function ShoppingView() {
   const { dict } = useI18n();
   const { shopping, addShoppingItem, clearBought } = useHousehold();
-  const [name, setName] = useState("");
 
   const toBuy = shopping.filter((item) => !item.checkedAt);
   const bought = shopping.filter((item) => item.checkedAt);
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const clean = name.trim();
-    if (!clean) return;
-    addShoppingItem({ name: clean, note: null });
-    setName("");
-  };
-
   return (
     <div className="flex flex-col gap-6">
-      <form onSubmit={submit} className="flex items-center gap-3 rounded-card bg-surface px-4 shadow-card ring-1 ring-[light-dark(rgb(40_30_20/0.04),rgb(255_255_255/0.06))]">
-        <span
-          aria-hidden
-          className="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-green text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.28)]"
-        >
-          <Plus size={18} strokeWidth={2.75} />
-        </span>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={dict.add.itemName}
-          aria-label={dict.add.itemName}
-          enterKeyHint="done"
-          maxLength={120}
-          className="h-14 min-w-0 flex-1 bg-transparent text-[17px] outline-none placeholder:text-label-tertiary"
-        />
-      </form>
-
+      <CartBanner
+        history={shopping.map((item) => ({ name: item.name, note: item.note }))}
+        onAdd={(name, note, from) => {
+          addShoppingItem({ name, note });
+          dropInCart({ name: note ? `${name} ${note}` : name, from });
+        }}
+      />
       {shopping.length === 0 ? (
         <div className="rounded-card bg-surface shadow-card">
           <EmptyState icon={ShoppingBasket} title={dict.shopping.empty} hint={dict.shopping.emptyHint} />

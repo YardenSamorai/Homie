@@ -52,6 +52,12 @@
   --separator: light-dark(#e8ebe6, rgb(255 255 255 / 0.1));
   --hairline: light-dark(transparent, rgb(255 255 255 / 0.08));
   --segment-thumb: light-dark(#ffffff, #314038);
+  --tint-sage: light-dark(#527a67, #8fbfab);
+  --tint-coral: light-dark(#a35d42, #e0a48c);
+  --tint-teal: light-dark(#3d7480, #8eb8c2);
+  --tint-indigo: light-dark(#5a5f94, #a4a8d4);
+  --tint-plum: light-dark(#6e5c88, #b4a4c8);
+
   --accent: var(--sage);
   --accent-contrast: light-dark(#ffffff, #10211a);
   --today: var(--sage);
@@ -63,6 +69,43 @@
   --shadow-card:
     0 1px 2px light-dark(rgb(37 79 65 / 0.04), transparent),
     0 10px 28px light-dark(rgb(37 79 65 / 0.06), transparent);
+}
+
+:root[data-tint="coral"] {
+  --accent: var(--tint-coral);
+  --accent-contrast: light-dark(#ffffff, #2a140e);
+  --today: var(--tint-coral);
+  --today-contrast: var(--accent-contrast);
+  --fill: light-dark(#f6e4da, rgb(163 93 66 / 0.22));
+  --sage-light: light-dark(#f6e4da, #3a2822);
+}
+:root[data-tint="teal"] {
+  --accent: var(--tint-teal);
+  --accent-contrast: light-dark(#ffffff, #0e1c20);
+  --today: var(--tint-teal);
+  --today-contrast: var(--accent-contrast);
+  --fill: light-dark(#e3f0f2, rgb(61 116 128 / 0.24));
+  --sage-light: light-dark(#e3f0f2, #1c2c30);
+}
+:root[data-tint="indigo"] {
+  --accent: var(--tint-indigo);
+  --accent-contrast: light-dark(#ffffff, #16182c);
+  --today: var(--tint-indigo);
+  --today-contrast: var(--accent-contrast);
+  --fill: light-dark(#e8e9f4, rgb(90 95 148 / 0.24));
+  --sage-light: light-dark(#e8e9f4, #262838);
+}
+:root[data-tint="plum"] {
+  --accent: var(--tint-plum);
+  --accent-contrast: light-dark(#ffffff, #1c1424);
+  --today: var(--tint-plum);
+  --today-contrast: var(--accent-contrast);
+  --fill: light-dark(#f0eaf4, rgb(110 92 136 / 0.24));
+  --sage-light: light-dark(#f0eaf4, #2c2434);
+}
+
+:root[data-bold="1"] body {
+  font-weight: 500;
 }
 
 /*
@@ -129,6 +172,11 @@
   --color-coral: var(--coral);
   --color-peach: var(--peach);
   --color-lavender: var(--lavender);
+  --color-tint-sage: var(--tint-sage);
+  --color-tint-coral: var(--tint-coral);
+  --color-tint-teal: var(--tint-teal);
+  --color-tint-indigo: var(--tint-indigo);
+  --color-tint-plum: var(--tint-plum);
   --color-hairline: var(--hairline);
   --color-segment-thumb: var(--segment-thumb);
 
@@ -252,6 +300,11 @@ a,
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+}
+
+/* model-viewer draws a loading bar across the top, then removes it. The cart has no chrome. */
+model-viewer::part(default-progress-bar) {
+  display: none;
 }
 
 @media (prefers-reduced-transparency: reduce) {

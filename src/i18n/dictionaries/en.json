@@ -122,6 +122,10 @@
   "shopping": {
     "title": "Shopping",
     "lead": "Everything the house needs, in one place",
+    "cartTitle": "Our cart",
+    "cartCalm": "The cart is waiting for what home needs",
+    "quantity": "Qty",
+    "suggestions": "Suggestions",
     "empty": "The list is empty",
     "emptyHint": "Items you add show up here for both of you.",
     "bought": "Bought",
@@ -238,6 +242,23 @@
       "dark": "Dark",
       "system": "Automatic"
     },
+    "textSize": "Text Size",
+    "textSizes": {
+      "0": "Extra Small",
+      "1": "Small",
+      "2": "Default",
+      "3": "Large",
+      "4": "Extra Large"
+    },
+    "tint": "Color",
+    "tints": {
+      "sage": "Sage",
+      "coral": "Coral",
+      "teal": "Teal",
+      "indigo": "Indigo",
+      "plum": "Plum"
+    },
+    "boldText": "Bold Text",
     "languageNames": {
       "he": "עברית",
       "en": "English"

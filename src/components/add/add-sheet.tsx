@@ -7,6 +7,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/i18n/dictionary-provider";
 import type { DayKey } from "@/lib/dates";
+import { centerOf, dropInCart } from "@/lib/cart-drop";
 import { useAddSheet, useHousehold, type AddKind } from "@/lib/household-store";
 import type { Recurrence } from "@/lib/tasks";
 import { useClock } from "@/lib/use-clock";
@@ -52,6 +53,8 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
       addTask({ title: clean, assigneeId, dueDate, recurrence: dueDate ? recurrence : "none" });
     } else if (kind === "shopping") {
       addShoppingItem({ name: clean, note: extra });
+      const from = centerOf(e.currentTarget.querySelector("button[type=submit]"));
+      if (from) dropInCart({ name: clean, from });
     } else {
       addEvent({ title: clean, date, time: allDay ? null : time, prep: extra });
     }
