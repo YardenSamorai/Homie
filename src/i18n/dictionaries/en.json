@@ -24,6 +24,16 @@
       "many": "{count} open tasks today"
     },
     "household": "Household",
+    "memberClear": "Clear today",
+    "memberOpenOne": "1 open task",
+    "memberOpen": "{count} open tasks",
+    "memberOverdueOne": "1 overdue",
+    "memberOverdue": "{count} overdue",
+    "dayPulse": "{tasks} · {events}",
+    "dayTasksOne": "1 task",
+    "dayTasks": "{count} tasks",
+    "dayEventsOne": "1 event",
+    "dayEvents": "{count} events",
     "pickDay": "Pick a day",
     "backToToday": "Today",
     "previousWeek": "Previous week",
@@ -58,7 +68,10 @@
     "noEvents": "No events on this day",
     "noEventsHint": "Tap + to add an event.",
     "prepare": "Get ready",
-    "prepareHint": "Events in the next two weeks that need something done beforehand."
+    "prepareHint": "Events in the next two weeks that need something done beforehand.",
+    "upcomingNone": "Nothing coming up",
+    "upcomingOne": "1 upcoming event",
+    "upcoming": "{count} upcoming events"
   },
   "add": {
     "open": "Add",
@@ -95,7 +108,11 @@
     "clearBought": "Clear",
     "mark": "Mark \"{name}\" as bought",
     "unmark": "Mark \"{name}\" as not bought",
-    "addedBy": "Added by {name}"
+    "addedBy": "Added by {name}",
+    "leftOne": "1 item left",
+    "left": "{count} items left",
+    "allBought": "All bought",
+    "progress": "{bought} of {total}"
   },
   "tasks": {
     "title": "Tasks",
@@ -108,10 +125,18 @@
     "showDone": "Show completed",
     "hideDone": "Hide completed",
     "empty": "No tasks",
-    "emptyHint": "Tasks you add will show up here."
+    "emptyHint": "Tasks you add will show up here.",
+    "metaQuiet": "All quiet",
+    "metaOverdueOne": "1 overdue",
+    "metaOverdue": "{count} overdue",
+    "metaTodayOne": "1 due today",
+    "metaToday": "{count} due today",
+    "metaOpenOne": "1 open",
+    "metaOpen": "{count} open"
   },
   "settings": {
     "title": "Settings",
+    "household": "Household",
     "language": "Language",
     "appearance": "Appearance",
     "themes": {

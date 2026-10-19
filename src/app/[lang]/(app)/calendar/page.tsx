@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CalendarMeta } from "@/components/calendar/calendar-meta";
 import { PageHeader } from "@/components/ui/page-header";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { CalendarView } from "./calendar-view";
@@ -12,7 +13,7 @@ export default async function CalendarPage() {
 
   return (
     <>
-      <PageHeader title={dict.calendar.title} />
+      <PageHeader title={dict.calendar.title} meta={<CalendarMeta />} />
       <CalendarView />
     </>
   );

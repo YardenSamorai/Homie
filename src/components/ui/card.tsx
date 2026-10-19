@@ -15,7 +15,9 @@ export function Card({
           {action}
         </div>
       )}
-      <div className="rounded-card bg-surface shadow-card">{children}</div>
+      <div className="rounded-card bg-surface shadow-card ring-1 ring-[light-dark(rgb(40_30_20/0.04),rgb(255_255_255/0.06))]">
+        {children}
+      </div>
     </section>
   );
 }

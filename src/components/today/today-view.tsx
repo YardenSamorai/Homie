@@ -51,7 +51,7 @@ export function TodayView({ children }: { children?: ReactNode }) {
   return (
     <div className="flex flex-col gap-8">
       <Hero name={currentUser.name} today={today} hour={clock?.hour ?? null} openCount={openToday} />
-      <HouseholdMembers members={members} />
+      <HouseholdMembers members={members} tasks={tasks} today={today} />
       {today && selected && seeded ? (
         <>
           <DateStrip

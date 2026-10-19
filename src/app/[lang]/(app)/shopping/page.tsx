@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { ShoppingMeta } from "@/components/shopping/shopping-meta";
 import { PageHeader } from "@/components/ui/page-header";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { ShoppingView } from "./shopping-view";
@@ -12,7 +13,7 @@ export default async function ShoppingPage() {
 
   return (
     <>
-      <PageHeader title={dict.shopping.title} />
+      <PageHeader title={dict.shopping.title} meta={<ShoppingMeta />} />
       <ShoppingView />
     </>
   );

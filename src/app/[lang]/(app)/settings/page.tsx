@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { AppearancePicker } from "./appearance-picker";
+import { HouseholdCard } from "./household-card";
 import { LanguagePicker } from "./language-picker";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,6 +17,9 @@ export default async function SettingsPage() {
     <>
       <PageHeader title={dict.settings.title} />
       <div className="flex flex-col gap-8">
+        <Card title={dict.settings.household}>
+          <HouseholdCard />
+        </Card>
         <Card title={dict.settings.appearance}>
           <AppearancePicker />
         </Card>

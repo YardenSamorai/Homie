@@ -4,6 +4,7 @@ import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { CalendarCheck } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useI18n } from "@/i18n/dictionary-provider";
+import { format } from "@/i18n/format";
 import { localeDirection } from "@/i18n/config";
 import { diffDays, fromDayKey, type DayKey } from "@/lib/dates";
 import { easeOut, spring } from "@/lib/motion";
@@ -123,7 +124,25 @@ export function DayTasks({
           exit="exit"
           className="flex flex-col gap-5"
         >
-          <h2 className="px-1 text-xl font-semibold tracking-tight">{heading}</h2>
+          <div className="flex items-baseline justify-between gap-3 px-1">
+            <h2 className="text-xl font-semibold tracking-tight">{heading}</h2>
+            {!isEmpty && (
+              <p className="text-[13px] text-label-secondary">
+                {[
+                  ofDay.length + overdue.length > 0 &&
+                    (ofDay.length + overdue.length === 1
+                      ? dict.today.dayTasksOne
+                      : format(dict.today.dayTasks, { count: ofDay.length + overdue.length })),
+                  dayEvents.length > 0 &&
+                    (dayEvents.length === 1
+                      ? dict.today.dayEventsOne
+                      : format(dict.today.dayEvents, { count: dayEvents.length })),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            )}
+          </div>
           {isEmpty ? (
             <div className="rounded-card bg-surface shadow-card">
               <EmptyState icon={CalendarCheck} tint="var(--green)" title={dict.today.noTasksForDay} hint={dict.today.noTasksForDayHint} />

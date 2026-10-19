@@ -69,11 +69,12 @@ export function TasksView() {
         groups.map((group) => (
           <section key={group.key} className="flex flex-col gap-2">
             <h2
-              className={`section-label px-1 ${
+              className={`section-label flex items-baseline gap-1.5 px-1 ${
                 group.key === "overdue" ? "text-danger" : "text-label-secondary"
               }`}
             >
               {group.title}
+              <span className="font-medium tabular-nums text-label-tertiary">{group.tasks.length}</span>
             </h2>
             <ul className="overflow-hidden rounded-card bg-surface shadow-card">
               {group.tasks.map((task) => (

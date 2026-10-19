@@ -24,6 +24,16 @@
       "many": "{count} משימות פתוחות היום"
     },
     "household": "בני הבית",
+    "memberClear": "היום פנוי",
+    "memberOpenOne": "משימה אחת פתוחה",
+    "memberOpen": "{count} משימות פתוחות",
+    "memberOverdueOne": "אחת באיחור",
+    "memberOverdue": "{count} באיחור",
+    "dayPulse": "{tasks} · {events}",
+    "dayTasksOne": "משימה אחת",
+    "dayTasks": "{count} משימות",
+    "dayEventsOne": "אירוע אחד",
+    "dayEvents": "{count} אירועים",
     "pickDay": "בחירת יום",
     "backToToday": "היום",
     "previousWeek": "השבוע הקודם",
@@ -58,7 +68,10 @@
     "noEvents": "אין אירועים ביום הזה",
     "noEventsHint": "לחצו על + כדי להוסיף אירוע.",
     "prepare": "להתכונן",
-    "prepareHint": "אירועים בשבועיים הקרובים שצריך להכין להם משהו מראש."
+    "prepareHint": "אירועים בשבועיים הקרובים שצריך להכין להם משהו מראש.",
+    "upcomingNone": "אין אירועים בקרוב",
+    "upcomingOne": "אירוע אחד בהמשך",
+    "upcoming": "{count} אירועים בהמשך"
   },
   "add": {
     "open": "הוספה",
@@ -95,7 +108,11 @@
     "clearBought": "ניקוי",
     "mark": "סימון \"{name}\" כנקנה",
     "unmark": "ביטול הסימון של \"{name}\"",
-    "addedBy": "נוסף על ידי {name}"
+    "addedBy": "נוסף על ידי {name}",
+    "leftOne": "פריט אחד נשאר",
+    "left": "{count} פריטים נשארו",
+    "allBought": "הכל נקנה",
+    "progress": "{bought} מתוך {total}"
   },
   "tasks": {
     "title": "משימות",
@@ -108,10 +125,18 @@
     "showDone": "הצגת משימות שבוצעו",
     "hideDone": "הסתרת משימות שבוצעו",
     "empty": "אין משימות",
-    "emptyHint": "משימות שתוסיפו יופיעו כאן."
+    "emptyHint": "משימות שתוסיפו יופיעו כאן.",
+    "metaQuiet": "הכל שקט",
+    "metaOverdueOne": "אחת באיחור",
+    "metaOverdue": "{count} באיחור",
+    "metaTodayOne": "אחת להיום",
+    "metaToday": "{count} להיום",
+    "metaOpenOne": "אחת פתוחה",
+    "metaOpen": "{count} פתוחות"
   },
   "settings": {
     "title": "הגדרות",
+    "household": "הבית",
     "language": "שפה",
     "appearance": "מראה",
     "themes": {

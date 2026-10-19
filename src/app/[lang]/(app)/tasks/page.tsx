@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { TasksMeta } from "@/components/tasks/tasks-meta";
 import { PageHeader } from "@/components/ui/page-header";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { TasksView } from "./tasks-view";
@@ -12,7 +13,7 @@ export default async function TasksPage() {
 
   return (
     <>
-      <PageHeader title={dict.tasks.title} />
+      <PageHeader title={dict.tasks.title} meta={<TasksMeta />} />
       <TasksView />
     </>
   );

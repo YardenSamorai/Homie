@@ -28,6 +28,20 @@ export function nextOccurrence(due: DayKey, recurrence: Exclude<Recurrence, "non
   return addDays(due, step * k);
 }
 
+/** Open work due today or earlier, plus what this person already finished today. */
+export function loadForMember(tasks: Task[], memberId: string, today: DayKey) {
+  const open = tasks.filter((t) => t.assigneeId === memberId && !t.completedAt && t.dueDate && t.dueDate <= today);
+  const doneToday = tasks.filter((t) => t.assigneeId === memberId && t.completedAt && t.dueDate === today);
+  const total = open.length + doneToday.length;
+  return {
+    open: open.length,
+    overdue: open.filter((t) => t.dueDate! < today).length,
+    doneToday: doneToday.length,
+    total,
+    progress: total === 0 ? 1 : doneToday.length / total,
+  };
+}
+
 /** Future occurrence preview for an open recurring task (SPEC §6.4). */
 export function isProjectedOn(task: Task, day: DayKey, today: DayKey): boolean {
   if (task.recurrence === "none" || !task.dueDate || task.completedAt) return false;

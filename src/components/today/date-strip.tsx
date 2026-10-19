@@ -93,7 +93,7 @@ export function DateStrip({
   };
 
   return (
-    <section aria-label={dict.today.pickDay} className="flex flex-col gap-3 rounded-card bg-surface px-2 pb-2 pt-3 shadow-card">
+    <section aria-label={dict.today.pickDay} className="flex flex-col gap-3 rounded-card bg-surface px-2 pb-2 pt-3 shadow-card ring-1 ring-[light-dark(rgb(40_30_20/0.04),rgb(255_255_255/0.06))]">
       <div className="flex min-h-10 items-center justify-between ps-3 pe-1">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.h2

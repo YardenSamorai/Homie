@@ -95,8 +95,11 @@ export function ShoppingView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <form onSubmit={submit} className="flex items-center gap-3 rounded-card bg-surface px-4 shadow-card">
-        <span aria-hidden className="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-green text-white">
+      <form onSubmit={submit} className="flex items-center gap-3 rounded-card bg-surface px-4 shadow-card ring-1 ring-[light-dark(rgb(40_30_20/0.04),rgb(255_255_255/0.06))]">
+        <span
+          aria-hidden
+          className="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-green text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.28)]"
+        >
           <Plus size={18} strokeWidth={2.75} />
         </span>
         <input
@@ -120,7 +123,10 @@ export function ShoppingView() {
           {bought.length > 0 && (
             <section className="flex flex-col gap-2">
               <div className="flex items-center justify-between px-1">
-                <h2 className="section-label text-label-secondary">{dict.shopping.bought}</h2>
+                <h2 className="section-label text-label-secondary">
+                  {dict.shopping.bought}
+                  <span className="ms-1.5 font-medium tabular-nums text-label-tertiary">{bought.length}</span>
+                </h2>
                 <button
                   type="button"
                   onClick={clearBought}

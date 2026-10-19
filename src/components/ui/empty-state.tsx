@@ -22,7 +22,7 @@ export function EmptyState({
   tint?: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-2 px-6 py-8 text-center">
+    <div className="flex flex-col items-center gap-2 px-8 py-12 text-center">
       {illustration ? (
         <motion.div {...settle} className="mb-2">
           <Tilt className="relative size-28 overflow-hidden rounded-[28px] shadow-[0_10px_24px_rgb(0_0_0/0.12)] ring-1 ring-hairline">
@@ -32,7 +32,7 @@ export function EmptyState({
       ) : (
         <span
           style={{ color: tint, backgroundColor: `color-mix(in oklab, ${tint} 10%, transparent)` }}
-          className="mb-2 flex size-14 items-center justify-center rounded-full"
+          className="mb-2 flex size-16 items-center justify-center rounded-full"
         >
           <Icon aria-hidden size={26} strokeWidth={1.5} />
         </span>

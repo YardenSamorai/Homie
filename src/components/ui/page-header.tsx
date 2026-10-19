@@ -9,9 +9,12 @@ const subscribeNever = () => () => {};
 export function PageHeader({
   title,
   subtitle,
+  meta,
 }: {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
+  /** A live sentence under the large title — counts, not a section label. */
+  meta?: React.ReactNode;
 }) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [bar, setBar] = useState<HTMLDivElement | null>(null);
@@ -34,6 +37,7 @@ export function PageHeader({
       <h1 ref={titleRef} className="text-[34px] font-bold leading-tight tracking-tight">
         {title}
       </h1>
+      {meta && <div className="text-[15px] leading-snug text-label-secondary">{meta}</div>}
 
       {/* Portaled: the page wrapper animates transform, which would otherwise pin this to the page, not the screen. */}
       {mounted &&

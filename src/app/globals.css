@@ -54,7 +54,9 @@
   --danger: var(--red);
   --material: light-dark(rgb(250 249 246 / 0.78), rgb(28 29 32 / 0.72));
   --shadow-card:
-    0 1px 2px light-dark(rgb(40 30 20 / 0.04), transparent), 0 8px 24px light-dark(rgb(40 30 20 / 0.05), transparent);
+    0 1px 2px light-dark(rgb(40 30 20 / 0.04), transparent),
+    0 8px 24px light-dark(rgb(40 30 20 / 0.05), transparent),
+    inset 0 1px 0 light-dark(rgb(255 255 255 / 0.7), rgb(255 255 255 / 0.06));
 }
 
 /*
