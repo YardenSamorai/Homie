@@ -1,6 +1,7 @@
 import { AddSheet } from "@/components/add/add-sheet";
 import { ConnectionBanner } from "@/components/shell/connection-banner";
 import { HouseholdSync } from "@/components/shell/household-sync";
+import { OnboardingGate } from "@/components/shell/onboarding-gate";
 import { ScrollEdges } from "@/components/shell/scroll-edges";
 import { SheetDepth } from "@/components/shell/sheet-depth";
 import { Sidebar } from "@/components/shell/sidebar";
@@ -9,6 +10,7 @@ import { TabBar } from "@/components/shell/tab-bar";
 
 export default function AppLayout({ children }: LayoutProps<"/[lang]">) {
   return (
+    <OnboardingGate>
     <div className="flex min-h-dvh">
       <HouseholdSync />
       <ConnectionBanner />
@@ -19,5 +21,6 @@ export default function AppLayout({ children }: LayoutProps<"/[lang]">) {
       <TabBar />
       <AddSheet />
     </div>
+    </OnboardingGate>
   );
 }

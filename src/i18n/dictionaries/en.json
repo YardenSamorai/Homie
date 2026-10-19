@@ -203,6 +203,8 @@
     "joinSignIn": "Sign in to join",
     "alreadyHome": "You’re already in a household",
     "alreadyHomeHint": "Leave your current household before joining a new one. This invite isn’t used up.",
+    "alreadyHere": "You’re already in this home",
+    "alreadyHereHint": "This invite is for the other parent. Send them the link.",
     "invalidTitle": "This invite isn’t valid",
     "inviteExpired": "This invite has expired. Ask for a new link.",
     "inviteRevoked": "This invite was cancelled.",

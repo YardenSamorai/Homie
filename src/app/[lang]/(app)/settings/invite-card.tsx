@@ -31,6 +31,7 @@ export function InviteCard() {
         householdId: session.householdId,
         householdName,
         inviterName: inviter,
+        inviterUserId: session.userId,
       });
       setUrl(`${window.location.origin}/${locale}/invite/${invite.token}`);
       setCopied(false);

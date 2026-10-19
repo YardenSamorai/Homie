@@ -31,7 +31,7 @@ export const authApi = {
 
   clearInvite: () => fetch("/api/invite", { method: "DELETE" }),
 
-  createInvite: (input: { householdId?: string; householdName: string; inviterName: string }) =>
+  createInvite: (input: { householdId?: string; householdName: string; inviterName: string; inviterUserId?: string }) =>
     parse<InvitePreview>(post("/api/invite", input)),
 
   acceptInvite: (userId: string) =>
@@ -39,4 +39,12 @@ export const authApi = {
 
   createHousehold: (userId: string, name: string) =>
     parse<{ id: string; name: string }>(post("/api/household", { userId, name })),
+
+  household: (id: string) =>
+    parse<{ id: string; name: string; members: { id: string; name: string }[] }>(
+      fetch(`/api/household?id=${encodeURIComponent(id)}`),
+    ),
+
+  saveName: (userId: string, displayName: string) =>
+    parse<{ userId: string; email: string; displayName: string }>(post("/api/auth/profile", { userId, displayName })),
 };

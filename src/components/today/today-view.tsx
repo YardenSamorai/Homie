@@ -22,9 +22,9 @@ export function TodayView() {
   const { locale, dict } = useI18n();
   const clock = useClock();
   const today = clock?.today ?? null;
-  const { members, tasks, events, toggleTask } = useHousehold();
+  const { currentUserId, members, tasks, events, toggleTask } = useHousehold();
   const setSharedDay = useSelectedDay((s) => s.setDay);
-  const currentUser = members[0];
+  const currentUser = members.find((member) => member.id === currentUserId) ?? members[0];
 
   const [selection, setSelection] = useState<{ day: DayKey | null; previous: DayKey | null }>({ day: null, previous: null });
   const selected = selection.day ?? today;

@@ -41,13 +41,19 @@ export function NameForm() {
     if (!session) return;
     setBusy(true);
     setError(null);
-    patch({ displayName: clean });
-    const next = { ...session, displayName: clean };
     try {
-      const pending = await authApi.pendingInvite();
+      await authApi.saveName(session.userId, clean);
+      patch({ displayName: clean });
+      const next = { ...session, displayName: clean };
+      let pending = null;
+      try {
+        pending = await authApi.pendingInvite();
+      } catch {
+        pending = null;
+      }
       router.replace(afterAuthPath(locale, next, pending));
     } catch {
-      router.replace(afterAuthPath(locale, next, null));
+      setError(dict.auth.errors.generic);
     } finally {
       setBusy(false);
     }

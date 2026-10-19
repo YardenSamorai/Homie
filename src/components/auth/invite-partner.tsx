@@ -32,6 +32,7 @@ export function InvitePartner() {
         householdId: session.householdId,
         householdName: session.householdName ?? dict.auth.setupTitle,
         inviterName: session.displayName,
+        inviterUserId: session.userId,
       });
       setUrl(`${window.location.origin}/${locale}/invite/${invite.token}`);
       setCopied(false);

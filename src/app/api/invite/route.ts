@@ -16,7 +16,14 @@ function clearCookie() {
 export async function GET() {
   const token = (await cookies()).get(INVITE_COOKIE)?.value;
   if (!token) {
-    return NextResponse.json({ status: "missing", token: "", householdName: null, inviterName: null, expiresAt: null });
+    return NextResponse.json({
+      status: "missing",
+      token: "",
+      householdId: null,
+      householdName: null,
+      inviterName: null,
+      expiresAt: null,
+    });
   }
   return NextResponse.json(readInvite(token));
 }
@@ -26,6 +33,7 @@ export async function POST(request: Request) {
     householdId?: string;
     householdName?: string;
     inviterName?: string;
+    inviterUserId?: string;
   };
   if (!body.householdName?.trim() || !body.inviterName?.trim()) {
     return NextResponse.json({ error: "generic" }, { status: 400 });
@@ -35,6 +43,7 @@ export async function POST(request: Request) {
       householdId: body.householdId,
       householdName: body.householdName,
       inviterName: body.inviterName,
+      inviterUserId: body.inviterUserId,
     }),
   );
 }

@@ -38,7 +38,8 @@ export function JoinHome() {
   }
 
   const ok = invite?.status === "ok";
-  const blocked = Boolean(ok && session?.householdId);
+  const here = Boolean(ok && session?.householdId && session.householdId === invite?.householdId);
+  const blocked = Boolean(ok && session?.householdId && !here);
 
   const join = async () => {
     if (!session) return;
@@ -63,27 +64,31 @@ export function JoinHome() {
   return (
     <AuthShell
       busy={!invite}
-      eyebrow={ok && !blocked ? dict.auth.youreInvited : undefined}
+      eyebrow={ok && !blocked && !here ? dict.auth.youreInvited : undefined}
       title={
-        blocked
-          ? dict.auth.alreadyHome
-          : ok
-            ? (invite.householdName ?? dict.auth.setupTitle)
-            : invite
-              ? dict.auth.invalidTitle
-              : undefined
+        here
+          ? dict.auth.alreadyHere
+          : blocked
+            ? dict.auth.alreadyHome
+            : ok
+              ? (invite.householdName ?? dict.auth.setupTitle)
+              : invite
+                ? dict.auth.invalidTitle
+                : undefined
       }
       lead={
-        blocked
-          ? dict.auth.alreadyHomeHint
-          : ok
-            ? format(dict.auth.joinLead, { inviter: invite.inviterName ?? "" })
-            : invite
-              ? dict.auth.staleInvite
-              : undefined
+        here
+          ? dict.auth.alreadyHereHint
+          : blocked
+            ? dict.auth.alreadyHomeHint
+            : ok
+              ? format(dict.auth.joinLead, { inviter: invite.inviterName ?? "" })
+              : invite
+                ? dict.auth.staleInvite
+                : undefined
       }
       hero={
-        ok && !blocked ? (
+        ok && !blocked && !here ? (
           <InviteFaces
             left={memberFrom(invite.inviterName ?? "·", inviterColor, "inviter")}
             right={you}
@@ -95,7 +100,7 @@ export function JoinHome() {
       }
     >
       {error && <p className="mb-3 px-1 text-[13px] text-danger">{error}</p>}
-      {ok && !blocked && (
+      {ok && !blocked && !here && (
         <>
           <button type="button" disabled={busy} onClick={() => void join()} className={homeClass}>
             {dict.auth.join}
@@ -110,7 +115,7 @@ export function JoinHome() {
           {dict.auth.createInstead}
         </button>
       )}
-      {blocked && (
+      {(blocked || here) && (
         <button type="button" onClick={() => router.replace(`/${locale}`)} className={primaryClass}>
           {dict.auth.goHome}
         </button>

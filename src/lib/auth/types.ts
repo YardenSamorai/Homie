@@ -3,6 +3,7 @@ export type InviteStatus = "ok" | "expired" | "revoked" | "used" | "full" | "mis
 export type InvitePreview = {
   status: InviteStatus;
   token: string;
+  householdId: string | null;
   householdName: string | null;
   inviterName: string | null;
   expiresAt: string | null;

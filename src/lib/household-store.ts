@@ -19,6 +19,7 @@ type HouseholdState = {
   shopping: ShoppingItem[];
   events: HouseEvent[];
   syncSelf: (self: Member | null) => void;
+  setRoster: (currentUserId: string, members: Member[]) => void;
   toggleTask: (task: Task, today: DayKey) => void;
   addTask: (task: NewTask) => void;
   toggleShoppingItem: (id: string) => void;
@@ -42,6 +43,8 @@ export const useHousehold = create<HouseholdState>()((set) => ({
       currentUserId: self?.id ?? "",
       members: self ? [self] : [],
     }),
+
+  setRoster: (currentUserId, members) => set({ currentUserId, members }),
 
   toggleTask: (task, today) =>
     set(({ tasks }) => ({
