@@ -8,11 +8,11 @@ export type CartPassenger = { id: string; name: string };
 type Vec3 = { x: number; y: number; z: number };
 type Drop = { object: { position: Vec3 }; from: Vec3; to: Vec3; start: number };
 
-const dropMs = 420;
+const dropMs = 1500;
 
-/** Cubic bezier (0.23, 1, 0.32, 1), the same ease-out as the rest of the app. */
-function easeOut(t: number) {
-  const [x1, y1, x2, y2] = [0.23, 1, 0.32, 1];
+/** Gentle throughout, so the drop from above the cart stays easy to follow. */
+function easeInOut(t: number) {
+  const [x1, y1, x2, y2] = [0.37, 0, 0.63, 1];
   let u = t;
   for (let i = 0; i < 6; i++) {
     const x = 3 * (1 - u) ** 2 * u * x1 + 3 * (1 - u) * u ** 2 * x2 + u ** 3;
@@ -116,9 +116,11 @@ export function CartModel({ items }: { items: CartPassenger[] }) {
       const bounds = new THREE.Box3().setFromObject(cart);
       const center = bounds.getCenter(new THREE.Vector3());
       const size = bounds.getSize(new THREE.Vector3());
-      const distance = Math.max(size.y, size.z) / (2 * Math.tan((28 * Math.PI) / 360)) * 1.28;
-      camera.position.set(center.x + distance, center.y + size.y * 0.02, center.z);
-      camera.lookAt(center.x, center.y * 0.92, center.z);
+      const distance = Math.max(size.y, size.z) / (2 * Math.tan((28 * Math.PI) / 360)) * 1.85;
+      const lookY = center.y * 0.62;
+      camera.position.set(center.x + distance, lookY, center.z);
+      camera.lookAt(center.x, lookY, center.z);
+      const fallFromY = lookY + distance * Math.tan((28 * Math.PI) / 360) * 0.72;
       shadow.position.set(center.x, bounds.min.y + 0.004, center.z);
       resize();
 
@@ -159,7 +161,7 @@ export function CartModel({ items }: { items: CartPassenger[] }) {
                 holder.position.set(to.x, to.y, to.z);
                 return;
               }
-              const from = { x: to.x, y: to.y + 0.42, z: to.z };
+              const from = { x: to.x, y: Math.max(fallFromY, to.y + size.y * 0.85), z: to.z };
               holder.position.set(from.x, from.y, from.z);
               drops.push({ object: holder, from, to, start: performance.now() });
             })
@@ -176,11 +178,10 @@ export function CartModel({ items }: { items: CartPassenger[] }) {
         for (let i = drops.length - 1; i >= 0; i--) {
           const drop = drops[i];
           const t = Math.min(1, (now - drop.start) / dropMs);
-          const eased = easeOut(t);
-          const arc = Math.sin(Math.PI * t) * 0.08;
+          const eased = easeInOut(t);
           drop.object.position.set(
             drop.from.x + (drop.to.x - drop.from.x) * eased,
-            drop.from.y + (drop.to.y - drop.from.y) * eased + arc,
+            drop.from.y + (drop.to.y - drop.from.y) * eased,
             drop.from.z + (drop.to.z - drop.from.z) * eased,
           );
           if (t === 1) drops.splice(i, 1);
