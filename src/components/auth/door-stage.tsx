@@ -31,7 +31,7 @@ type Chip = {
   float: number;
   /** Chips under the code notification step aside while it is shown. */
   top: boolean;
-  /** Dropped on short screens so the house keeps its room. */
+  /** Fades first when the stage gets short (a small phone, or the keyboard open), so the house keeps its room. */
   minor: boolean;
 };
 
@@ -107,7 +107,7 @@ export function DoorStage({ phase }: { phase: DoorPhase }) {
       <div className="door-glow absolute inset-0 -z-10" />
 
       {/* A zero-size anchor at the house's center; rings, house, and label hang off it. Symmetric, so physical left is fine in RTL. */}
-      <div className="absolute left-1/2 top-1/2 size-0 [@media(max-height:700px)]:scale-90 lg:scale-[1.3]">
+      <div className="door-shrink absolute left-1/2 top-1/2 size-0 lg:scale-[1.3]">
         {[0, 1, 2].map((ring) => (
           <span
             key={ring}
@@ -161,11 +161,10 @@ export function DoorStage({ phase }: { phase: DoorPhase }) {
           </div>
         </div>
 
-        <span
-          className="door-fade-in absolute left-0 top-[3.55rem] -translate-x-1/2 whitespace-nowrap text-[15px] font-semibold tracking-[-0.01em] text-label [@media(max-height:560px)]:hidden"
-          style={vars({ "--d": "0.4s" })}
-        >
-          Homie
+        <span className="door-label absolute left-0 top-[3.55rem] -translate-x-1/2 whitespace-nowrap text-[15px] font-semibold tracking-[-0.01em] text-label">
+          <span className="door-fade-in block" style={vars({ "--d": "0.4s" })}>
+            Homie
+          </span>
         </span>
       </div>
 
@@ -185,7 +184,9 @@ export function DoorStage({ phase }: { phase: DoorPhase }) {
             transition={reduce ? { duration: 0.2 } : { type: "spring", bounce: 0.15, duration: 0.55, delay: 0.1 }}
             className="absolute inset-x-4 top-3 mx-auto max-w-[22rem]"
           >
-            <Notice dict={dict} done={phase === "done"} />
+            <div className="door-notice">
+              <Notice dict={dict} done={phase === "done"} />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -219,7 +220,7 @@ function ChipSlot({
 
   return (
     <div
-      className={`absolute lg:scale-110 ${chip.minor ? "[@media(max-height:700px)]:hidden" : ""} [@media(max-height:560px)]:hidden`}
+      className={`absolute lg:scale-110 ${chip.minor ? "door-minor" : "door-major"}`}
       style={{ left: `${x}%`, top: `${chip.y}%`, transform: `translate(-50%, -50%) rotate(${rtl ? -chip.tilt : chip.tilt}deg)` }}
     >
       <motion.div style={{ transform: lean }}>

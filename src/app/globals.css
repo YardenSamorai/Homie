@@ -424,6 +424,49 @@ a,
     transform: scale(1.03);
   }
 }
+/*
+ * The stage answers to its own height, not the screen's. When it gets short (a small phone, or the
+ * keyboard pushing the form up) the extras fade away and the house stays put, centered.
+ */
+.door-stage {
+  container: door / size;
+}
+.door-shrink {
+  transition: scale 0.3s var(--ease-out-strong);
+}
+.door-minor,
+.door-major,
+.door-label,
+.door-notice {
+  transition: opacity 0.25s var(--ease-out-strong);
+}
+@container door (max-height: 340px) {
+  .door-shrink {
+    scale: 0.9;
+  }
+  .door-minor {
+    opacity: 0;
+  }
+}
+@container door (max-height: 250px) {
+  .door-shrink {
+    scale: 0.8;
+  }
+  .door-major {
+    opacity: 0;
+  }
+}
+@container door (max-height: 280px) {
+  .door-notice {
+    opacity: 0;
+  }
+}
+@container door (max-height: 190px) {
+  .door-label {
+    opacity: 0;
+  }
+}
+
 .door-stage[data-paused] .door-float,
 .door-stage[data-paused] .door-drift,
 .door-stage[data-paused] .door-breathe {

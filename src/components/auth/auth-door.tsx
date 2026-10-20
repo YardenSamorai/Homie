@@ -213,16 +213,19 @@ export function AuthDoor() {
       initial={false}
       animate={leaving ? { opacity: 0, transform: reduce ? "scale(1)" : "scale(0.985)" } : { opacity: 1, transform: "scale(1)" }}
       transition={{ duration: 0.32, ease: easeOut }}
-      className="relative flex min-h-dvh flex-col bg-bg lg:grid lg:h-dvh lg:min-h-[40rem] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] [@media(orientation:landscape)_and_(max-height:560px)]:grid [@media(orientation:landscape)_and_(max-height:560px)]:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)]"
+      className="relative flex min-h-dvh flex-col bg-bg lg:grid lg:h-dvh lg:min-h-[40rem] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] [@media(min-width:640px)_and_(max-height:560px)]:grid [@media(min-width:640px)_and_(max-height:560px)]:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)]"
     >
-      {/* The house takes whatever height the form leaves, so the screen is composed top to bottom on any phone. */}
+      {/*
+        The house takes whatever height the form leaves, so the screen is composed top to bottom on any phone.
+        Layout switches key off width only: the iOS keyboard shrinks the height, and must never re-flow the page.
+      */}
       <div className="relative min-h-[max(9rem,30dvh)] flex-1 lg:m-3 lg:overflow-hidden lg:rounded-[36px] lg:bg-[color-mix(in_oklab,var(--sage-light)_45%,var(--bg))]">
         <div className="absolute inset-x-0 bottom-0 top-[env(safe-area-inset-top)] lg:top-0">
           <DoorStage phase={phase} />
         </div>
       </div>
 
-      <div className="relative shrink-0 px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] lg:flex lg:flex-col lg:items-center lg:justify-center lg:px-12 lg:pb-12 [@media(orientation:landscape)_and_(max-height:560px)]:flex [@media(orientation:landscape)_and_(max-height:560px)]:flex-col [@media(orientation:landscape)_and_(max-height:560px)]:justify-center [@media(orientation:landscape)_and_(max-height:560px)]:py-4">
+      <div className="relative shrink-0 px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] lg:flex lg:flex-col lg:items-center lg:justify-center lg:px-12 lg:pb-12 [@media(min-width:640px)_and_(max-height:560px)]:flex [@media(min-width:640px)_and_(max-height:560px)]:flex-col [@media(min-width:640px)_and_(max-height:560px)]:justify-center [@media(min-width:640px)_and_(max-height:560px)]:py-4">
         {/* A steady height for both steps, so changing step never nudges the house. */}
         <div className="mx-auto flex min-h-[21rem] w-full max-w-[24.5rem] flex-col">
           <AnimatePresence mode="wait" initial={false}>
