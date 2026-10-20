@@ -3,12 +3,22 @@
 import { useId, useState, type Ref } from "react";
 import { motion, useReducedMotion } from "motion/react";
 
-export const CODE_LENGTH = 6;
+/**
+ * Supabase sends 8 digits unless the project's Email OTP Length says otherwise; the demo login uses 6.
+ * NEXT_PUBLIC_OTP_LENGTH overrides both if the Supabase setting changes.
+ */
+const configured = Number(process.env.NEXT_PUBLIC_OTP_LENGTH);
+export const CODE_LENGTH =
+  Number.isInteger(configured) && configured >= 6 && configured <= 10
+    ? configured
+    : process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? 8
+      : 6;
 
 export type OtpState = "idle" | "error" | "success";
 
 /**
- * One real input under six painted cells, so paste, SMS/email autofill, and the numeric keyboard
+ * One real input under painted cells, so paste, SMS/email autofill, and the numeric keyboard
  * all behave natively. The cells are only a picture of the value.
  */
 export function OtpInput({
@@ -36,6 +46,8 @@ export function OtpInput({
   const [focused, setFocused] = useState(false);
   const digits = value.split("");
   const active = Math.min(value.length, CODE_LENGTH - 1);
+  // Eight cells still have to fit an iPhone SE, so longer codes get slimmer cells.
+  const long = CODE_LENGTH > 6;
 
   return (
     <div className="relative" dir="ltr">
@@ -74,7 +86,7 @@ export function OtpInput({
         }
         transition={{ duration: 0.42, ease: "easeOut" }}
         aria-hidden
-        className="pointer-events-none flex items-center gap-2"
+        className={`pointer-events-none flex items-center ${long ? "gap-1.5" : "gap-2"}`}
       >
         {Array.from({ length: CODE_LENGTH }, (_, i) => {
           const digit = digits[i];
@@ -89,9 +101,13 @@ export function OtpInput({
                   : "bg-surface text-label ring-[light-dark(rgb(40_30_20/0.09),rgb(255_255_255/0.1))]";
           return (
             <span key={i} className={`contents`}>
-              {i === CODE_LENGTH / 2 && <span className="mx-0.5 h-0.5 w-2.5 shrink-0 rounded-full bg-label-tertiary/60" />}
+              {i === Math.floor(CODE_LENGTH / 2) && (
+                <span className={`h-0.5 shrink-0 rounded-full bg-label-tertiary/60 ${long ? "mx-0 w-2" : "mx-0.5 w-2.5"}`} />
+              )}
               <span
-                className={`relative flex h-[3.75rem] min-w-0 flex-1 items-center justify-center rounded-[16px] text-[26px] font-semibold tabular-nums shadow-[0_6px_16px_-10px_rgb(40_30_20/0.25)] ring-1 transition-[background-color,color,box-shadow] duration-200 ease-[var(--ease-out-strong)] ${tone}`}
+                className={`relative flex min-w-0 flex-1 items-center justify-center font-semibold ${
+                  long ? "h-14 rounded-[14px] text-[22px]" : "h-[3.75rem] rounded-[16px] text-[26px]"
+                } tabular-nums shadow-[0_6px_16px_-10px_rgb(40_30_20/0.25)] ring-1 transition-[background-color,color,box-shadow] duration-200 ease-[var(--ease-out-strong)] ${tone}`}
                 style={{ transitionDelay: state === "success" ? `${i * 45}ms` : "0ms" }}
               >
                 {digit ? (

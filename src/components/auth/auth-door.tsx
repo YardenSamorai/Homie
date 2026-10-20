@@ -443,7 +443,7 @@ function CodeStep({
         </AnimatePresence>
       </motion.h1>
       <motion.p variants={itemVariants} className={`${lead} flex flex-wrap items-center gap-x-1.5 gap-y-1.5`}>
-        <span>{copy.codeSentTo}</span>
+        <span>{format(copy.codeSentTo, { count: CODE_LENGTH })}</span>
         <button
           type="button"
           onClick={onEditEmail}

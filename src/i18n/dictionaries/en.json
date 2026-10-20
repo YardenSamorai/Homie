@@ -179,7 +179,7 @@
     "sending": "Sending…",
     "newHere": "First time here? The same code creates your account.",
     "doorCodeTitle": "Check your email",
-    "codeSentTo": "We sent a 6-digit code to",
+    "codeSentTo": "We sent a {count}-digit code to",
     "editEmail": "Change email",
     "enter": "Continue",
     "checking": "Checking…",
