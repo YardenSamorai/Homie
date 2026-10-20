@@ -49,7 +49,7 @@ export function InviteLanding({ token }: { token: string }) {
 
   const ok = invite?.status === "ok";
   const you = session?.displayName ? memberFrom(session.displayName, "var(--pink)", "you") : "empty";
-  const href = session ? `/${locale}/join` : `/${locale}/register`;
+  const href = session ? `/${locale}/join` : `/${locale}/login`;
 
   return (
     <AuthShell
@@ -75,7 +75,7 @@ export function InviteLanding({ token }: { token: string }) {
         </Link>
       )}
       {invite && !ok && (
-        <Link href={session ? `/${locale}/setup` : `/${locale}/register`} className={primaryClass}>
+        <Link href={session ? `/${locale}/setup` : `/${locale}/login`} className={primaryClass}>
           {dict.auth.createInstead}
         </Link>
       )}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { verifyOtp } from "@/lib/auth/demo-server";
+import { householdFor, verifyOtp } from "@/lib/auth/demo-server";
+import { readAccount } from "@/lib/supabase/account";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabase } from "@/lib/supabase/server";
 
@@ -11,10 +12,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: result.error, retryAfter: result.retryAfter }, { status: 400 });
     }
     const { profile, isNew } = result;
+    const house = householdFor(profile.userId);
     return NextResponse.json({
       userId: profile.userId,
       email: profile.email,
       displayName: profile.displayName,
+      householdId: house?.id ?? null,
+      householdName: house?.name ?? null,
+      role: house?.role ?? null,
       isNew,
     });
   }
@@ -26,21 +31,13 @@ export async function POST(request: Request) {
     type: "email",
   });
   if (error || !data.user) {
-    const expired = /expir/i.test(error?.message ?? "");
-    return NextResponse.json({ error: expired ? "expired" : "code" }, { status: 400 });
+    // Supabase answers a wrong code and an expired one with the same error, so both read as "doesn't match".
+    const message = error?.message ?? "";
+    const reason = /rate|too many/i.test(message) || error?.status === 429 ? "locked" : "invalid";
+    return NextResponse.json({ error: reason, retryAfter: reason === "locked" ? 60 : undefined }, { status: 400 });
   }
 
-  await supabase.from("profiles").upsert({ id: data.user.id }, { onConflict: "id" });
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("display_name")
-    .eq("id", data.user.id)
-    .maybeSingle();
-
-  return NextResponse.json({
-    userId: data.user.id,
-    email: data.user.email ?? email,
-    displayName: profile?.display_name ?? null,
-    isNew: !profile?.display_name,
-  });
+  await supabase.from("profiles").upsert({ id: data.user.id }, { onConflict: "id", ignoreDuplicates: true });
+  const account = await readAccount(supabase, data.user);
+  return NextResponse.json({ ...account, isNew: !account.displayName });
 }

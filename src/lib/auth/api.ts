@@ -1,4 +1,4 @@
-import type { InvitePreview } from "./types";
+import type { AuthSession, InvitePreview } from "./types";
 
 type Fail = { error?: string; retryAfter?: number };
 
@@ -18,12 +18,11 @@ function post(input: string, body: unknown) {
 }
 
 export const authApi = {
-  sendOtp: (email: string) => parse<{ resendAt: number }>(post("/api/auth/otp", { email })),
+  sendOtp: (email: string, locale: string) => parse<{ resendAt: number }>(post("/api/auth/otp", { email, locale })),
 
-  verifyOtp: (email: string, code: string) =>
-    parse<{ userId: string; email: string; displayName: string | null; isNew: boolean }>(
-      post("/api/auth/verify", { email, code }),
-    ),
+  verifyOtp: (email: string, code: string) => parse<AuthSession & { isNew: boolean }>(post("/api/auth/verify", { email, code })),
+
+  currentSession: () => parse<{ account: AuthSession | null }>(fetch("/api/auth/session", { cache: "no-store" })),
 
   previewInvite: (token: string) => parse<InvitePreview>(fetch(`/api/invite/${encodeURIComponent(token)}`)),
 

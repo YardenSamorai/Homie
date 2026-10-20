@@ -19,7 +19,12 @@ function preferredLocale(request: NextRequest): Locale {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const firstSegment = pathname.split("/")[1];
+  const [, firstSegment, secondSegment] = pathname.split("/");
+  if (hasLocale(firstSegment) && secondSegment === "register") {
+    const door = request.nextUrl.clone();
+    door.pathname = `/${firstSegment}/login`;
+    return NextResponse.redirect(door, 308);
+  }
   if (hasLocale(firstSegment)) return refreshSupabaseSession(request);
 
   const url = request.nextUrl.clone();

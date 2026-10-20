@@ -272,6 +272,16 @@ export function acceptInvite(
   return { ok: true, householdId: house.id, householdName: house.name };
 }
 
+export function householdFor(userId: string) {
+  const house = [...households.values()].find((row) => row.memberIds.includes(userId));
+  if (!house) return null;
+  return {
+    id: house.id,
+    name: house.name,
+    role: house.memberIds[0] === userId ? ("admin" as const) : ("member" as const),
+  };
+}
+
 export function createHousehold(userId: string, name: string) {
   const id = crypto.randomUUID();
   households.set(id, { id, name: name.trim(), memberIds: [userId] });
