@@ -304,6 +304,7 @@ a,
 
 /* Sign-in stage: warm light pooling around the icon, the way a lit house reads from the street. */
 .door-glow {
+  animation: door-fade 1.2s ease-out both;
   background:
     radial-gradient(42% 38% at 50% 52%, color-mix(in oklab, var(--sage) 20%, transparent), transparent 72%),
     radial-gradient(38% 34% at 18% 22%, color-mix(in oklab, var(--peach) 90%, transparent), transparent 75%),
@@ -319,6 +320,128 @@ a,
 .door-ring {
   border: 1px solid color-mix(in oklab, var(--label) 7%, transparent);
   background: radial-gradient(closest-side, transparent 82%, color-mix(in oklab, var(--surface) 55%, transparent));
+}
+.door-halo {
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--sage) 26%, transparent), color-mix(in oklab, var(--peach) 30%, transparent) 55%, transparent);
+}
+
+/*
+ * Sign-in choreography, in CSS so it plays from the first paint, before any script loads.
+ * The house settles (0–0.6s), the rings and moments around it arrive (0.45–1.3s), then the welcome (0.95–1.6s).
+ * Each element sets --d for its own delay.
+ */
+.door-mark-in {
+  animation: door-mark 0.8s var(--ease-out-strong) var(--d, 0s) both;
+}
+.door-ring-in {
+  animation: door-ring 1s var(--ease-out-strong) var(--d, 0s) both;
+}
+.door-card-in {
+  animation: door-card 0.85s var(--ease-out-strong) var(--d, 0s) both;
+}
+.door-rise {
+  animation: door-rise 0.6s var(--ease-out-strong) var(--d, 0s) both;
+}
+.door-fade-in {
+  animation: door-fade 0.9s ease-out var(--d, 0s) both;
+}
+@keyframes door-mark {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.86);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0) scale(1.012);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes door-ring {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+@keyframes door-card {
+  from {
+    opacity: 0;
+    transform: translate(var(--fx, 0px), var(--fy, 10px)) scale(0.94);
+  }
+}
+@keyframes door-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes door-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* After the entrance, the scene breathes: slow, small, and out of step with itself. */
+.door-float {
+  animation: door-float var(--float, 8s) ease-in-out var(--d, 1.4s) infinite;
+}
+.door-drift {
+  animation: door-drift var(--float, 12s) ease-in-out var(--d, 1.6s) infinite;
+}
+.door-breathe {
+  animation: door-breathe 7s ease-in-out 1.2s infinite;
+}
+@keyframes door-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -5px, 0);
+  }
+}
+@keyframes door-drift {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.014);
+    opacity: 0.8;
+  }
+}
+@keyframes door-breathe {
+  0%,
+  100% {
+    opacity: 0.6;
+    transform: scale(0.97);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+}
+.door-stage[data-paused] .door-float,
+.door-stage[data-paused] .door-drift,
+.door-stage[data-paused] .door-breathe {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .door-mark-in,
+  .door-ring-in,
+  .door-card-in,
+  .door-rise,
+  .door-fade-in {
+    animation: door-fade 0.35s ease-out calc(var(--d, 0s) * 0.3) both;
+  }
+  .door-float,
+  .door-drift,
+  .door-breathe {
+    animation: none;
+  }
 }
 .otp-caret {
   animation: otp-caret 1.1s steps(1, end) infinite;

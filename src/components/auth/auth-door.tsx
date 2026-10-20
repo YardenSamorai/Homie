@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react";
 import { useRouter } from "next/navigation";
-import { Check, PenLine } from "lucide-react";
+import { Check, CircleAlert, PenLine } from "lucide-react";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
 import { authApi } from "@/lib/auth/api";
@@ -22,6 +22,23 @@ type Failure = { status?: number; body?: { error?: string; retryAfter?: number }
 
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Steps rise in one after another; the outgoing step lifts away as a single piece. */
+const stepVariants: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.05, delayChildren: 0.05 } },
+  exit: { opacity: 0, transform: "translateY(-10px)", transition: { duration: 0.2, ease: easeOut } },
+};
+const itemVariants: Variants = {
+  hidden: { opacity: 0, transform: "translateY(14px)" },
+  show: { opacity: 1, transform: "translateY(0px)", transition: { duration: 0.45, ease: easeOut } },
+};
+
+/** The page's first welcome, after the house and its moments have arrived. CSS, so it plays before hydration. */
+const welcome = (intro: boolean, order: number) =>
+  intro ? { className: "door-rise", style: { "--d": `${0.95 + order * 0.07}s` } as CSSProperties } : { className: "", style: undefined };
+
+const shakeFrames = ["translateX(0px)", "translateX(-9px)", "translateX(8px)", "translateX(-5px)", "translateX(3px)", "translateX(0px)"];
+
 /** The one way into Homie. New and returning people take the same path: email, code, home. */
 export function AuthDoor() {
   const { locale, dict } = useI18n();
@@ -35,11 +52,13 @@ export function AuthDoor() {
   const signOut = useAuth((s) => s.signOut);
 
   const [phase, setPhase] = useState<DoorPhase>("email");
+  const [intro, setIntro] = useState(true);
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [shake, setShake] = useState(0);
+  const [emailShake, setEmailShake] = useState(0);
   const [resendAt, setResendAt] = useState(0);
   const [now, setNow] = useState(0);
   const [leaving, setLeaving] = useState(false);
@@ -98,30 +117,38 @@ export function AuthDoor() {
 
   const wait = Math.max(0, Math.ceil((resendAt - now) / 1000));
 
+  const toCode = (clean: string, resendFrom: number) => {
+    setEmail(clean);
+    setNow(Date.now());
+    setResendAt(resendFrom);
+    setCode("");
+    submitted.current = false;
+    setIntro(false);
+    setPhase("code");
+  };
+
   const send = async () => {
     if (busy) return;
     const clean = email.trim().toLowerCase();
     if (!online) return fail("offline");
-    if (!emailPattern.test(clean)) return fail("email");
+    if (!emailPattern.test(clean)) {
+      setEmailShake((n) => n + 1);
+      return fail("email");
+    }
     setBusy(true);
     setError(null);
     try {
       const result = await authApi.sendOtp(clean, locale);
-      setEmail(clean);
-      setNow(Date.now());
-      setResendAt(result.resendAt);
-      setCode("");
-      submitted.current = false;
-      setPhase("code");
+      toCode(clean, result.resendAt);
     } catch (caught) {
       const { status, body } = caught as Failure;
       if (!status) fail("network");
-      else if (body?.error === "wait") {
-        setEmail(clean);
-        setNow(Date.now());
-        setResendAt(Date.now() + (body.retryAfter ?? 60) * 1000);
-        setPhase("code");
-      } else if (body?.error === "email") fail("email");
+      else if (body?.error === "wait") toCode(clean, Date.now() + (body.retryAfter ?? 60) * 1000);
+      else if (body?.error === "email") {
+        setEmailShake((n) => n + 1);
+        fail("email");
+      } else if (body?.error === "limit") fail("mailLimit");
+      else if (body?.error === "notAllowed") fail("mailNotAllowed");
       else fail("send");
     } finally {
       setBusy(false);
@@ -129,7 +156,11 @@ export function AuthDoor() {
   };
 
   const verify = async (next: string) => {
-    if (busy || phase === "done" || next.length !== CODE_LENGTH) return;
+    if (busy || phase === "done") return;
+    if (next.length !== CODE_LENGTH) {
+      setShake((n) => n + 1);
+      return;
+    }
     if (!online) return fail("offline");
     setBusy(true);
     setError(null);
@@ -177,34 +208,35 @@ export function AuthDoor() {
     setReturning(true);
   };
 
-  const step = {
-    initial: reduce ? { opacity: 0 } : { opacity: 0, transform: "translateY(10px)" },
-    animate: { opacity: 1, transform: "translateY(0px)" },
-    exit: reduce ? { opacity: 0 } : { opacity: 0, transform: "translateY(-8px)" },
-  };
-
   return (
     <motion.main
       initial={false}
       animate={leaving ? { opacity: 0, transform: reduce ? "scale(1)" : "scale(0.985)" } : { opacity: 1, transform: "scale(1)" }}
       transition={{ duration: 0.32, ease: easeOut }}
-      className="relative flex min-h-dvh flex-col bg-bg lg:grid lg:h-dvh lg:min-h-[40rem] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]"
+      className="relative flex min-h-dvh flex-col bg-bg lg:grid lg:h-dvh lg:min-h-[40rem] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] [@media(orientation:landscape)_and_(max-height:560px)]:grid [@media(orientation:landscape)_and_(max-height:560px)]:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)]"
     >
-      <div className="relative h-[clamp(15rem,46dvh,27rem)] shrink-0 [@media(max-height:560px)]:h-[9rem] lg:m-3 lg:h-auto lg:overflow-hidden lg:rounded-[36px] lg:bg-[color-mix(in_oklab,var(--sage-light)_45%,var(--bg))]">
-        <DoorStage phase={phase} />
+      {/* The house takes whatever height the form leaves, so the screen is composed top to bottom on any phone. */}
+      <div className="relative min-h-[max(9rem,30dvh)] flex-1 lg:m-3 lg:overflow-hidden lg:rounded-[36px] lg:bg-[color-mix(in_oklab,var(--sage-light)_45%,var(--bg))]">
+        <div className="absolute inset-x-0 bottom-0 top-[env(safe-area-inset-top)] lg:top-0">
+          <DoorStage phase={phase} />
+        </div>
       </div>
 
-      <div className="flex flex-1 flex-col px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2 lg:items-center lg:justify-center lg:px-12 lg:pb-12">
-        <div className="mx-auto flex w-full max-w-[24.5rem] flex-1 flex-col lg:flex-none">
+      <div className="relative shrink-0 px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] lg:flex lg:flex-col lg:items-center lg:justify-center lg:px-12 lg:pb-12 [@media(orientation:landscape)_and_(max-height:560px)]:flex [@media(orientation:landscape)_and_(max-height:560px)]:flex-col [@media(orientation:landscape)_and_(max-height:560px)]:justify-center [@media(orientation:landscape)_and_(max-height:560px)]:py-4">
+        {/* A steady height for both steps, so changing step never nudges the house. */}
+        <div className="mx-auto flex min-h-[21rem] w-full max-w-[24.5rem] flex-col">
           <AnimatePresence mode="wait" initial={false}>
             {phase === "email" ? (
               <motion.div
                 key="email"
-                {...step}
-                transition={{ duration: 0.26, ease: easeOut }}
+                variants={stepVariants}
+                initial="hidden"
+                animate="show"
+                exit="exit"
                 className="flex flex-1 flex-col"
               >
                 <EmailStep
+                  intro={intro}
                   email={email}
                   setEmail={(value) => {
                     setEmail(value);
@@ -212,6 +244,7 @@ export function AuthDoor() {
                   }}
                   error={error}
                   busy={busy}
+                  shake={emailShake}
                   autoFocus={returning}
                   onSubmit={() => void send()}
                 />
@@ -219,8 +252,10 @@ export function AuthDoor() {
             ) : (
               <motion.div
                 key="code"
-                {...step}
-                transition={{ duration: 0.26, ease: easeOut }}
+                variants={stepVariants}
+                initial="hidden"
+                animate="show"
+                exit="exit"
                 className="flex flex-1 flex-col"
               >
                 <CodeStep
@@ -249,40 +284,61 @@ export function AuthDoor() {
   );
 }
 
-const title = "text-[2.125rem] leading-[1.06] font-bold tracking-[-0.028em] text-balance lg:text-[2.75rem]";
-const lead = "mt-2.5 text-[16px] leading-[1.45] text-label-secondary text-pretty";
+const title = "text-[clamp(2rem,8.6vw,2.5rem)] leading-[1.06] font-bold tracking-[-0.02em] text-balance lg:text-[2.75rem]";
+const lead = "mt-2 text-[16px] leading-[1.5] text-label/[0.72] text-pretty";
 
 function EmailStep({
+  intro,
   email,
   setEmail,
   error,
   busy,
+  shake,
   autoFocus,
   onSubmit,
 }: {
+  intro: boolean;
   email: string;
   setEmail: (value: string) => void;
   error: string | null;
   busy: boolean;
+  shake: number;
   autoFocus: boolean;
   onSubmit: () => void;
 }) {
   const { dict } = useI18n();
+  const reduce = useReducedMotion();
   const copy = dict.auth;
+  const a = welcome(intro, 0);
+  const b = welcome(intro, 1);
+  const c = welcome(intro, 2);
+  const d = welcome(intro, 3);
 
   return (
     <>
-      <h1 className={title}>{copy.doorTitle}</h1>
-      <p className={lead}>{copy.doorLead}</p>
-      <form
+      <motion.h1 variants={itemVariants} className={`${title} ${a.className}`} style={a.style}>
+        {copy.doorTitle}
+      </motion.h1>
+      <motion.p variants={itemVariants} className={`${lead} ${b.className}`} style={b.style}>
+        {copy.doorLead}
+      </motion.p>
+      <motion.form
+        variants={itemVariants}
         noValidate
         onSubmit={(event) => {
           event.preventDefault();
           onSubmit();
         }}
-        className="mt-7 flex flex-col"
+        className={`mt-6 flex flex-col ${c.className}`}
+        style={c.style}
       >
-        <div className="relative">
+        <motion.div
+          key={shake}
+          initial={false}
+          animate={shake && !reduce ? { transform: shakeFrames } : undefined}
+          transition={{ duration: 0.42, ease: "easeOut" }}
+          className="relative"
+        >
           <input
             id="door-email"
             type="email"
@@ -300,21 +356,30 @@ function EmailStep({
             onChange={(event) => setEmail(event.target.value)}
             aria-invalid={error ? true : undefined}
             aria-describedby="door-message"
-            className={`peer h-[3.75rem] w-full rounded-[18px] bg-surface px-4 pt-5 text-[17px] text-label shadow-[0_8px_22px_-14px_rgb(40_30_20/0.3)] outline-none ring-1 transition-[box-shadow] duration-200 ease-[var(--ease-out-strong)] autofill:shadow-[inset_0_0_0_100px_var(--surface)] focus:ring-2 rtl:text-right ${
-              error ? "ring-danger/60 focus:ring-danger" : "ring-[light-dark(rgb(40_30_20/0.09),rgb(255_255_255/0.1))] focus:ring-accent"
+            style={{ outline: "none" }}
+            className={`peer h-[3.625rem] w-full rounded-[16px] bg-surface px-4 pt-[1.125rem] text-[17px] text-label shadow-[0_1px_2px_rgb(40_30_20/0.05)] outline-none ring-1 transition-[box-shadow] duration-200 ease-[var(--ease-out-strong)] autofill:shadow-[inset_0_0_0_100px_var(--surface)] focus:ring-2 rtl:text-right ${
+              error
+                ? "ring-danger/70 focus:shadow-[0_0_0_5px_color-mix(in_oklab,var(--danger)_12%,transparent)]"
+                : "ring-[light-dark(rgb(40_30_20/0.1),rgb(255_255_255/0.12))] focus:shadow-[0_0_0_5px_color-mix(in_oklab,var(--accent)_14%,transparent)] focus:ring-accent"
             }`}
           />
           <label
             htmlFor="door-email"
-            className="pointer-events-none absolute start-4 top-1/2 origin-left -translate-y-1/2 text-[17px] text-label-tertiary transition-[translate,scale,color] duration-200 ease-[var(--ease-out-strong)] peer-focus:-translate-y-[118%] peer-focus:scale-[0.76] peer-focus:text-accent peer-[:not(:placeholder-shown)]:-translate-y-[118%] peer-[:not(:placeholder-shown)]:scale-[0.76] rtl:origin-right"
+            className="pointer-events-none absolute start-4 top-1/2 origin-left -translate-y-1/2 text-[17px] text-label/50 transition-[translate,scale,color] duration-200 ease-[var(--ease-out-strong)] peer-focus:-translate-y-[118%] peer-focus:scale-[0.76] peer-focus:text-accent peer-[:not(:placeholder-shown)]:-translate-y-[118%] peer-[:not(:placeholder-shown)]:scale-[0.76] peer-[:not(:placeholder-shown)]:text-label/60 rtl:origin-right"
           >
             {copy.email}
           </label>
-        </div>
+        </motion.div>
         <Message id="door-message" error={error} />
-        <DoorButton state={busy ? "busy" : "idle"} disabled={!email.trim()} label={copy.sendCode} busyLabel={copy.sending} />
-      </form>
-      <p className="mt-auto pt-8 text-center text-[13px] leading-snug text-label-tertiary lg:mt-8 lg:pt-0">{copy.newHere}</p>
+        <DoorButton state={busy ? "busy" : "idle"} label={copy.sendCode} busyLabel={copy.sending} />
+      </motion.form>
+      <motion.p
+        variants={itemVariants}
+        className={`mt-auto flex min-h-11 items-center justify-center pt-3 text-center text-[13px] leading-snug text-label/[0.68] lg:mt-6 ${d.className}`}
+        style={d.style}
+      >
+        {copy.newHere}
+      </motion.p>
     </>
   );
 }
@@ -360,28 +425,42 @@ function CodeStep({
 
   return (
     <>
-      <h1 className={title}>{done ? copy.welcomeHome : copy.doorCodeTitle}</h1>
-      <p className={`${lead} flex flex-wrap items-center gap-x-1.5 gap-y-1`}>
+      <motion.h1 variants={itemVariants} className={title}>
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span
+            key={done ? "done" : "code"}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: easeOut }}
+            className="block"
+          >
+            {done ? copy.welcomeHome : copy.doorCodeTitle}
+          </motion.span>
+        </AnimatePresence>
+      </motion.h1>
+      <motion.p variants={itemVariants} className={`${lead} flex flex-wrap items-center gap-x-1.5 gap-y-1.5`}>
         <span>{copy.codeSentTo}</span>
         <button
           type="button"
           onClick={onEditEmail}
           disabled={done}
           aria-label={`${copy.editEmail}: ${email}`}
-          className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-fill py-1 pe-2.5 ps-3 text-[15px] font-medium text-label transition-[scale,opacity] duration-150 ease-out active:scale-[0.97] disabled:opacity-60"
+          className="inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-full bg-surface py-1 pe-2.5 ps-3 text-[15px] font-medium text-label shadow-[0_1px_2px_rgb(40_30_20/0.06)] ring-1 ring-[light-dark(rgb(40_30_20/0.08),rgb(255_255_255/0.1))] transition-[scale,box-shadow] duration-150 ease-out hover:shadow-[0_2px_8px_rgb(40_30_20/0.08)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-60"
         >
           <span dir="ltr" className="truncate">
             {email}
           </span>
-          <PenLine aria-hidden size={14} className="shrink-0 text-label-secondary" />
+          <PenLine aria-hidden size={14} className="shrink-0 text-label/60" />
         </button>
-      </p>
-      <form
+      </motion.p>
+      <motion.form
+        variants={itemVariants}
         onSubmit={(event) => {
           event.preventDefault();
           onVerify();
         }}
-        className="mt-7 flex flex-col"
+        className="mt-6 flex flex-col"
       >
         <OtpInput
           inputRef={input}
@@ -393,30 +472,27 @@ function CodeStep({
           disabled={done}
           describedBy="door-message"
         />
-        <Message id="door-message" error={error} hint={supabaseConfigured() ? null : copy.demoHint} />
+        <Message id="door-message" error={error} hint={done ? null : supabaseConfigured() ? copy.spamHint : copy.demoHint} />
         <DoorButton
           state={done ? "done" : busy ? "busy" : "idle"}
-          disabled={code.length !== CODE_LENGTH}
           label={copy.enter}
           busyLabel={copy.checking}
           doneLabel={copy.welcomeHome}
         />
-      </form>
-      <div className="mt-auto flex flex-col items-center gap-1 pt-8 text-center lg:mt-8 lg:pt-0">
+      </motion.form>
+      <motion.div
+        variants={itemVariants}
+        className={`mt-auto flex min-h-11 items-center justify-center pt-3 transition-opacity duration-200 lg:mt-6 ${done ? "opacity-0" : ""}`}
+      >
         <button
           type="button"
           onClick={onResend}
           disabled={busy || done || wait > 0}
-          className="min-h-11 px-3 text-[15px] font-medium text-accent transition-opacity active:opacity-60 disabled:text-label-tertiary"
+          className="min-h-11 rounded-full px-4 text-[15px] font-semibold text-accent transition-[opacity,background-color] duration-150 hover:bg-[color-mix(in_oklab,var(--accent)_8%,transparent)] active:opacity-60 focus-visible:outline-2 focus-visible:outline-accent disabled:bg-transparent disabled:font-medium disabled:text-label/[0.68]"
         >
-          {wait > 0 ? (
-            <span className="tabular-nums">{format(copy.resendAfter, { time: clock })}</span>
-          ) : (
-            copy.resendCode
-          )}
+          {wait > 0 ? <span className="tabular-nums">{format(copy.resendAfter, { time: clock })}</span> : copy.resendCode}
         </button>
-        <p className="text-[13px] leading-snug text-label-tertiary">{copy.spamHint}</p>
-      </div>
+      </motion.div>
     </>
   );
 }
@@ -426,7 +502,7 @@ function Message({ id, error, hint = null }: { id: string; error: string | null;
   const reduce = useReducedMotion();
   const text = error ?? hint;
   return (
-    <div id={id} aria-live="polite" className="min-h-[1.875rem] px-1 pb-2 pt-1.5">
+    <div id={id} aria-live="polite" className="flex min-h-[2.25rem] items-start px-1 pb-2 pt-2">
       <AnimatePresence mode="wait" initial={false}>
         {text && (
           <motion.p
@@ -435,8 +511,9 @@ function Message({ id, error, hint = null }: { id: string; error: string | null;
             animate={{ opacity: 1, transform: "translateY(0px)" }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.18, ease: easeOut }}
-            className={`text-[13px] leading-snug ${error ? "text-danger" : "text-label-tertiary"}`}
+            className={`flex items-start gap-1.5 text-[13px] leading-snug ${error ? "font-medium text-danger" : "text-label/[0.68]"}`}
           >
+            {error && <CircleAlert aria-hidden size={15} strokeWidth={2.25} className="mt-px shrink-0" />}
             {text}
           </motion.p>
         )}
@@ -447,13 +524,11 @@ function Message({ id, error, hint = null }: { id: string; error: string | null;
 
 function DoorButton({
   state,
-  disabled,
   label,
   busyLabel,
   doneLabel,
 }: {
   state: "idle" | "busy" | "done";
-  disabled: boolean;
   label: string;
   busyLabel: string;
   doneLabel?: string;
@@ -465,13 +540,12 @@ function DoorButton({
   return (
     <button
       type="submit"
-      disabled={disabled && !working}
       aria-disabled={working || undefined}
       aria-busy={state === "busy" || undefined}
-      className={`relative h-14 w-full overflow-hidden rounded-full text-[17px] font-semibold text-accent-contrast transition-[scale,background-color,opacity,box-shadow] duration-200 ease-[var(--ease-out-strong)] active:scale-[0.97] disabled:opacity-50 disabled:shadow-none ${
+      className={`relative h-14 w-full overflow-hidden rounded-full bg-[linear-gradient(180deg,rgb(255_255_255/0.16),rgb(255_255_255/0)_62%)] text-[17px] font-semibold tracking-[-0.01em] text-accent-contrast transition-[scale,box-shadow,filter,background-color] duration-200 ease-[var(--ease-out-strong)] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-accent ${
         state === "done"
-          ? "bg-green shadow-[0_10px_24px_-10px_color-mix(in_oklab,var(--green)_70%,transparent)]"
-          : "bg-accent shadow-[0_10px_24px_-10px_color-mix(in_oklab,var(--accent)_75%,transparent),inset_0_1px_0_rgb(255_255_255/0.22)]"
+          ? "bg-green shadow-[inset_0_1px_0_rgb(255_255_255/0.22),0_12px_26px_-12px_color-mix(in_oklab,var(--green)_80%,transparent)]"
+          : "bg-accent shadow-[inset_0_1px_0_rgb(255_255_255/0.22),0_1px_2px_rgb(37_79_65/0.22),0_12px_26px_-12px_color-mix(in_oklab,var(--accent)_80%,transparent)] hover:brightness-[1.05] hover:shadow-[inset_0_1px_0_rgb(255_255_255/0.22),0_1px_2px_rgb(37_79_65/0.22),0_16px_32px_-12px_color-mix(in_oklab,var(--accent)_85%,transparent)] active:scale-[0.97] active:brightness-95 active:duration-100"
       } ${working ? "pointer-events-none" : ""}`}
     >
       <AnimatePresence mode="popLayout" initial={false}>

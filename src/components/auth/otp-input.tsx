@@ -60,7 +60,9 @@ export function OtpInput({
         disabled={disabled}
         aria-invalid={state === "error" ? true : undefined}
         aria-describedby={describedBy}
-        className="absolute inset-0 z-10 w-full cursor-text bg-transparent text-[16px] text-transparent caret-transparent outline-none selection:bg-transparent"
+        // The cells show focus themselves; the global focus outline would box the whole row.
+        style={{ outline: "none" }}
+        className="absolute inset-0 z-10 w-full cursor-text bg-transparent text-[16px] text-transparent caret-transparent selection:bg-transparent"
       />
       <motion.div
         key={shake}

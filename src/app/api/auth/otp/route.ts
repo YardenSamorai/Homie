@@ -29,9 +29,16 @@ export async function POST(request: Request) {
     },
   });
   if (error) {
+    console.error("[homie] signInWithOtp failed", error.code, error.message);
     if (error.code === "email_address_invalid") return NextResponse.json({ error: "email" }, { status: 400 });
+    if (error.code === "email_address_not_authorized") return NextResponse.json({ error: "notAllowed" }, { status: 400 });
+    // The mailer's hourly cap: nothing was sent, so the person must not be sent on to a code screen.
+    if (error.code === "over_email_send_rate_limit" || /email rate limit/i.test(error.message)) {
+      return NextResponse.json({ error: "limit" }, { status: 429 });
+    }
+    // A code went out moments ago; the person can type that one.
     const seconds = Number(/(\d+)\s*second/i.exec(error.message)?.[1]);
-    if (/rate|limit|seconds|security purposes/i.test(error.message)) {
+    if (error.code === "over_request_rate_limit" || /security purposes|seconds/i.test(error.message)) {
       return NextResponse.json({ error: "wait", retryAfter: Number.isFinite(seconds) ? seconds : 60 }, { status: 429 });
     }
     return NextResponse.json({ error: "send" }, { status: 400 });
