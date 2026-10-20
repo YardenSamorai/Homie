@@ -262,31 +262,6 @@ html {
   overscroll-behavior: none;
 }
 
-/*
- * Invite / onboarding half-sheet. Rare first-time motion, so 500ms is the Apple drawer settle
- * (same curve as AddSheet), not a daily UI animation. Reduced motion keeps the fade.
- */
-.onboard-sheet {
-  transform: translateY(0);
-  transition: transform 500ms var(--ease-drawer);
-}
-@starting-style {
-  .onboard-sheet {
-    transform: translateY(100%);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .onboard-sheet {
-    transition: opacity 200ms var(--ease-out-strong);
-  }
-  @starting-style {
-    .onboard-sheet {
-      opacity: 0;
-      transform: none;
-    }
-  }
-}
-
 input,
 textarea,
 select {

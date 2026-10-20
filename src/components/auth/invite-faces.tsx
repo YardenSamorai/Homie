@@ -49,12 +49,12 @@ export function InviteFaces({
             {right === "empty" ? (
               <span
                 aria-hidden
-                className="flex size-[72px] items-center justify-center rounded-full bg-pink/15 text-pink ring-[5px] ring-sheet"
+                className="flex size-[72px] items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--pink)_15%,var(--bg))] text-pink ring-[5px] ring-bg"
               >
                 <Plus size={28} strokeWidth={1.75} />
               </span>
             ) : (
-              <span className="block rounded-full ring-[5px] ring-sheet">
+              <span className="block rounded-full ring-[5px] ring-bg">
                 <Avatar member={right} size={72} />
               </span>
             )}
@@ -77,7 +77,7 @@ function NameChip({ color, label }: { color: string; label: string }) {
         color,
         backgroundColor: `color-mix(in oklab, ${color} 16%, transparent)`,
       }}
-      className="max-w-[9.5rem] truncate rounded-full px-2.5 py-0.5 text-[12px] font-semibold"
+      className="max-w-[9.5rem] truncate rounded-full px-3 py-1 text-[13px] font-semibold"
     >
       {label}
     </span>

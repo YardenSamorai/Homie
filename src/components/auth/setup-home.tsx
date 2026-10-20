@@ -27,7 +27,8 @@ export function SetupHome() {
 
   const create = async () => {
     const clean = name.trim();
-    if (!clean || !session) return;
+    if (!session) return;
+    if (!clean) return setError(dict.auth.errors.name);
     if (!online) return setError(dict.auth.errors.offline);
     setBusy(true);
     setError(null);
@@ -76,11 +77,12 @@ export function SetupHome() {
             }}
             placeholder={dict.auth.homeNamePlaceholder}
             enterKeyHint="done"
+            style={{ outline: "none" }}
             className={fieldClass}
           />
           {error && <p className="mt-2 px-1 text-[13px] text-danger">{error}</p>}
         </div>
-        <button type="submit" disabled={busy || !name.trim()} className={homeClass}>
+        <button type="submit" disabled={busy} className={homeClass}>
           {dict.auth.createHome}
         </button>
       </form>

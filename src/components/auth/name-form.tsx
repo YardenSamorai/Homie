@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { useRouter } from "next/navigation";
+import { UserRound } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Tilt } from "@/components/ui/tilt";
 import { useI18n } from "@/i18n/dictionary-provider";
@@ -66,7 +67,13 @@ export function NameForm() {
       hero={
         <motion.div {...motionProps} className="flex justify-center">
           <Tilt className="drop-shadow-[0_10px_20px_rgb(40_30_20/0.16)]">
-            <Avatar member={memberFrom(name, inviterColor, "you")} size={88} />
+            {name.trim() ? (
+              <Avatar member={memberFrom(name, inviterColor, "you")} size={96} />
+            ) : (
+              <span className="flex size-24 items-center justify-center rounded-full bg-[color-mix(in_oklab,var(--indigo)_14%,var(--surface))] text-indigo ring-1 ring-[color-mix(in_oklab,var(--indigo)_20%,transparent)]">
+                <UserRound size={40} strokeWidth={1.75} />
+              </span>
+            )}
           </Tilt>
         </motion.div>
       }
@@ -91,11 +98,12 @@ export function NameForm() {
               setName(event.target.value);
               setError(null);
             }}
+            style={{ outline: "none" }}
             className={fieldClass}
           />
           {error && <p className="mt-2 px-1 text-[13px] text-danger">{error}</p>}
         </div>
-        <button type="submit" disabled={busy || !name.trim()} className={homeClass}>
+        <button type="submit" disabled={busy} className={homeClass}>
           {dict.auth.saveName}
         </button>
       </form>
