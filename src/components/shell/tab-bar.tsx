@@ -24,13 +24,13 @@ export function TabBar() {
           onClick={() => show(addKindFor(pathname, locale), selectedDay)}
           aria-label={dict.add.open}
           aria-haspopup="dialog"
-          className="pointer-events-auto absolute inset-x-0 top-0 z-10 mx-auto flex size-12 -translate-y-1/2 items-center justify-center rounded-full bg-coral text-white shadow-[0_8px_20px_rgb(232_162_127/0.45)] transition-[scale] duration-150 ease-out active:scale-95"
+          className="pointer-events-auto absolute inset-x-0 top-0 z-10 mx-auto flex size-14 -translate-y-1/2 items-center justify-center rounded-full bg-accent text-accent-contrast shadow-[0_10px_24px_color-mix(in_oklab,var(--accent)_38%,transparent),inset_0_1px_0_rgb(255_255_255/0.32)] ring-[3px] ring-surface transition-transform duration-150 ease-out active:scale-95"
         >
-          <Plus aria-hidden size={24} strokeWidth={2.5} />
+          <Plus aria-hidden size={26} strokeWidth={2.5} />
         </button>
         <nav
           aria-label={dict.nav.main}
-          className="pointer-events-auto rounded-[28px] bg-surface px-1 pb-1 pt-7 shadow-[0_10px_30px_rgb(37_79_65/0.1)]"
+          className="pointer-events-auto rounded-[28px] bg-surface px-1 pb-1 pt-8 shadow-[0_10px_30px_rgb(37_79_65/0.1)]"
         >
           <ul className="flex">
             {navItems

@@ -92,18 +92,7 @@ export function AuthShell({
   );
 }
 
+export { btnGhost as ghostClass, btnPrimary as homeClass, btnPrimary as primaryClass, btnSuccess as successClass } from "@/components/ui/button";
+
 export const fieldClass =
   "h-12 w-full rounded-xl bg-surface px-4 text-[16px] text-label shadow-card outline-none ring-1 ring-[light-dark(rgb(40_30_20/0.04),rgb(255_255_255/0.06))] placeholder:text-label-tertiary";
-
-export const primaryClass =
-  "flex min-h-12 w-full items-center justify-center rounded-full bg-accent text-[17px] font-semibold text-accent-contrast transition-transform duration-150 ease-out active:scale-[0.97] disabled:opacity-35";
-
-/** Terracotta — joining or creating the house, not a generic continue. */
-export const homeClass =
-  "flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-coral text-[17px] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97] disabled:opacity-35";
-
-export const successClass =
-  "flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-success text-[17px] font-semibold text-white transition-transform duration-150 ease-out active:scale-[0.97] disabled:opacity-35";
-
-export const ghostClass =
-  "flex min-h-11 w-full items-center justify-center text-[15px] font-semibold text-accent transition-opacity duration-150 active:opacity-60 disabled:opacity-35";

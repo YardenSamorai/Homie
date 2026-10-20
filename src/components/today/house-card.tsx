@@ -40,7 +40,7 @@ export function HouseCard({ openCount, day }: { openCount: number; day: DayKey |
           type="button"
           whileTap={press}
           onClick={() => show("task", day)}
-          className="min-h-11 rounded-full bg-accent px-5 text-[15px] font-semibold text-accent-contrast"
+          className="min-h-11 rounded-full bg-accent px-5 text-[15px] font-semibold text-accent-contrast shadow-[0_6px_16px_color-mix(in_oklab,var(--accent)_28%,transparent),inset_0_1px_0_rgb(255_255_255/0.28)]"
         >
           {dict.today.quickAddHint}
         </motion.button>

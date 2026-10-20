@@ -4,12 +4,14 @@ import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { CalendarCheck } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useI18n } from "@/i18n/dictionary-provider";
+import { format } from "@/i18n/format";
 import { localeDirection } from "@/i18n/config";
 import { diffDays, fromDayKey, type DayKey } from "@/lib/dates";
 import { easeOut, spring } from "@/lib/motion";
 import { isProjectedOn, type Member, type Task } from "@/lib/tasks";
 import { EventRow } from "@/components/events/event-row";
 import { sortEvents, type HouseEvent } from "@/lib/household";
+import { useAddSheet } from "@/lib/household-store";
 import { TaskRow, type RowKind } from "./task-row";
 
 type Row = { task: Task; kind: RowKind; caption?: string };
@@ -40,6 +42,7 @@ function TaskItems({
   members: Member[];
   onToggle: (task: Task) => void;
 }) {
+  const showEdit = useAddSheet((s) => s.showEdit);
   if (rows.length === 0) return null;
   return (
     <ul>
@@ -62,6 +65,7 @@ function TaskItems({
                 caption={caption}
                 assignee={members.find((m) => m.id === task.assigneeId)}
                 onToggle={onToggle}
+                onOpen={kind === "projected" ? undefined : (next) => showEdit({ kind: "task", id: next.id })}
               />
             </motion.li>
           );
@@ -89,6 +93,7 @@ export function DayTasks({
   onToggle: (task: Task) => void;
 }) {
   const { locale, dict } = useI18n();
+  const showEdit = useAddSheet((s) => s.showEdit);
   const relative = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
   const shortDate = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" });
 
@@ -150,7 +155,14 @@ export function DayTasks({
                     <ul>
                       {dayEvents.map((event) => (
                         <li key={event.id} className={rowRule}>
-                          <EventRow event={event} />
+                          <button
+                            type="button"
+                            onClick={() => showEdit({ kind: "event", id: event.id })}
+                            aria-label={format(dict.add.editNamed, { title: event.title })}
+                            className="block w-full touch-manipulation select-none text-start active:bg-fill"
+                          >
+                            <EventRow event={event} />
+                          </button>
                         </li>
                       ))}
                     </ul>

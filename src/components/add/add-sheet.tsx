@@ -29,17 +29,54 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
   const { dict } = useI18n();
   const kind = useAddSheet((s) => s.kind);
   const setKind = useAddSheet((s) => s.setKind);
-  const { members, currentUserId, addTask, addShoppingItem, addEvent } = useHousehold();
+  const editing = useAddSheet((s) => s.edit);
+  const {
+    members,
+    currentUserId,
+    tasks,
+    shopping,
+    events,
+    addTask,
+    updateTask,
+    deleteTask,
+    addShoppingItem,
+    updateShoppingItem,
+    deleteShoppingItem,
+    addEvent,
+    updateEvent,
+    deleteEvent,
+  } = useHousehold();
   const titleRef = useRef<HTMLInputElement>(null);
+  const seed =
+    editing?.kind === "task"
+      ? tasks.find((task) => task.id === editing.id)
+      : editing?.kind === "shopping"
+        ? shopping.find((item) => item.id === editing.id)
+        : editing?.kind === "event"
+          ? events.find((event) => event.id === editing.id)
+          : undefined;
 
-  const [title, setTitle] = useState("");
-  const [note, setNote] = useState("");
-  const [assigneeId, setAssigneeId] = useState(currentUserId);
-  const [hasDate, setHasDate] = useState(true);
-  const [date, setDate] = useState<DayKey>(defaultDay);
-  const [recurrence, setRecurrence] = useState<Recurrence>("none");
-  const [allDay, setAllDay] = useState(false);
-  const [time, setTime] = useState("19:00");
+  const [title, setTitle] = useState(() => {
+    if (!seed) return "";
+    return "title" in seed ? seed.title : seed.name;
+  });
+  const [note, setNote] = useState(() => {
+    if (!seed) return "";
+    if ("note" in seed) return seed.note ?? "";
+    if ("prep" in seed) return seed.prep ?? "";
+    return "";
+  });
+  const [assigneeId, setAssigneeId] = useState(() => (seed && "assigneeId" in seed ? seed.assigneeId : currentUserId));
+  const [hasDate, setHasDate] = useState(() => (seed && "dueDate" in seed ? Boolean(seed.dueDate) : true));
+  const [date, setDate] = useState<DayKey>(() => {
+    if (seed && "dueDate" in seed && seed.dueDate) return seed.dueDate;
+    if (seed && "date" in seed) return seed.date;
+    return defaultDay;
+  });
+  const [recurrence, setRecurrence] = useState<Recurrence>(() => (seed && "recurrence" in seed ? seed.recurrence : "none"));
+  const [allDay, setAllDay] = useState(() => (seed && "time" in seed ? seed.time === null : false));
+  const [time, setTime] = useState(() => (seed && "time" in seed && seed.time ? seed.time : "19:00"));
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const valid = title.trim().length > 0 && (kind !== "event" || date !== "");
 
@@ -50,43 +87,65 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
     const extra = note.trim() || null;
     if (kind === "task") {
       const dueDate = hasDate && date ? date : null;
-      addTask({ title: clean, assigneeId, dueDate, recurrence: dueDate ? recurrence : "none" });
+      const next = { title: clean, assigneeId, dueDate, recurrence: dueDate ? recurrence : "none" as Recurrence };
+      if (editing?.kind === "task") updateTask(editing.id, next);
+      else addTask(next);
     } else if (kind === "shopping") {
-      addShoppingItem({ name: clean, note: extra });
-      const from = centerOf(e.currentTarget.querySelector("button[type=submit]"));
-      if (from) dropInCart({ name: clean, from });
+      if (editing?.kind === "shopping") updateShoppingItem(editing.id, { name: clean, note: extra });
+      else {
+        addShoppingItem({ name: clean, note: extra });
+        const from = centerOf(e.currentTarget.querySelector("button[type=submit]"));
+        if (from) dropInCart({ name: clean, from });
+      }
+    } else if (editing?.kind === "event") {
+      updateEvent(editing.id, { title: clean, date, time: allDay ? null : time, prep: extra });
     } else {
       addEvent({ title: clean, date, time: allDay ? null : time, prep: extra });
     }
     onDone();
   };
 
+  const remove = () => {
+    if (!editing) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    if (editing.kind === "task") deleteTask(editing.id);
+    else if (editing.kind === "shopping") deleteShoppingItem(editing.id);
+    else deleteEvent(editing.id);
+    onDone();
+  };
+
   const placeholder = { task: dict.add.taskTitle, shopping: dict.add.itemName, event: dict.add.eventTitle }[kind];
+  const heading = editing ? dict.add.editTitles[kind] : dict.add.titles[kind];
 
   return (
     <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col">
       <div className="grid shrink-0 grid-cols-[1fr_auto_1fr] items-center px-4 pb-3 pt-1">
         <Drawer.Close className="justify-self-start py-2 text-[17px] text-accent">{dict.add.cancel}</Drawer.Close>
-        <Drawer.Title className="text-[17px] font-semibold">{dict.add.titles[kind]}</Drawer.Title>
+        <Drawer.Title className="text-[17px] font-semibold">{heading}</Drawer.Title>
         <button
           type="submit"
           disabled={!valid}
           className="justify-self-end py-2 text-[17px] font-semibold text-accent transition-opacity duration-150 disabled:opacity-35"
         >
-          {dict.add.submit}
+          {editing ? dict.add.save : dict.add.submit}
         </button>
       </div>
 
       <Drawer.Content className="flex min-h-0 flex-1 touch-auto flex-col gap-6 overflow-y-auto overscroll-contain px-4 pb-[max(env(safe-area-inset-bottom),20px)]">
-        <SegmentedControl
-          label={dict.add.open}
-          value={kind}
-          onChange={(next) => {
-            setKind(next);
-            titleRef.current?.focus();
-          }}
-          options={kinds.map((value) => ({ value, label: dict.add.kinds[value] }))}
-        />
+        {!editing && (
+          <SegmentedControl
+            label={dict.add.open}
+            value={kind}
+            onChange={(next) => {
+              setKind(next);
+              titleRef.current?.focus();
+            }}
+            options={kinds.map((value) => ({ value, label: dict.add.kinds[value] }))}
+          />
+        )}
 
         <div className={groupClass}>
           <input
@@ -207,13 +266,23 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
             </div>
           </>
         )}
+
+        {editing && (
+          <button
+            type="button"
+            onClick={remove}
+            className="min-h-12 w-full rounded-xl text-[17px] font-semibold text-danger transition-transform duration-150 ease-out active:scale-[0.97]"
+          >
+            {confirmDelete ? dict.add.deleteConfirm : dict.add.delete}
+          </button>
+        )}
       </Drawer.Content>
     </form>
   );
 }
 
 export function AddSheet() {
-  const { open, day, setOpen } = useAddSheet();
+  const { open, day, edit, setOpen } = useAddSheet();
   const today = useClock()?.today;
   return (
     <Drawer.Root open={open} onOpenChange={setOpen}>
@@ -223,7 +292,9 @@ export function AddSheet() {
           <Drawer.Viewport className="fixed inset-0 z-50 flex touch-none items-end justify-center">
             <Drawer.Popup className="flex max-h-[calc(100dvh-3rem)] min-h-[60dvh] w-full max-w-lg touch-none flex-col rounded-t-[28px] bg-sheet text-label shadow-[0_-8px_40px_rgb(40_30_20/0.16)] outline-none [transform:translateY(var(--drawer-swipe-movement-y))] transition-transform duration-[450ms] ease-[var(--ease-ios)] will-change-transform data-swiping:select-none data-starting-style:[transform:translateY(100%)] data-ending-style:[transform:translateY(100%)] data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)] motion-reduce:transition-opacity motion-reduce:data-starting-style:[transform:none] motion-reduce:data-starting-style:opacity-0 motion-reduce:data-ending-style:[transform:none] motion-reduce:data-ending-style:opacity-0">
               <div aria-hidden className="mx-auto mb-1 mt-2 h-[5px] w-9 shrink-0 rounded-full bg-label-tertiary" />
-              {today && <AddForm defaultDay={day ?? today} onDone={() => setOpen(false)} />}
+              {today && (
+                <AddForm key={edit ? `${edit.kind}-${edit.id}` : "new"} defaultDay={day ?? today} onDone={() => setOpen(false)} />
+              )}
             </Drawer.Popup>
           </Drawer.Viewport>
         </Drawer.Portal>

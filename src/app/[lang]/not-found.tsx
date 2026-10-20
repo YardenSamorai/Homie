@@ -10,7 +10,7 @@ export default async function NotFound() {
       <h1 className="text-[28px] font-bold tracking-tight">{dict.notFound.title}</h1>
       <Link
         href={`/${locale}`}
-        className="flex min-h-11 items-center rounded-full bg-accent px-6 text-[17px] font-semibold text-accent-contrast transition-transform active:scale-95"
+        className="flex min-h-11 items-center rounded-full bg-accent px-6 text-[17px] font-semibold text-accent-contrast shadow-[0_6px_16px_color-mix(in_oklab,var(--accent)_28%,transparent),inset_0_1px_0_rgb(255_255_255/0.28)] transition-transform active:scale-95"
       >
         {dict.notFound.back}
       </Link>

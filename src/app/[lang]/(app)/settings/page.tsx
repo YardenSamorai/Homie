@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { AppearancePicker } from "./appearance-picker";
 import { HouseholdCard } from "./household-card";
+import { HouseholdName } from "./household-name";
 import { InviteCard } from "./invite-card";
 import { GuideReplay } from "@/components/shell/guide-replay";
 import { LanguagePicker } from "./language-picker";
@@ -19,6 +20,9 @@ export default async function SettingsPage() {
     <>
       <PageHeader title={dict.settings.title} subtitle={dict.settings.lead} />
       <div className="flex flex-col gap-8">
+        <Card title={dict.settings.homeName}>
+          <HouseholdName />
+        </Card>
         <Card title={dict.settings.household}>
           <HouseholdCard />
         </Card>

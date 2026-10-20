@@ -6,9 +6,10 @@ import { MonthGrid } from "@/components/calendar/month-grid";
 import { EventRow } from "@/components/events/event-row";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useI18n } from "@/i18n/dictionary-provider";
+import { format } from "@/i18n/format";
 import { addDays, diffDays, fromDayKey, startOfMonth, type DayKey } from "@/lib/dates";
 import { PREP_WINDOW_DAYS, sortEvents } from "@/lib/household";
-import { useHousehold, useSelectedDay } from "@/lib/household-store";
+import { useAddSheet, useHousehold, useSelectedDay } from "@/lib/household-store";
 import { useClock } from "@/lib/use-clock";
 
 const separator =
@@ -19,6 +20,7 @@ export function CalendarView() {
   const today = useClock()?.today ?? null;
   const { events } = useHousehold();
   const setSharedDay = useSelectedDay((s) => s.setDay);
+  const showEdit = useAddSheet((s) => s.showEdit);
 
   const [picked, setPicked] = useState<DayKey | null>(null);
   const [months, setMonths] = useState<{ current: DayKey | null; previous: DayKey | null }>({ current: null, previous: null });
@@ -78,7 +80,14 @@ export function CalendarView() {
             <ul>
               {dayEvents.map((event) => (
                 <li key={event.id} className={separator}>
-                  <EventRow event={event} />
+                  <button
+                    type="button"
+                    onClick={() => showEdit({ kind: "event", id: event.id })}
+                    aria-label={format(dict.add.editNamed, { title: event.title })}
+                    className="block w-full touch-manipulation select-none text-start active:bg-fill"
+                  >
+                    <EventRow event={event} />
+                  </button>
                 </li>
               ))}
             </ul>

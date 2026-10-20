@@ -96,6 +96,10 @@
     "open": "Add",
     "cancel": "Cancel",
     "submit": "Add",
+    "save": "Save",
+    "delete": "Delete",
+    "deleteConfirm": "Delete?",
+    "editNamed": "Edit \"{title}\"",
     "kinds": {
       "task": "Task",
       "shopping": "Shopping",
@@ -105,6 +109,11 @@
       "task": "New task",
       "shopping": "New item",
       "event": "New event"
+    },
+    "editTitles": {
+      "task": "Edit task",
+      "shopping": "Edit item",
+      "event": "Edit event"
     },
     "taskTitle": "What needs doing?",
     "assignee": "Assigned to",
@@ -232,6 +241,10 @@
   "settings": {
     "title": "Our home",
     "lead": "The place you share",
+    "homeName": "Home name",
+    "homeNameHint": "This is how the home appears to both of you.",
+    "rename": "Save name",
+    "renamed": "Name updated",
     "household": "Household",
     "invite": "Invite to the household",
     "inviteHint": "A one-time link for the other parent, valid for seven days.",

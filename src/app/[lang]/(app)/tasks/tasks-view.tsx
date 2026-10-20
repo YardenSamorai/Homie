@@ -7,7 +7,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { TaskRow, type RowKind } from "@/components/today/task-row";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { fromDayKey } from "@/lib/dates";
-import { useHousehold } from "@/lib/household-store";
+import { useAddSheet, useHousehold } from "@/lib/household-store";
 import type { Task } from "@/lib/tasks";
 import { useClock } from "@/lib/use-clock";
 
@@ -20,6 +20,7 @@ export function TasksView() {
   const { locale, dict } = useI18n();
   const today = useClock()?.today ?? null;
   const { tasks, members, currentUserId, toggleTask } = useHousehold();
+  const showEdit = useAddSheet((s) => s.showEdit);
   const [scope, setScope] = useState<Scope>("all");
   const [showDone, setShowDone] = useState(false);
   const shortDate = new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short" });
@@ -85,6 +86,7 @@ export function TasksView() {
                     caption={captionOf(task, group.key)}
                     assignee={members.find((m) => m.id === task.assigneeId)}
                     onToggle={(t) => toggleTask(t, today)}
+                    onOpen={(next) => showEdit({ kind: "task", id: next.id })}
                   />
                 </li>
               ))}

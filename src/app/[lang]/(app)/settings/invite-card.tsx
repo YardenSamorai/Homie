@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { btnPrimarySm, btnSecondarySm } from "@/components/ui/button";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { authApi } from "@/lib/auth/api";
 import { useAuth } from "@/lib/auth/session";
@@ -58,21 +59,11 @@ export function InviteCard() {
       {url && <p className="break-all text-[13px] leading-snug text-label-secondary">{url}</p>}
       {error && <p className="text-[13px] text-danger">{error}</p>}
       <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void copy()}
-          className="flex min-h-11 items-center rounded-full bg-accent px-4 text-[15px] font-semibold text-accent-contrast transition-transform duration-150 ease-out active:scale-[0.97] disabled:opacity-35"
-        >
+        <button type="button" disabled={busy} onClick={() => void copy()} className={btnPrimarySm}>
           {copied ? dict.auth.copied : url ? dict.auth.copyLink : dict.auth.inviteTitle}
         </button>
         {url && (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => void mint()}
-            className="flex min-h-11 items-center rounded-full px-4 text-[15px] font-semibold text-accent transition-opacity active:opacity-60"
-          >
+          <button type="button" disabled={busy} onClick={() => void mint()} className={btnSecondarySm}>
             {dict.auth.newLink}
           </button>
         )}

@@ -278,3 +278,11 @@ export function createHousehold(userId: string, name: string) {
   persist();
   return { id, name: name.trim() };
 }
+
+export function renameHousehold(id: string, name: string, userId: string) {
+  const house = households.get(id);
+  if (!house || !house.memberIds.includes(userId)) return null;
+  house.name = name.trim();
+  persist();
+  return { id: house.id, name: house.name };
+}

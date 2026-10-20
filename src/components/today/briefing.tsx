@@ -61,7 +61,6 @@ export function QuickAddBar({ day }: { day: DayKey }) {
 function Tile({
   href,
   color,
-  surface,
   count,
   label,
   caption,
@@ -69,7 +68,6 @@ function Tile({
 }: {
   href: string;
   color: string;
-  surface: string;
   count: number;
   label: string;
   caption: string;
@@ -78,15 +76,17 @@ function Tile({
   return (
     <Link
       href={href}
-      className="flex min-h-[5.5rem] min-w-0 touch-manipulation select-none flex-col justify-between gap-2 rounded-[22px] px-3.5 py-3 transition-transform duration-150 ease-out active:scale-[0.97]"
-      style={{ backgroundColor: surface }}
+      className="flex min-h-[5.5rem] min-w-0 touch-manipulation select-none overflow-hidden rounded-[22px] bg-surface shadow-card ring-1 ring-[light-dark(rgb(40_30_20/0.06),rgb(255_255_255/0.08))] transition-transform duration-150 ease-out active:scale-[0.97]"
     >
-      <span className="truncate text-[15px] font-semibold leading-tight" style={{ color }}>
-        {label}
-      </span>
-      <span className="flex min-w-0 flex-col">
-        <span className="text-[22px] font-bold leading-none tabular-nums tracking-tight text-label">{count}</span>
-        <span className={`mt-1 truncate text-[12px] leading-snug ${captionClass}`}>{caption}</span>
+      <span aria-hidden className="w-1.5 shrink-0" style={{ backgroundColor: color }} />
+      <span className="flex min-w-0 flex-1 flex-col justify-between gap-2 px-3.5 py-3">
+        <span className="truncate text-[15px] font-semibold leading-tight" style={{ color }}>
+          {label}
+        </span>
+        <span className="flex min-w-0 flex-col">
+          <span className="text-[22px] font-bold leading-none tabular-nums tracking-tight text-label">{count}</span>
+          <span className={`mt-1 truncate text-[12px] leading-snug ${captionClass}`}>{caption}</span>
+        </span>
       </span>
     </Link>
   );
@@ -120,7 +120,6 @@ export function DomainTiles({ today }: { today: DayKey }) {
         <Tile
           href={`/${locale}/tasks`}
           color="var(--sage)"
-          surface="var(--sage-light)"
           count={openToday}
           label={dict.nav.tasks}
           caption={taskCaption}
@@ -129,7 +128,6 @@ export function DomainTiles({ today }: { today: DayKey }) {
         <Tile
           href={`/${locale}/shopping`}
           color="var(--coral)"
-          surface="var(--peach)"
           count={shopLeft}
           label={dict.nav.shopping}
           caption={shopLeft === 0 ? dict.today.shoppingEmpty : dict.today.tileShopLeft}
@@ -137,7 +135,6 @@ export function DomainTiles({ today }: { today: DayKey }) {
         <Tile
           href={`/${locale}/calendar`}
           color="var(--sage-dark)"
-          surface="var(--lavender)"
           count={nextEvent ? 1 : 0}
           label={dict.today.nextEvent}
           caption={nextEvent ? nextEvent.title : dict.today.noNextEvent}

@@ -7,6 +7,7 @@ import { useI18n } from "@/i18n/dictionary-provider";
 import { authApi } from "@/lib/auth/api";
 import { useAuth, useAuthReady } from "@/lib/auth/session";
 import { useOnlineStatus } from "@/lib/use-online-status";
+import { btnSecondary } from "@/components/ui/button";
 import { AuthShell, ghostClass, homeClass, successClass } from "./auth-shell";
 import { InviteFaces, inviterColor, memberFrom } from "./invite-faces";
 
@@ -100,7 +101,7 @@ export function InvitePartner() {
           {copied ? <Check size={18} strokeWidth={2.25} /> : <Link2 size={18} strokeWidth={2.25} />}
           {copied ? dict.auth.copied : dict.auth.copyLink}
         </button>
-        <button type="button" disabled={busy} onClick={() => void mint()} className={ghostClass}>
+        <button type="button" disabled={busy} onClick={() => void mint()} className={btnSecondary}>
           {dict.auth.newLink}
         </button>
         <p className="px-1 text-[13px] text-label-tertiary">{dict.auth.newLinkHint}</p>

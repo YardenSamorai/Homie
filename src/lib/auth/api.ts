@@ -40,6 +40,15 @@ export const authApi = {
   createHousehold: (userId: string, name: string) =>
     parse<{ id: string; name: string }>(post("/api/household", { userId, name })),
 
+  renameHousehold: (id: string, userId: string, name: string) =>
+    parse<{ id: string; name: string }>(
+      fetch("/api/household", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id, userId, name }),
+      }),
+    ),
+
   household: (id: string) =>
     parse<{ id: string; name: string; members: { id: string; name: string }[] }>(
       fetch(`/api/household?id=${encodeURIComponent(id)}`),

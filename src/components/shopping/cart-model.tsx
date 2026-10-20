@@ -28,14 +28,14 @@ function slotAt(index: number): Vec3 {
   const layer = Math.floor(index / 3);
   return {
     x: 0.08,
-    y: 0.4 + layer * 0.12,
-    z: -0.12 + column * 0.14,
+    y: 0.38 + layer * 0.16,
+    z: -0.16 + column * 0.16,
   };
 }
 
 /**
- * The clay cart on the page background. Matching groceries drop into the basket
- * and stay there until they are checked off the list.
+ * The clay cart on the page background. It rolls in place so it reads as moving,
+ * and matching groceries drop into the basket until they are checked off.
  */
 export function CartModel({ items }: { items: CartPassenger[] }) {
   const host = useRef<HTMLDivElement>(null);
@@ -81,13 +81,16 @@ export function CartModel({ items }: { items: CartPassenger[] }) {
       scene.add(fill);
 
       const shadow = shadowBlot(THREE);
-      scene.add(shadow);
+      const rig = new THREE.Group();
+      scene.add(rig);
+      rig.add(shadow);
 
       const loader = new GLTFLoader();
       const templates = new Map<string, Promise<import("three").Object3D>>();
       const placed = new Map<string, import("three").Object3D>();
       const slots = new Map<string, number>();
       const drops: Drop[] = [];
+      const wheels: import("three").Object3D[] = [];
 
       const load = (src: string) => {
         let pending = templates.get(src);
@@ -112,7 +115,10 @@ export function CartModel({ items }: { items: CartPassenger[] }) {
 
       const cart = await load("/models/cart.glb");
       if (!alive) return;
-      scene.add(cart);
+      rig.add(cart);
+      cart.traverse((node) => {
+        if (/wheel|tire|rim/i.test(node.name)) wheels.push(node);
+      });
       const bounds = new THREE.Box3().setFromObject(cart);
       const center = bounds.getCenter(new THREE.Vector3());
       const size = bounds.getSize(new THREE.Vector3());
@@ -139,7 +145,7 @@ export function CartModel({ items }: { items: CartPassenger[] }) {
         }
         for (const [id, object] of placed) {
           if (wanted.has(id)) continue;
-          scene.remove(object);
+          rig.remove(object);
           placed.delete(id);
           slots.delete(id);
         }
@@ -155,7 +161,7 @@ export function CartModel({ items }: { items: CartPassenger[] }) {
               const holder = new THREE.Group();
               holder.add(object);
               restOnFloor(THREE, object);
-              scene.add(holder);
+              rig.add(holder);
               placed.set(id, holder);
               if (reduce) {
                 holder.position.set(to.x, to.y, to.z);
@@ -186,6 +192,17 @@ export function CartModel({ items }: { items: CartPassenger[] }) {
           );
           if (t === 1) drops.splice(i, 1);
         }
+        if (!reduce) {
+          const travel = Math.sin(now * 0.00048);
+          const hop = Math.abs(Math.sin(now * 0.0042));
+          rig.position.z = travel * 0.16;
+          rig.position.y = hop * 0.012;
+          rig.rotation.x = (hop - 0.5) * 0.025;
+          rig.rotation.y = travel * 0.05;
+          for (const wheel of wheels) {
+            wheel.rotation.x = now * 0.0034;
+          }
+        }
         renderer.render(scene, camera);
         frame = requestAnimationFrame(tick);
       };
@@ -213,7 +230,7 @@ export function CartModel({ items }: { items: CartPassenger[] }) {
     };
   }, []);
 
-  return <div ref={host} className="h-full w-full" />;
+  return <div ref={host} className="relative z-10 h-full w-full" />;
 }
 
 function restOnFloor(THREE: typeof import("three"), object: import("three").Object3D) {
@@ -223,7 +240,7 @@ function restOnFloor(THREE: typeof import("three"), object: import("three").Obje
   const box = new THREE.Box3().setFromObject(object);
   const size = box.getSize(new THREE.Vector3());
   const span = Math.max(size.x, size.y, size.z, 0.0001);
-  object.scale.setScalar(0.2 / span);
+  object.scale.setScalar(0.3 / span);
   object.updateMatrixWorld(true);
   const fitted = new THREE.Box3().setFromObject(object);
   const center = fitted.getCenter(new THREE.Vector3());

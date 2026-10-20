@@ -96,6 +96,10 @@
     "open": "הוספה",
     "cancel": "ביטול",
     "submit": "הוספה",
+    "save": "שמירה",
+    "delete": "מחיקה",
+    "deleteConfirm": "למחוק?",
+    "editNamed": "עריכת \"{title}\"",
     "kinds": {
       "task": "משימה",
       "shopping": "קניות",
@@ -105,6 +109,11 @@
       "task": "משימה חדשה",
       "shopping": "פריט חדש",
       "event": "אירוע חדש"
+    },
+    "editTitles": {
+      "task": "עריכת משימה",
+      "shopping": "עריכת פריט",
+      "event": "עריכת אירוע"
     },
     "taskTitle": "מה צריך לעשות?",
     "assignee": "באחריות",
@@ -232,6 +241,10 @@
   "settings": {
     "title": "הבית שלנו",
     "lead": "המקום המשותף של שניכם",
+    "homeName": "שם הבית",
+    "homeNameHint": "כך הבית מופיע אצל שניכם.",
+    "rename": "שמירת השם",
+    "renamed": "השם עודכן",
     "household": "בני הבית",
     "invite": "הזמנה לבית",
     "inviteHint": "קישור חד־פעמי להורה השני, תקף לשבעה ימים.",

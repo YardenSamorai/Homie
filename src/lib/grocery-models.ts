@@ -17,5 +17,12 @@ function normalize(value: string) {
 
 export function groceryModelFor(name: string) {
   const key = normalize(name);
-  return models.find((model) => model.names.some((alias) => normalize(alias) === key))?.src ?? null;
+  return (
+    models.find((model) =>
+      model.names.some((alias) => {
+        const match = normalize(alias);
+        return key === match || key.startsWith(`${match} `);
+      }),
+    )?.src ?? null
+  );
 }

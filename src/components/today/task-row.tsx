@@ -18,12 +18,14 @@ export function TaskRow({
   kind,
   caption,
   onToggle,
+  onOpen,
 }: {
   task: Task;
   assignee: Member | undefined;
   kind: RowKind;
   caption?: string;
   onToggle: (task: Task) => void;
+  onOpen?: (task: Task) => void;
 }) {
   const { dict } = useI18n();
   const done = kind === "done";
@@ -34,6 +36,25 @@ export function TaskRow({
     projected ? { text: dict.today.projected, danger: false } : null,
     task.recurrence !== "none" ? { text: dict.today.recurrence[task.recurrence], danger: false, repeat: true } : null,
   ].filter(Boolean) as { text: string; danger: boolean; repeat?: boolean }[];
+
+  const body = (
+    <>
+      <StrikeText done={done}>{task.title}</StrikeText>
+      {meta.length > 0 && (
+        <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[13px] text-label-secondary">
+          {meta.map((item, index) => (
+            <span key={item.text} className="flex min-w-0 items-center gap-1.5">
+              {index > 0 && <span aria-hidden className="text-label-tertiary">·</span>}
+              <span className={`flex min-w-0 items-center gap-1 ${item.danger ? "text-danger" : ""}`}>
+                {item.repeat && <Repeat aria-hidden size={11} strokeWidth={2.25} />}
+                <span className="truncate">{item.text}</span>
+              </span>
+            </span>
+          ))}
+        </span>
+      )}
+    </>
+  );
 
   return (
     <div className={`flex min-h-[52px] items-center gap-3 px-4 py-2 ${projected ? "opacity-55" : ""} ${done ? "opacity-70" : ""}`}>
@@ -58,22 +79,18 @@ export function TaskRow({
         </motion.button>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <StrikeText done={done}>{task.title}</StrikeText>
-        {meta.length > 0 && (
-          <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[13px] text-label-secondary">
-            {meta.map((item, index) => (
-              <span key={item.text} className="flex min-w-0 items-center gap-1.5">
-                {index > 0 && <span aria-hidden className="text-label-tertiary">·</span>}
-                <span className={`flex min-w-0 items-center gap-1 ${item.danger ? "text-danger" : ""}`}>
-                  {item.repeat && <Repeat aria-hidden size={11} strokeWidth={2.25} />}
-                  <span className="truncate">{item.text}</span>
-                </span>
-              </span>
-            ))}
-          </span>
-        )}
-      </div>
+      {onOpen ? (
+        <button
+          type="button"
+          onClick={() => onOpen(task)}
+          aria-label={format(dict.add.editNamed, { title: task.title })}
+          className="flex min-w-0 flex-1 touch-manipulation select-none flex-col text-start"
+        >
+          {body}
+        </button>
+      ) : (
+        <div className="flex min-w-0 flex-1 flex-col">{body}</div>
+      )}
 
       {assignee && (
         <span

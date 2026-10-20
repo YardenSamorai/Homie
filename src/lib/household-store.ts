@@ -22,10 +22,16 @@ type HouseholdState = {
   setRoster: (currentUserId: string, members: Member[]) => void;
   toggleTask: (task: Task, today: DayKey) => void;
   addTask: (task: NewTask) => void;
+  updateTask: (id: string, patch: NewTask) => void;
+  deleteTask: (id: string) => void;
   toggleShoppingItem: (id: string) => void;
   clearBought: () => void;
   addShoppingItem: (item: NewShoppingItem) => void;
+  updateShoppingItem: (id: string, patch: NewShoppingItem) => void;
+  deleteShoppingItem: (id: string) => void;
   addEvent: (event: NewEvent) => void;
+  updateEvent: (id: string, patch: NewEvent) => void;
+  deleteEvent: (id: string) => void;
 };
 
 const now = () => new Date().toISOString();
@@ -58,6 +64,13 @@ export const useHousehold = create<HouseholdState>()((set) => ({
       tasks: [...tasks, { ...task, id: crypto.randomUUID(), spawnedFromId: null, editedAt: null, completedAt: null }],
     })),
 
+  updateTask: (id, patch) =>
+    set(({ tasks }) => ({
+      tasks: tasks.map((task) => (task.id === id ? { ...task, ...patch, editedAt: now() } : task)),
+    })),
+
+  deleteTask: (id) => set(({ tasks }) => ({ tasks: tasks.filter((task) => task.id !== id) })),
+
   toggleShoppingItem: (id) =>
     set(({ shopping }) => ({
       shopping: shopping.map((item) => (item.id === id ? { ...item, checkedAt: item.checkedAt ? null : now() } : item)),
@@ -70,20 +83,37 @@ export const useHousehold = create<HouseholdState>()((set) => ({
       shopping: [{ ...item, id: crypto.randomUUID(), addedBy: currentUserId, checkedAt: null }, ...shopping],
     })),
 
+  updateShoppingItem: (id, patch) =>
+    set(({ shopping }) => ({
+      shopping: shopping.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+    })),
+
+  deleteShoppingItem: (id) => set(({ shopping }) => ({ shopping: shopping.filter((item) => item.id !== id) })),
+
   addEvent: (event) =>
     set(({ events, currentUserId }) => ({
       events: [...events, { ...event, id: crypto.randomUUID(), createdBy: currentUserId }],
     })),
+
+  updateEvent: (id, patch) =>
+    set(({ events }) => ({
+      events: events.map((event) => (event.id === id ? { ...event, ...patch } : event)),
+    })),
+
+  deleteEvent: (id) => set(({ events }) => ({ events: events.filter((event) => event.id !== id) })),
 }));
 
 export type AddKind = "task" | "shopping" | "event";
+export type EditTarget = { kind: AddKind; id: string };
 
 type AddSheetState = {
   open: boolean;
   kind: AddKind;
   /** Day the new task or event defaults to. */
   day: DayKey | null;
+  edit: EditTarget | null;
   show: (kind: AddKind, day?: DayKey | null) => void;
+  showEdit: (target: EditTarget) => void;
   setOpen: (open: boolean) => void;
   setKind: (kind: AddKind) => void;
 };
@@ -92,8 +122,10 @@ export const useAddSheet = create<AddSheetState>()((set) => ({
   open: false,
   kind: "task",
   day: null,
-  show: (kind, day = null) => set({ open: true, kind, day }),
-  setOpen: (open) => set({ open }),
+  edit: null,
+  show: (kind, day = null) => set({ open: true, kind, day, edit: null }),
+  showEdit: (edit) => set({ open: true, kind: edit.kind, day: null, edit }),
+  setOpen: (open) => set(open ? { open } : { open: false, edit: null }),
   setKind: (kind) => set({ kind }),
 }));
 

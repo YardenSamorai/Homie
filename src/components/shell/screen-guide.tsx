@@ -85,7 +85,7 @@ export function ScreenGuide() {
             <button
               type="button"
               onClick={() => close("done")}
-              className="min-h-11 rounded-full bg-accent px-5 text-[15px] font-semibold text-accent-contrast active:scale-[0.97]"
+              className="min-h-11 rounded-full bg-accent px-5 text-[15px] font-semibold text-accent-contrast shadow-[0_6px_16px_color-mix(in_oklab,var(--accent)_28%,transparent),inset_0_1px_0_rgb(255_255_255/0.28)] active:scale-[0.97]"
             >
               {dict.guides.done}
             </button>

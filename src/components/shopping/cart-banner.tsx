@@ -7,6 +7,7 @@ import { CartModel } from "@/components/shopping/cart-model";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { centerOf, subscribeCartDrops } from "@/lib/cart-drop";
 import { grocerySuggestions, type GroceryHint } from "@/lib/groceries";
+import { groceryModelFor } from "@/lib/grocery-models";
 import { easeOut } from "@/lib/motion";
 
 type Point = { x: number; y: number };
@@ -42,6 +43,7 @@ export function CartBanner({
 
   useEffect(() => {
     return subscribeCartDrops((drop) => {
+      if (groceryModelFor(drop.name)) return;
       const basket = centerOf(basketRef.current);
       if (!basket) return;
       const next: Toss = { id: ++tossId, name: drop.name, from: drop.from, to: basket };
