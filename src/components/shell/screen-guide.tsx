@@ -30,6 +30,10 @@ function readDone(userId: string): Record<string, string> {
   }
 }
 
+export function guideSeen(userId: string, id: GuideId) {
+  return Boolean(readDone(userId)[`${id}-v1`]);
+}
+
 function writeDone(userId: string, id: string, status: "done" | "skipped") {
   try {
     const all = JSON.parse(localStorage.getItem(GUIDE_KEY) ?? "{}") as Record<string, Record<string, string>>;

@@ -309,6 +309,16 @@
       "en": "English"
     }
   },
+  "install": {
+    "title": "Homie on your Home Screen",
+    "body": "Opens like an app: full screen, no address bar, and its own icon.",
+    "action": "Install",
+    "later": "Not now",
+    "gotIt": "Got it",
+    "stepShare": "Tap Share in Safari's toolbar. If you don't see it, tap ⋯ first.",
+    "stepAdd": "Choose “Add to Home Screen”, then “Add”.",
+    "settingsTitle": "App"
+  },
   "connection": {
     "offline": "You're offline. Your changes will be saved when the connection is back.",
     "online": "Back online"

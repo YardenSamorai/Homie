@@ -3,6 +3,7 @@ import { Heebo } from "next/font/google";
 import { locales, localeDirection } from "@/i18n/config";
 import { getDictionary, getLocale } from "@/i18n/get-dictionary";
 import { skyScript } from "@/lib/sky";
+import splashScreens from "@/lib/splash-screens.json";
 import { themeScript } from "@/lib/theme-script";
 import { Providers } from "../providers";
 import "../globals.css";
@@ -22,7 +23,9 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { default: dict.meta.title, template: `%s · ${dict.meta.title}` },
     description: dict.meta.description,
     applicationName: "Homie",
-    appleWebApp: { title: "Homie", statusBarStyle: "default" },
+    appleWebApp: { capable: true, title: "Homie", statusBarStyle: "default", startupImage: splashScreens },
+    // iOS before 16.4 opens full screen from this tag rather than the manifest.
+    other: { "apple-mobile-web-app-capable": "yes" },
   };
 }
 
@@ -31,7 +34,10 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   interactiveWidget: "resizes-content",
-  themeColor: "#f8f7f2",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8f7f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#121614" },
+  ],
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/[lang]">) {

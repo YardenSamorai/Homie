@@ -7,7 +7,7 @@ export const themes = ["light", "dark", "system"] as const;
 export type Theme = (typeof themes)[number];
 
 const changeEvent = "homie:theme";
-const statusBar = { light: "#f2f2f7", dark: "#000000" };
+const statusBar = { light: "#f8f7f2", dark: "#121614" };
 
 function read(): Theme {
   const value = document.documentElement.dataset.theme;
