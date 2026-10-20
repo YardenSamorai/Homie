@@ -18,8 +18,25 @@ function preferredLocale(request: NextRequest): Locale {
 }
 
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
   const [, firstSegment, secondSegment] = pathname.split("/");
+  const lang = hasLocale(firstSegment) ? firstSegment : preferredLocale(request);
+
+  // A link from the sign-in email can land on any page (Supabase falls back to the Site URL when the
+  // callback isn't allow-listed). Finish signing in wherever it lands, or explain that it expired.
+  const code = searchParams.get("code");
+  if (code) {
+    const callback = new URL("/api/auth/callback", request.nextUrl.origin);
+    callback.searchParams.set("code", code);
+    callback.searchParams.set("lang", lang);
+    return NextResponse.redirect(callback);
+  }
+  if (searchParams.get("error_code") || searchParams.get("error_description")) {
+    const door = new URL(`/${lang}/login`, request.nextUrl.origin);
+    door.searchParams.set("link", "expired");
+    return NextResponse.redirect(door);
+  }
+
   if (hasLocale(firstSegment) && secondSegment === "register") {
     const door = request.nextUrl.clone();
     door.pathname = `/${firstSegment}/login`;
