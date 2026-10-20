@@ -393,13 +393,28 @@ a,
 .door-breathe {
   animation: door-breathe 7s ease-in-out 1.2s infinite;
 }
+/*
+ * Two loops of different lengths on nested elements, rise and sway, so each card wanders along a path
+ * that never quite repeats and never stops, the way something hangs in air.
+ */
+.door-sway {
+  animation: door-sway calc(var(--float, 7s) * 1.37) ease-in-out infinite alternate;
+}
 @keyframes door-float {
   0%,
   100% {
     transform: translate3d(0, 0, 0);
   }
   50% {
-    transform: translate3d(0, -5px, 0);
+    transform: translate3d(0, calc(var(--ay, 10px) * -1), 0);
+  }
+}
+@keyframes door-sway {
+  from {
+    transform: translate3d(calc(var(--ax, 5px) * -1), 0, 0) rotate(calc(var(--ar, 1deg) * -1));
+  }
+  to {
+    transform: translate3d(var(--ax, 5px), 0, 0) rotate(var(--ar, 1deg));
   }
 }
 @keyframes door-drift {
@@ -468,6 +483,7 @@ a,
 }
 
 .door-stage[data-paused] .door-float,
+.door-stage[data-paused] .door-sway,
 .door-stage[data-paused] .door-drift,
 .door-stage[data-paused] .door-breathe {
   animation-play-state: paused;
@@ -481,6 +497,7 @@ a,
     animation: door-fade 0.35s ease-out calc(var(--d, 0s) * 0.3) both;
   }
   .door-float,
+  .door-sway,
   .door-drift,
   .door-breathe {
     animation: none;

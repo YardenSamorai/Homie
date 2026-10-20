@@ -27,8 +27,9 @@ type Chip = {
   tilt: number;
   /** How far the chip leans with the pointer, relative to the others. */
   depth: number;
-  /** Seconds per float cycle. Different for each chip so they never move in step. */
+  /** Seconds per float loop, and how far it travels. Different for each chip so they never move in step. */
   float: number;
+  drift: { x: number; y: number; lean: number };
   /** Chips under the code notification step aside while it is shown. */
   top: boolean;
   /** Fades first when the stage gets short (a small phone, or the keyboard open), so the house keeps its room. */
@@ -37,10 +38,10 @@ type Chip = {
 
 // Listed in the order they arrive: around the house, starting top and going clockwise.
 const chips: Chip[] = [
-  { key: "shopping", x: 27, y: 14, tilt: -3, depth: 0.9, float: 8.4, top: true, minor: false },
-  { key: "task", x: 72, y: 24, tilt: 2.5, depth: 1.2, float: 9.6, top: true, minor: false },
-  { key: "event", x: 71, y: 75, tilt: 2, depth: 1.05, float: 8.8, top: false, minor: true },
-  { key: "home", x: 28, y: 86, tilt: -2, depth: 0.8, float: 10.4, top: false, minor: true },
+  { key: "shopping", x: 27, y: 14, tilt: -3, depth: 0.9, float: 6.4, drift: { x: 5, y: 11, lean: 1.2 }, top: true, minor: false },
+  { key: "task", x: 72, y: 24, tilt: 2.5, depth: 1.2, float: 7.3, drift: { x: -6, y: 13, lean: -1.4 }, top: true, minor: false },
+  { key: "event", x: 71, y: 75, tilt: 2, depth: 1.05, float: 6.9, drift: { x: 4, y: 10, lean: 1 }, top: false, minor: true },
+  { key: "home", x: 28, y: 86, tilt: -2, depth: 0.8, float: 7.8, drift: { x: -5, y: 12, lean: -1.1 }, top: false, minor: true },
 ];
 
 const cardsStart = 0.62;
@@ -229,17 +230,28 @@ function ChipSlot({
           animate={hidden ? { opacity: 0, transform: "translateY(6px) scale(0.97)" } : { opacity: 1, transform: "translateY(0px) scale(1)" }}
           transition={{ duration: hidden ? 0.22 : 0.45, ease: easeOut, delay: hidden ? 0 : 0.35 }}
         >
-          <div className="door-float" style={vars({ "--float": `${chip.float}s`, "--d": `${arrive + 0.85}s` })}>
-            {/* Each chip arrives from a little closer to the house, as if it came out of it. */}
-            <div
-              className="door-card-in"
-              style={vars({
-                "--d": `${arrive}s`,
-                "--fx": `${Math.round((50 - x) * 0.35)}px`,
-                "--fy": `${Math.round((50 - chip.y) * 0.35)}px`,
-              })}
-            >
-              {children}
+          <div
+            className="door-float"
+            style={vars({
+              "--float": `${chip.float}s`,
+              "--d": `${arrive + 0.85}s`,
+              "--ax": `${rtl ? -chip.drift.x : chip.drift.x}px`,
+              "--ay": `${chip.drift.y}px`,
+              "--ar": `${rtl ? -chip.drift.lean : chip.drift.lean}deg`,
+            })}
+          >
+            <div className="door-sway">
+              {/* Each chip arrives from a little closer to the house, as if it came out of it. */}
+              <div
+                className="door-card-in"
+                style={vars({
+                  "--d": `${arrive}s`,
+                  "--fx": `${Math.round((50 - x) * 0.35)}px`,
+                  "--fy": `${Math.round((50 - chip.y) * 0.35)}px`,
+                })}
+              >
+                {children}
+              </div>
             </div>
           </div>
         </motion.div>
