@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Homie</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: light-dark(#f8f7f2, #121614);
+        --label: light-dark(#1f2d28, #f3f6f4);
+        --accent: light-dark(#527a67, #8fbfab);
+      }
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        padding: max(24px, env(safe-area-inset-top)) 32px max(24px, env(safe-area-inset-bottom));
+        background: var(--bg);
+        color: var(--label);
+        font-family: -apple-system, system-ui, sans-serif;
+        text-align: center;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      svg {
+        width: 88px;
+        height: 88px;
+        border-radius: 21px;
+        box-shadow: 0 18px 40px -12px rgb(37 79 65 / 0.45);
+      }
+      h1 {
+        margin: 12px 0 0;
+        font-size: 24px;
+        font-weight: 700;
+      }
+      p {
+        margin: 0;
+        max-width: 18rem;
+        font-size: 16px;
+        line-height: 1.45;
+        opacity: 0.72;
+      }
+      button {
+        margin-top: 14px;
+        height: 52px;
+        padding: 0 32px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #fff;
+        font: inherit;
+        font-size: 17px;
+        font-weight: 600;
+        transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+      }
+      button:active {
+        transform: scale(0.97);
+      }
+    </style>
+  </head>
+  <body>
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#7aa18c" />
+          <stop offset="1" stop-color="#3f6655" />
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" fill="url(#bg)" />
+      <path
+        d="M32 15.5 48.5 29V44.5a3.5 3.5 0 0 1-3.5 3.5H19a3.5 3.5 0 0 1-3.5-3.5V29Z"
+        fill="#fbf7f0"
+        stroke="#fbf7f0"
+        stroke-width="2.4"
+        stroke-linejoin="round"
+      />
+      <rect x="27" y="32" width="10" height="9" rx="2.4" fill="#cfe0d5" />
+    </svg>
+    <h1 id="title">אין חיבור לאינטרנט</h1>
+    <p id="body">Homie צריך חיבור כדי להציג את הבית. בדקו את ה-Wi-Fi או את הנתונים הסלולריים.</p>
+    <button id="retry" type="button">לנסות שוב</button>
+    <script>
+      if (!/^he|^iw/i.test(navigator.language)) {
+        document.documentElement.lang = "en";
+        document.documentElement.dir = "ltr";
+        document.getElementById("title").textContent = "You're offline";
+        document.getElementById("body").textContent =
+          "Homie needs a connection to show your home. Check Wi-Fi or mobile data.";
+        document.getElementById("retry").textContent = "Try again";
+      }
+      window.Capacitor?.Plugins?.SplashScreen?.hide();
+      document.getElementById("retry").addEventListener("click", () => {
+        location.href = "https://homie-taupe.vercel.app";
+      });
+    </script>
+  </body>
+</html>
