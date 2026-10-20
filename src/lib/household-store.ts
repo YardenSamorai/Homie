@@ -4,6 +4,7 @@ import { create } from "zustand";
 import type { DayKey } from "./dates";
 import type { HouseEvent, ShoppingItem } from "./household";
 import { completeTask, uncompleteTask, type Member, type Task } from "./tasks";
+import { removeEvent, removeShoppingItem, removeTask, saveEvent, saveShoppingItem, saveTask } from "./supabase/lists";
 
 type NewTask = Pick<Task, "title" | "assigneeId" | "dueDate" | "recurrence">;
 type NewShoppingItem = Pick<ShoppingItem, "name" | "note">;
@@ -20,6 +21,7 @@ type HouseholdState = {
   events: HouseEvent[];
   syncSelf: (self: Member | null) => void;
   setRoster: (currentUserId: string, members: Member[]) => void;
+  replaceLists: (lists: { tasks: Task[]; shopping: ShoppingItem[]; events: HouseEvent[] }) => void;
   toggleTask: (task: Task, today: DayKey) => void;
   addTask: (task: NewTask) => void;
   updateTask: (id: string, patch: NewTask) => void;
@@ -37,7 +39,7 @@ type HouseholdState = {
 const now = () => new Date().toISOString();
 
 /** Client-side household data. Stands in for Supabase until the backend is wired (SPEC §9). */
-export const useHousehold = create<HouseholdState>()((set) => ({
+export const useHousehold = create<HouseholdState>()((set, get) => ({
   currentUserId: "",
   members: [],
   tasks: [],
@@ -48,59 +50,94 @@ export const useHousehold = create<HouseholdState>()((set) => ({
     set({
       currentUserId: self?.id ?? "",
       members: self ? [self] : [],
+      tasks: [],
+      shopping: [],
+      events: [],
     }),
 
   setRoster: (currentUserId, members) => set({ currentUserId, members }),
 
-  toggleTask: (task, today) =>
-    set(({ tasks }) => ({
-      tasks: task.completedAt
-        ? uncompleteTask(tasks, task.id)
-        : completeTask(tasks, task.id, today, now(), crypto.randomUUID()),
-    })),
+  replaceLists: (lists) => set(lists),
 
-  addTask: (task) =>
-    set(({ tasks }) => ({
-      tasks: [...tasks, { ...task, id: crypto.randomUUID(), spawnedFromId: null, editedAt: null, completedAt: null }],
-    })),
+  toggleTask: (task, today) => {
+    const previous = get().tasks;
+    const tasks = task.completedAt
+      ? uncompleteTask(previous, task.id)
+      : completeTask(previous, task.id, today, now(), crypto.randomUUID());
+    set({ tasks });
+    const kept = new Set(tasks.map((item) => item.id));
+    for (const item of tasks) void saveTask(item);
+    for (const item of previous) if (!kept.has(item.id)) void removeTask(item.id);
+  },
 
-  updateTask: (id, patch) =>
-    set(({ tasks }) => ({
-      tasks: tasks.map((task) => (task.id === id ? { ...task, ...patch, editedAt: now() } : task)),
-    })),
+  addTask: (task) => {
+    const created: Task = { ...task, id: crypto.randomUUID(), spawnedFromId: null, editedAt: null, completedAt: null };
+    set(({ tasks }) => ({ tasks: [...tasks, created] }));
+    void saveTask(created);
+  },
 
-  deleteTask: (id) => set(({ tasks }) => ({ tasks: tasks.filter((task) => task.id !== id) })),
+  updateTask: (id, patch) => {
+    const tasks = get().tasks.map((task) => (task.id === id ? { ...task, ...patch, editedAt: now() } : task));
+    set({ tasks });
+    const updated = tasks.find((task) => task.id === id);
+    if (updated) void saveTask(updated);
+  },
 
-  toggleShoppingItem: (id) =>
-    set(({ shopping }) => ({
-      shopping: shopping.map((item) => (item.id === id ? { ...item, checkedAt: item.checkedAt ? null : now() } : item)),
-    })),
+  deleteTask: (id) => {
+    set(({ tasks }) => ({ tasks: tasks.filter((task) => task.id !== id) }));
+    void removeTask(id);
+  },
 
-  clearBought: () => set(({ shopping }) => ({ shopping: shopping.filter((item) => !item.checkedAt) })),
+  toggleShoppingItem: (id) => {
+    const shopping = get().shopping.map((item) =>
+      item.id === id ? { ...item, checkedAt: item.checkedAt ? null : now() } : item,
+    );
+    set({ shopping });
+    const updated = shopping.find((item) => item.id === id);
+    if (updated) void saveShoppingItem(updated);
+  },
 
-  addShoppingItem: (item) =>
-    set(({ shopping, currentUserId }) => ({
-      shopping: [{ ...item, id: crypto.randomUUID(), addedBy: currentUserId, checkedAt: null }, ...shopping],
-    })),
+  clearBought: () => {
+    const bought = get().shopping.filter((item) => item.checkedAt);
+    set(({ shopping }) => ({ shopping: shopping.filter((item) => !item.checkedAt) }));
+    for (const item of bought) void removeShoppingItem(item.id);
+  },
 
-  updateShoppingItem: (id, patch) =>
-    set(({ shopping }) => ({
-      shopping: shopping.map((item) => (item.id === id ? { ...item, ...patch } : item)),
-    })),
+  addShoppingItem: (item) => {
+    const created: ShoppingItem = { ...item, id: crypto.randomUUID(), addedBy: get().currentUserId, checkedAt: null };
+    set(({ shopping }) => ({ shopping: [created, ...shopping] }));
+    void saveShoppingItem(created);
+  },
 
-  deleteShoppingItem: (id) => set(({ shopping }) => ({ shopping: shopping.filter((item) => item.id !== id) })),
+  updateShoppingItem: (id, patch) => {
+    const shopping = get().shopping.map((item) => (item.id === id ? { ...item, ...patch } : item));
+    set({ shopping });
+    const updated = shopping.find((item) => item.id === id);
+    if (updated) void saveShoppingItem(updated);
+  },
 
-  addEvent: (event) =>
-    set(({ events, currentUserId }) => ({
-      events: [...events, { ...event, id: crypto.randomUUID(), createdBy: currentUserId }],
-    })),
+  deleteShoppingItem: (id) => {
+    set(({ shopping }) => ({ shopping: shopping.filter((item) => item.id !== id) }));
+    void removeShoppingItem(id);
+  },
 
-  updateEvent: (id, patch) =>
-    set(({ events }) => ({
-      events: events.map((event) => (event.id === id ? { ...event, ...patch } : event)),
-    })),
+  addEvent: (event) => {
+    const created: HouseEvent = { ...event, id: crypto.randomUUID(), createdBy: get().currentUserId };
+    set(({ events }) => ({ events: [...events, created] }));
+    void saveEvent(created);
+  },
 
-  deleteEvent: (id) => set(({ events }) => ({ events: events.filter((event) => event.id !== id) })),
+  updateEvent: (id, patch) => {
+    const events = get().events.map((event) => (event.id === id ? { ...event, ...patch } : event));
+    set({ events });
+    const updated = events.find((event) => event.id === id);
+    if (updated) void saveEvent(updated);
+  },
+
+  deleteEvent: (id) => {
+    set(({ events }) => ({ events: events.filter((event) => event.id !== id) }));
+    void removeEvent(id);
+  },
 }));
 
 export type AddKind = "task" | "shopping" | "event";

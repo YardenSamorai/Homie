@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ListChecks } from "lucide-react";
+import { ListChecks, Plus } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { TaskRow, type RowKind } from "@/components/today/task-row";
@@ -19,11 +19,44 @@ const separator =
 export function TasksView() {
   const { locale, dict } = useI18n();
   const today = useClock()?.today ?? null;
-  const { tasks, members, currentUserId, toggleTask } = useHousehold();
+  const { tasks, members, currentUserId, toggleTask, addTask } = useHousehold();
   const showEdit = useAddSheet((s) => s.showEdit);
   const [scope, setScope] = useState<Scope>("all");
   const [showDone, setShowDone] = useState(false);
+  const [title, setTitle] = useState("");
   const shortDate = new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short" });
+
+  const add = (event: React.FormEvent) => {
+    event.preventDefault();
+    const clean = title.trim();
+    if (!clean) return;
+    addTask({ title: clean, assigneeId: currentUserId, dueDate: today, recurrence: "none" });
+    setTitle("");
+  };
+
+  const field = (
+    <form onSubmit={add} className="flex items-center gap-1 rounded-card bg-surface px-1.5 shadow-card">
+      <input
+        value={title}
+        onChange={(event) => setTitle(event.target.value)}
+        placeholder={dict.add.taskTitle}
+        aria-label={dict.add.taskTitle}
+        enterKeyHint="done"
+        maxLength={120}
+        className="h-14 min-w-0 flex-1 bg-transparent ps-2.5 text-[17px] outline-none placeholder:text-label-tertiary"
+      />
+      <button
+        type="submit"
+        disabled={!title.trim()}
+        aria-label={dict.add.submit}
+        className="flex size-11 shrink-0 items-center justify-center rounded-full transition-transform duration-100 ease-[var(--ease-out-strong)] active:scale-[0.97] disabled:opacity-35"
+      >
+        <span className="flex size-[26px] items-center justify-center rounded-full bg-green text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.28)]">
+          <Plus size={18} strokeWidth={2.75} />
+        </span>
+      </button>
+    </form>
+  );
 
   const control = (
     <SegmentedControl
@@ -38,7 +71,12 @@ export function TasksView() {
   );
 
   if (!today) {
-    return <div className="flex flex-col gap-6">{control}</div>;
+    return (
+      <div className="flex flex-col gap-6">
+        {field}
+        {control}
+      </div>
+    );
   }
 
   const visible = tasks
@@ -61,6 +99,7 @@ export function TasksView() {
 
   return (
     <div className="flex flex-col gap-6">
+      {field}
       {control}
       {groups.length === 0 ? (
         <div className="rounded-card bg-surface shadow-card">

@@ -8,6 +8,7 @@ import { HouseholdName } from "./household-name";
 import { InviteCard } from "./invite-card";
 import { GuideReplay } from "@/components/shell/guide-replay";
 import { LanguagePicker } from "./language-picker";
+import { SignOut } from "./sign-out";
 
 export async function generateMetadata(): Promise<Metadata> {
   return { title: (await getDictionary()).settings.title };
@@ -35,6 +36,9 @@ export default async function SettingsPage() {
         <Card title={dict.settings.language}>
           <LanguagePicker />
           <GuideReplay />
+        </Card>
+        <Card title={dict.settings.account}>
+          <SignOut />
         </Card>
       </div>
     </>

@@ -2,6 +2,8 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { INVITE_COOKIE } from "@/lib/auth/constants";
 import { createInvite, readInvite } from "@/lib/auth/demo-server";
+import { supabaseConfigured } from "@/lib/supabase/env";
+import { createInviteForUser, previewInvite } from "@/lib/supabase/household";
 
 function clearCookie() {
   return {
@@ -25,7 +27,7 @@ export async function GET() {
       expiresAt: null,
     });
   }
-  return NextResponse.json(readInvite(token));
+  return NextResponse.json(supabaseConfigured() ? await previewInvite(token) : readInvite(token));
 }
 
 export async function POST(request: Request) {
@@ -37,6 +39,11 @@ export async function POST(request: Request) {
   };
   if (!body.householdName?.trim() || !body.inviterName?.trim()) {
     return NextResponse.json({ error: "generic" }, { status: 400 });
+  }
+  if (supabaseConfigured()) {
+    const invite = await createInviteForUser(body.householdName);
+    if (!invite) return NextResponse.json({ error: "generic" }, { status: 400 });
+    return NextResponse.json(invite);
   }
   return NextResponse.json(
     createInvite({

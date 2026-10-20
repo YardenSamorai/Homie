@@ -173,6 +173,9 @@
     "loginLead": "Your email, then a code. No password.",
     "registerTitle": "Welcome home",
     "registerLead": "A personal account for two parents. No password — just email.",
+    "doorTitle": "Come home",
+    "doorLead": "One email, then a short code. No password.",
+    "sendCode": "Send me a code",
     "email": "Email",
     "emailPlaceholder": "name@example.com",
     "continue": "Continue",
@@ -272,6 +275,9 @@
       "plum": "Plum"
     },
     "boldText": "Bold Text",
+    "account": "Account",
+    "signOut": "Sign Out",
+    "signOutHint": "You can sign in later with a different email.",
     "languageNames": {
       "he": "עברית",
       "en": "English"

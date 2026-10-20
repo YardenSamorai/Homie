@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { defaultLocale, hasLocale, localeCookie, type Locale } from "@/i18n/config";
+import { refreshSupabaseSession } from "@/lib/supabase/session";
 
 function preferredLocale(request: NextRequest): Locale {
   const saved = request.cookies.get(localeCookie)?.value;
@@ -16,10 +17,10 @@ function preferredLocale(request: NextRequest): Locale {
   return defaultLocale;
 }
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const firstSegment = pathname.split("/")[1];
-  if (hasLocale(firstSegment)) return;
+  if (hasLocale(firstSegment)) return refreshSupabaseSession(request);
 
   const url = request.nextUrl.clone();
   url.pathname = `/${preferredLocale(request)}${pathname === "/" ? "" : pathname}`;

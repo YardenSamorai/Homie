@@ -6,7 +6,12 @@ import { groceryModelFor } from "@/lib/grocery-models";
 export type CartPassenger = { id: string; name: string };
 
 type Vec3 = { x: number; y: number; z: number };
-type Drop = { object: { position: Vec3 }; from: Vec3; to: Vec3; start: number };
+type Drop = {
+  object: { position: { set: (x: number, y: number, z: number) => void } };
+  from: Vec3;
+  to: Vec3;
+  start: number;
+};
 
 const dropMs = 1500;
 

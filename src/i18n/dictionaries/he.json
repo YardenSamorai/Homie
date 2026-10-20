@@ -173,6 +173,9 @@
     "loginLead": "אימייל, ואז קוד. בלי סיסמה.",
     "registerTitle": "ברוכים הבאים הביתה",
     "registerLead": "חשבון אישי לשני הורים. בלי סיסמה — רק האימייל.",
+    "doorTitle": "בואו הביתה",
+    "doorLead": "אימייל אחד, וקוד קצר. בלי סיסמה.",
+    "sendCode": "שלחו לי קוד",
     "email": "אימייל",
     "emailPlaceholder": "name@example.com",
     "continue": "המשך",
@@ -272,6 +275,9 @@
       "plum": "שזיף"
     },
     "boldText": "טקסט מודגש",
+    "account": "חשבון",
+    "signOut": "יציאה",
+    "signOutHint": "אפשר להתחבר אחר כך עם אימייל אחר.",
     "languageNames": {
       "he": "עברית",
       "en": "English"
