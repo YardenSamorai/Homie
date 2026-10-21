@@ -149,9 +149,37 @@
   },
   "shopping": {
     "title": "Shopping",
-    "lead": "Everything the house needs, in one place",
-    "cartTitle": "Our cart",
-    "cartCalm": "The cart is waiting for what home needs",
+    "scopes": {
+      "all": "All",
+      "toBuy": "To buy",
+      "bought": "Bought"
+    },
+    "newItem": "New item",
+    "addItem": "Add an item",
+    "inCart": "{bought} of {total} in the cart",
+    "titleLeftOne": "1 item to buy",
+    "titleLeft": "{count} items to buy",
+    "titleBoughtNone": "Nothing bought yet",
+    "titleBoughtOne": "1 item bought",
+    "titleBought": "{count} items bought",
+    "emptyToBuy": "Everything on the list is in the cart.",
+    "emptyBought": "Items you check off show up here.",
+    "staples": "Staples",
+    "staplesTitle": "What always runs out",
+    "onList": "On the list",
+    "staplesItems": {
+      "milk": "Milk",
+      "bread": "Bread",
+      "eggs": "Eggs",
+      "cheese": "White cheese",
+      "cottage": "Cottage cheese",
+      "tomatoes": "Tomatoes",
+      "cucumbers": "Cucumbers",
+      "bananas": "Bananas",
+      "coffee": "Coffee",
+      "toiletPaper": "Toilet paper",
+      "dishSoap": "Dish soap"
+    },
     "quantity": "Qty",
     "suggestions": "Suggestions",
     "empty": "The list is empty",
@@ -161,10 +189,7 @@
     "mark": "Mark \"{name}\" as bought",
     "unmark": "Mark \"{name}\" as not bought",
     "addedBy": "Added by {name}",
-    "leftOne": "1 item left",
-    "left": "{count} items left",
-    "allBought": "All bought",
-    "progress": "{bought} of {total}"
+    "allBought": "All bought"
   },
   "tasks": {
     "title": "Tasks",

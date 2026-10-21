@@ -149,9 +149,37 @@
   },
   "shopping": {
     "title": "קניות",
-    "lead": "כל מה שצריך לבית, במקום אחד",
-    "cartTitle": "העגלה שלנו",
-    "cartCalm": "העגלה מחכה למה שחסר בבית",
+    "scopes": {
+      "all": "הכול",
+      "toBuy": "לקנות",
+      "bought": "נקנו"
+    },
+    "newItem": "פריט חדש",
+    "addItem": "הוספת פריט",
+    "inCart": "{bought} מתוך {total} בסל",
+    "titleLeftOne": "פריט אחד לקנות",
+    "titleLeft": "{count} פריטים לקנות",
+    "titleBoughtNone": "עוד לא נקנה כלום",
+    "titleBoughtOne": "פריט אחד נקנה",
+    "titleBought": "{count} פריטים נקנו",
+    "emptyToBuy": "כל מה שברשימה כבר בסל.",
+    "emptyBought": "מה שתסמנו כנקנה יופיע כאן.",
+    "staples": "קבועים",
+    "staplesTitle": "מה שתמיד נגמר",
+    "onList": "ברשימה",
+    "staplesItems": {
+      "milk": "חלב",
+      "bread": "לחם",
+      "eggs": "ביצים",
+      "cheese": "גבינה לבנה",
+      "cottage": "קוטג'",
+      "tomatoes": "עגבניות",
+      "cucumbers": "מלפפונים",
+      "bananas": "בננות",
+      "coffee": "קפה",
+      "toiletPaper": "נייר טואלט",
+      "dishSoap": "נוזל כלים"
+    },
     "quantity": "כמות",
     "suggestions": "הצעות",
     "empty": "הרשימה ריקה",
@@ -161,10 +189,7 @@
     "mark": "סימון \"{name}\" כנקנה",
     "unmark": "ביטול הסימון של \"{name}\"",
     "addedBy": "נוסף על ידי {name}",
-    "leftOne": "פריט אחד נשאר",
-    "left": "{count} פריטים נשארו",
-    "allBought": "הכל נקנה",
-    "progress": "{bought} מתוך {total}"
+    "allBought": "הכול נקנה"
   },
   "tasks": {
     "title": "משימות",
