@@ -8,6 +8,7 @@ import { periodFor } from "@/lib/period";
 import { isProjectedOn, type Task } from "@/lib/tasks";
 import { useClock } from "@/lib/use-clock";
 import { useI18n } from "@/i18n/dictionary-provider";
+import { ActivityBell } from "@/components/shell/activity";
 import { Avatar } from "@/components/ui/avatar";
 import { DomainTiles } from "./briefing";
 import { DateStrip } from "./date-strip";
@@ -66,13 +67,16 @@ export function TodayView() {
           </h1>
           <p className="mt-1 text-[15px] capitalize text-label-secondary">{dateLine || "\u00a0"}</p>
         </div>
-        <Link href={`/${locale}/settings`} aria-label={dict.nav.settings} className="mt-1 shrink-0">
-          {currentUser ? (
-            <Avatar member={currentUser} size={44} />
-          ) : (
-            <span className="block size-11 rounded-full bg-sage-light" />
-          )}
-        </Link>
+        <div className="mt-1 flex shrink-0 items-center gap-2.5">
+          <ActivityBell />
+          <Link href={`/${locale}/settings`} aria-label={dict.nav.settings}>
+            {currentUser ? (
+              <Avatar member={currentUser} size={44} />
+            ) : (
+              <span className="block size-11 rounded-full bg-sage-light" />
+            )}
+          </Link>
+        </div>
       </header>
       {members.length > 1 && <HouseholdMembers members={members} tasks={tasks} today={today} />}
       {today && selected ? (

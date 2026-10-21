@@ -58,8 +58,8 @@ export function ActivitySync() {
   return null;
 }
 
-/** The bell in the top corner. `glass` sits on the sky on Today; `plain` beside a page title. */
-export function ActivityBell({ variant = "plain" }: { variant?: "glass" | "plain" }) {
+/** The bell in the top corner of Today and of every page title. */
+export function ActivityBell() {
   const { dict } = useI18n();
   const selfId = useHousehold((s) => s.currentUserId);
   const items = useActivity((s) => s.items);
@@ -76,20 +76,16 @@ export function ActivityBell({ variant = "plain" }: { variant?: "glass" | "plain
   }, [count, ring]);
 
   const Icon = count > 0 ? BellRing : Bell;
-  const shape =
-    variant === "glass"
-      ? "size-9 ring-1 ring-white/25 backdrop-blur-md [background-color:var(--scene-glass)] [color:var(--scene-ink)]"
-      : "size-10 bg-surface text-label shadow-card ring-1 ring-[light-dark(rgb(40_30_20/0.05),rgb(255_255_255/0.08))]";
 
   return (
     <button
       type="button"
       onClick={() => show(selfId)}
       aria-label={count > 0 ? format(dict.activity.openUnread, { count }) : dict.activity.open}
-      className={`relative flex shrink-0 items-center justify-center rounded-full transition-[scale,background-color] duration-150 ease-out before:absolute before:-inset-1 active:scale-95 ${shape}`}
+      className="relative flex size-11 shrink-0 items-center justify-center rounded-full bg-surface text-label shadow-card ring-1 ring-[light-dark(rgb(40_30_20/0.05),rgb(255_255_255/0.08))] transition-[scale,background-color] duration-150 ease-out active:scale-95"
     >
       <motion.span animate={ring} style={{ originY: 0.15 }} className="flex">
-        <Icon aria-hidden size={variant === "glass" ? 18 : 19} strokeWidth={1.75} />
+        <Icon aria-hidden size={20} strokeWidth={1.75} />
       </motion.span>
       <AnimatePresence>
         {count > 0 && (

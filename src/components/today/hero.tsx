@@ -7,7 +7,6 @@ import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
 import type { DayKey } from "@/lib/dates";
 import { periodFor } from "@/lib/period";
-import { ActivityBell } from "@/components/shell/activity";
 import { SkyScene, type SkySceneHandle } from "./sky-scene";
 
 /** Full-bleed living sky. Type is the hero; the house is atmosphere. No card chrome. */
@@ -56,16 +55,13 @@ export function Hero({
         <p className="mt-2 text-[15px] leading-snug opacity-80">{ready ? summary : "\u00a0"}</p>
       </div>
 
-      <div className="absolute end-3 top-[max(0.65rem,env(safe-area-inset-top))] flex items-center gap-2.5">
-        <ActivityBell variant="glass" />
-        <Link
-          href={`/${locale}/settings`}
-          aria-label={dict.nav.settings}
-          className="relative flex size-9 items-center justify-center rounded-full ring-1 ring-white/25 backdrop-blur-md transition-[scale,color,background-color] duration-150 ease-out [background-color:var(--scene-glass)] [color:var(--scene-ink)] before:absolute before:-inset-1 active:scale-95 md:hidden"
-        >
-          <Settings aria-hidden size={18} strokeWidth={1.75} />
-        </Link>
-      </div>
+      <Link
+        href={`/${locale}/settings`}
+        aria-label={dict.nav.settings}
+        className="absolute end-3 top-[max(0.65rem,env(safe-area-inset-top))] flex size-9 items-center justify-center rounded-full ring-1 ring-white/25 backdrop-blur-md transition-[scale,color,background-color] duration-150 ease-out [background-color:var(--scene-glass)] [color:var(--scene-ink)] before:absolute before:-inset-1 active:scale-95 md:hidden"
+      >
+        <Settings aria-hidden size={18} strokeWidth={1.75} />
+      </Link>
     </section>
   );
 }

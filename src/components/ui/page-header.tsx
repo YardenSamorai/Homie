@@ -38,7 +38,7 @@ export function PageHeader({
         <h1 ref={titleRef} className="min-w-0 text-[34px] font-bold leading-tight tracking-tight">
           {title}
         </h1>
-        <div className="pt-1">
+        <div className="pt-0.5">
           <ActivityBell />
         </div>
       </div>
