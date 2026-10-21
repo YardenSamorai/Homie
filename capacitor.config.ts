@@ -19,6 +19,8 @@ const config: CapacitorConfig = {
   plugins: {
     // Hidden as soon as the first screen is ready; the duration only covers a page that never loads.
     SplashScreen: { launchShowDuration: 8000, launchAutoHide: true, backgroundColor: "#f8f7f2", showSpinner: false },
+    // The web view ends at the keyboard, so screens built on dvh (the sign-in code, the add sheet) stay above it.
+    Keyboard: { resize: "native", resizeOnFullScreen: true },
   },
 };
 

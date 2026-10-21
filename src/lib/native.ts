@@ -14,6 +14,8 @@ export async function startNativeShell() {
   // Safari shows :active (the press feedback) only on pages that listen for touches.
   document.addEventListener("touchstart", () => {}, { passive: true });
   await followAppLinks();
+  // No Safari-style ⌃ ⌄ Done bar over the keyboard; a build without the plugin just keeps it.
+  void import("@capacitor/keyboard").then(({ Keyboard }) => Keyboard.setAccessoryBarVisible({ isVisible: false })).catch(() => {});
   const { SplashScreen } = await import("@capacitor/splash-screen");
   requestAnimationFrame(() => void SplashScreen.hide({ fadeOutDuration: 250 }));
 }
