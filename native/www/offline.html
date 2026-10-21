@@ -92,7 +92,13 @@
     <p id="body">Homie צריך חיבור כדי להציג את הבית. בדקו את ה-Wi-Fi או את הנתונים הסלולריים.</p>
     <button id="retry" type="button">לנסות שוב</button>
     <script>
-      if (!/^he|^iw/i.test(navigator.language)) {
+      // The app passes the address that failed (SceneDelegate.swift); Try again goes back to it.
+      const site = "https://homie-taupe.vercel.app";
+      const from = new URLSearchParams(location.search).get("from");
+      const retry = from && from.startsWith(site) ? from : site;
+      const path = new URL(retry).pathname;
+      const hebrew = /^\/he(\/|$)/.test(path) || (!/^\/en(\/|$)/.test(path) && /^(he|iw)/i.test(navigator.language));
+      if (!hebrew) {
         document.documentElement.lang = "en";
         document.documentElement.dir = "ltr";
         document.getElementById("title").textContent = "You're offline";
@@ -102,7 +108,7 @@
       }
       window.Capacitor?.Plugins?.SplashScreen?.hide();
       document.getElementById("retry").addEventListener("click", () => {
-        location.href = "https://homie-taupe.vercel.app";
+        location.href = retry;
       });
     </script>
   </body>

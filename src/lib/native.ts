@@ -48,18 +48,25 @@ export async function startNativeShell() {
 /** An invite or sign-in link tapped in Mail or WhatsApp opens the app (Universal Links); show the page it points to. */
 async function followAppLinks() {
   const { App } = await import("@capacitor/app");
-  void App.addListener("appUrlOpen", ({ url }) => openInApp(url));
-  // A cold start reports the link once per launch, but every page load asks again.
+  // The launch URL keeps naming the last link opened on every page load after it, so each link is followed once.
+  const follow = (href: string) => {
+    sessionStorage.setItem(handledLaunch, href);
+    openInApp(href);
+  };
+  void App.addListener("appUrlOpen", ({ url }) => follow(url));
   const launch = await App.getLaunchUrl();
-  if (launch?.url && sessionStorage.getItem(handledLaunch) !== launch.url) {
-    sessionStorage.setItem(handledLaunch, launch.url);
-    openInApp(launch.url);
-  }
+  if (launch?.url && sessionStorage.getItem(handledLaunch) !== launch.url) follow(launch.url);
 }
+
+let opening: string | null = null;
 
 function openInApp(href: string) {
   const url = new URL(href);
   if (url.origin !== location.origin) return;
   const target = url.pathname + url.search + url.hash;
-  if (target !== location.pathname + location.search + location.hash) location.assign(target);
+  // A cold start reports the same link twice (the held appUrlOpen and the launch URL). A second navigation
+  // would cancel the first, and the app shows its offline page for any navigation that fails.
+  if (target === opening || target === location.pathname + location.search + location.hash) return;
+  opening = target;
+  location.assign(target);
 }

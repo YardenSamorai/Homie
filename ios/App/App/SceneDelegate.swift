@@ -1,5 +1,6 @@
 import UIKit
 import UserNotifications
+import WebKit
 import Capacitor
 
 /** Homie's background before the page sets its own: what shows behind the keyboard's rounded corners. */
@@ -34,14 +35,60 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
 /** The web view, held to the zoom of a native screen: no pinch, no zoom into a field on focus. */
 class MainViewController: CAPBridgeViewController {
+    private var navigationGuard: NavigationGuard?
+
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(AppearancePlugin())
         view.backgroundColor = homieBackground
+        if let webView = webView, let inner = webView.navigationDelegate as? (NSObject & WKNavigationDelegate) {
+            let guardian = NavigationGuard(inner: inner, errorURL: bridge?.config.errorPathURL)
+            navigationGuard = guardian
+            webView.navigationDelegate = guardian
+        }
         guard let scrollView = webView?.scrollView else { return }
         scrollView.minimumZoomScale = 1
         scrollView.maximumZoomScale = 1
         scrollView.bouncesZoom = false
         scrollView.pinchGestureRecognizer?.isEnabled = false
+    }
+}
+
+/**
+ * Sits in front of Capacitor's navigation delegate. Capacitor shows the offline page for any navigation that
+ * fails to start, including one that was only cancelled because another replaced it (a link opened twice,
+ * a tap while a page loads); those are left alone. A real failure shows the offline page with the address
+ * that failed, so Try again can load it rather than reloading the offline page itself.
+ */
+final class NavigationGuard: NSObject, WKNavigationDelegate {
+    private let inner: NSObject & WKNavigationDelegate
+    private let errorURL: URL?
+
+    init(inner: NSObject & WKNavigationDelegate, errorURL: URL?) {
+        self.inner = inner
+        self.errorURL = errorURL
+    }
+
+    override func responds(to aSelector: Selector!) -> Bool {
+        super.responds(to: aSelector) || inner.responds(to: aSelector)
+    }
+
+    override func forwardingTarget(for aSelector: Selector!) -> Any? {
+        inner.responds(to: aSelector) ? inner : nil
+    }
+
+    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        let failure = error as NSError
+        let cancelled = failure.domain == NSURLErrorDomain && failure.code == NSURLErrorCancelled
+        let interrupted = failure.domain == "WebKitErrorDomain" && failure.code == 102
+        if cancelled || interrupted { return }
+        guard let errorURL = errorURL, var page = URLComponents(url: errorURL, resolvingAgainstBaseURL: false) else {
+            inner.webView?(webView, didFailProvisionalNavigation: navigation, withError: error)
+            return
+        }
+        if let failed = failure.userInfo[NSURLErrorFailingURLStringErrorKey] as? String {
+            page.queryItems = [URLQueryItem(name: "from", value: failed)]
+        }
+        if let url = page.url { webView.load(URLRequest(url: url)) }
     }
 }
 
