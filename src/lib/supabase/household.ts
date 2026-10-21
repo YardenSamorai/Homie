@@ -39,11 +39,12 @@ export async function readHouseholdForUser(id: string) {
   const supabase = await createServerSupabase();
   const { data: house } = await supabase.from("households").select("id, name").eq("id", id).maybeSingle();
   if (!house) return null;
-  const { data: members } = await supabase
-    .from("household_members")
-    .select("user_id, profiles(display_name, avatar_path)")
-    .eq("household_id", id);
-  type Profile = { display_name: string | null; avatar_path: string | null };
+  const withPhotos = await supabase.from("household_members").select("user_id, profiles(display_name, avatar_path)").eq("household_id", id);
+  // A project that hasn't run 0005 has no avatar_path yet: list the people without their photos.
+  const members = withPhotos.error
+    ? (await supabase.from("household_members").select("user_id, profiles(display_name)").eq("household_id", id)).data
+    : withPhotos.data;
+  type Profile = { display_name: string | null; avatar_path?: string | null };
   return {
     id: house.id,
     name: house.name,
