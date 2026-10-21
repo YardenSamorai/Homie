@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { addDays, fromDayKey, dayRange, type DayKey } from "@/lib/dates";
 import { useHousehold, useSelectedDay } from "@/lib/household-store";
 import { periodFor } from "@/lib/period";
@@ -9,7 +8,6 @@ import { isProjectedOn, type Task } from "@/lib/tasks";
 import { useClock } from "@/lib/use-clock";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { ActivityBell } from "@/components/shell/activity";
-import { Avatar } from "@/components/ui/avatar";
 import { DomainTiles } from "./briefing";
 import { DateStrip } from "./date-strip";
 import { DayTasks } from "./day-tasks";
@@ -63,38 +61,34 @@ export function TodayView() {
 
   return (
     <div className="flex flex-col gap-5 pt-4 md:pt-8">
-      <header className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-balance text-[clamp(1.625rem,7.4vw,2rem)] font-bold leading-[1.12] tracking-tight [overflow-wrap:anywhere]">
-            <bdi>{currentUser ? `${greeting}, ${firstName(currentUser.name)}` : greeting || "\u00a0"}</bdi>
-          </h1>
-          <p className="mt-1 text-[15px] capitalize text-label-secondary">{dateLine || "\u00a0"}</p>
-        </div>
-        <div className="mt-1 flex shrink-0 items-center gap-2.5">
-          <ActivityBell />
-          <Link href={`/${locale}/settings`} aria-label={dict.nav.settings}>
-            {currentUser ? (
-              <Avatar member={currentUser} size={44} />
-            ) : (
-              <span className="block size-11 rounded-full bg-sage-light" />
-            )}
-          </Link>
-        </div>
-      </header>
-      {members.length > 0 && <HouseholdMembers members={members} self={currentUser?.id ?? ""} tasks={tasks} today={today} />}
-      {today && selected ? (
-        <DateStrip
-          compact
-          from={days[0]}
-          to={days[days.length - 1]}
-          today={today}
-          selected={selected}
-          markers={markers}
-          onSelect={select}
-        />
-      ) : (
-        <div aria-hidden className="h-16" />
-      )}
+      {/* Greeting, people and week read as one block: who's home and which day, before the day itself. */}
+      <div className="flex flex-col gap-3">
+        <header className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-balance text-[clamp(1.625rem,7.4vw,2rem)] font-bold leading-[1.12] tracking-tight [overflow-wrap:anywhere]">
+              <bdi>{currentUser ? `${greeting}, ${firstName(currentUser.name)}` : greeting || "\u00a0"}</bdi>
+            </h1>
+            <p className="mt-1 text-[15px] capitalize text-label-secondary">{dateLine || "\u00a0"}</p>
+          </div>
+          <div className="mt-1 shrink-0">
+            <ActivityBell />
+          </div>
+        </header>
+        {members.length > 0 && <HouseholdMembers members={members} self={currentUser?.id ?? ""} tasks={tasks} today={today} />}
+        {today && selected ? (
+          <DateStrip
+            compact
+            from={days[0]}
+            to={days[days.length - 1]}
+            today={today}
+            selected={selected}
+            markers={markers}
+            onSelect={select}
+          />
+        ) : (
+          <div aria-hidden className="h-16" />
+        )}
+      </div>
       <SkyStage today={today} openCount={openToday} />
       {today && <DomainTiles today={today} />}
       {today && selected ? (

@@ -119,21 +119,18 @@ export function HouseholdMembers({
 
   return (
     <section aria-label={dict.today.household}>
-      <ul className="flex justify-center gap-3 overflow-x-auto px-1 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* Stories-style: from the start edge, circle and first name; the day's load is the ring, and spoken. */}
+      <ul className="-mx-4 flex gap-4 overflow-x-auto px-4 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {members.map((member) => {
           const load = today ? loadForMember(tasks, member.id, today) : null;
           const caption = load ? captionFor(load, dict.today) : null;
           return (
-            <li key={member.id} className="flex w-[6rem] shrink-0 flex-col items-center gap-1.5">
+            <li key={member.id} className="flex w-16 shrink-0 flex-col items-center gap-1">
               <MemberCircle member={member} self={self} load={load} />
-              <div className="min-w-0 max-w-full text-center">
-                <p className="truncate text-[13px] font-medium leading-tight">
-                  <bdi>{member.name.trim().split(/\s+/)[0]}</bdi>
-                </p>
-                {caption && (
-                  <p className={`line-clamp-2 text-balance text-[12px] leading-snug ${caption.tone}`}>{caption.text}</p>
-                )}
-              </div>
+              <p className="w-full truncate text-center text-[13px] font-medium leading-tight">
+                <bdi>{member.name.trim().split(/\s+/)[0]}</bdi>
+                {caption && <span className="sr-only">, {caption.text}</span>}
+              </p>
             </li>
           );
         })}

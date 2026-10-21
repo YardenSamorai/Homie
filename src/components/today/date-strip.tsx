@@ -8,6 +8,9 @@ import { useI18n } from "@/i18n/dictionary-provider";
 import { addDays, dayRange, diffDays, fromDayKey, isWeekend, weekStart, type DayKey } from "@/lib/dates";
 import { easeOut, press, spring } from "@/lib/motion";
 
+const arrow =
+  "relative flex size-10 items-center justify-center rounded-full text-accent transition-[opacity,scale] duration-100 ease-out before:absolute before:inset-x-0 before:-inset-y-0.5 active:scale-90 disabled:opacity-30";
+
 /** iOS Calendar-style week strip: one week per page, swipe to move a week, the weekday is kept. */
 export function DateStrip({
   from,
@@ -104,7 +107,11 @@ export function DateStrip({
           : "flex flex-col gap-1.5 rounded-card bg-surface px-2 pb-1.5 pt-2 shadow-card"
       }
     >
-      <div className={`flex items-center justify-between ${compact ? "min-h-8 pe-1" : "min-h-10 ps-3 pe-1"}`}>
+      {/* Under Today's greeting, which already names the day, the month row only shows on a phone once
+          another day is picked: then it says which month, and offers the way back to today. */}
+      <div
+        className={`items-center justify-between ${compact ? `min-h-8 pe-1 ${selected === today ? "hidden md:flex" : "flex"}` : "flex min-h-10 ps-3 pe-1"}`}
+      >
         {compact ? (
           <span className="ps-1 text-[13px] font-semibold text-label-secondary">{month}</span>
         ) : (
@@ -144,7 +151,7 @@ export function DateStrip({
             onClick={() => goWeek(-1)}
             disabled={selectedWeek === 0}
             aria-label={dict.today.previousWeek}
-            className="relative flex size-10 items-center justify-center rounded-full text-accent transition-[opacity,scale] duration-100 ease-out before:absolute before:inset-x-0 before:-inset-y-0.5 active:scale-90 disabled:opacity-30"
+            className={`${arrow} ${compact ? "max-md:hidden" : ""}`}
           >
             <ChevronLeft aria-hidden size={22} strokeWidth={2.5} className="rtl:-scale-x-100" />
           </button>
@@ -153,7 +160,7 @@ export function DateStrip({
             onClick={() => goWeek(1)}
             disabled={selectedWeek === weeks.length - 1}
             aria-label={dict.today.nextWeek}
-            className="relative flex size-10 items-center justify-center rounded-full text-accent transition-[opacity,scale] duration-100 ease-out before:absolute before:inset-x-0 before:-inset-y-0.5 active:scale-90 disabled:opacity-30"
+            className={`${arrow} ${compact ? "max-md:hidden" : ""}`}
           >
             <ChevronRight aria-hidden size={22} strokeWidth={2.5} className="rtl:-scale-x-100" />
           </button>
