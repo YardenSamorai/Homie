@@ -324,6 +324,7 @@
     "empty": "עוד אין כאן כלום. כשמישהו מוסיף משימה, מוצר לקנייה או אירוע, זה יופיע כאן.",
     "kinds": {
       "task_added": "משימה חדשה: {title}",
+      "task_assigned": "משימה בשבילך: {title}",
       "task_done": "בוצע: {title}",
       "shopping_added": "נוסף לקניות: {title}",
       "shopping_bought": "נקנה: {title}",
@@ -342,6 +343,15 @@
       "outdated": "הגרסה של Homie באייפון הזה ישנה. עדכנו אותה ב-TestFlight כדי לקבל התראות.",
       "settingsTitle": "התראות"
     }
+  },
+  "morning": {
+    "title": "בוקר טוב",
+    "oneTask": "משימה אחת להיום: {list}",
+    "manyTasks": "{count} משימות להיום: {list}",
+    "more": "{list} ועוד {count}",
+    "oneEvent": "אירוע היום: {title}",
+    "manyEvents": "{count} אירועים היום",
+    "join": " · "
   },
   "crash": {
     "title": "משהו השתבש",

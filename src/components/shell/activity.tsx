@@ -14,7 +14,7 @@ import { isUnread, unreadCount, useActivity } from "@/lib/activity-store";
 import { useAuth, useAuthReady } from "@/lib/auth/session";
 import { MEMBER_COLORS, useHousehold } from "@/lib/household-store";
 import { spring } from "@/lib/motion";
-import { isNativeApp } from "@/lib/native";
+import { isNativeApp, setAppBadge } from "@/lib/native";
 import { onReturn } from "@/lib/on-return";
 import { enablePush, followNotificationTaps, openAppSettings, pushState, refreshPush, type PushState } from "@/lib/push/client";
 import { loadActivity, watchActivity } from "@/lib/supabase/activity";
@@ -56,6 +56,13 @@ export function ActivitySync() {
     void refreshPush(locale);
     return followNotificationTaps();
   }, [householdId, locale]);
+
+  // The icon's number follows the bell: what the other parent did since this one last looked.
+  const selfId = useHousehold((s) => s.currentUserId);
+  const unread = useActivity((s) => unreadCount(s.items, s.seenAt, selfId));
+  useEffect(() => {
+    if (ready && userId) setAppBadge(unread);
+  }, [ready, userId, unread]);
 
   return null;
 }
@@ -189,6 +196,7 @@ export function PushControl({ always = false }: { always?: boolean }) {
 function ActivityRow({ item, fresh, onOpen }: { item: ActivityItem; fresh: boolean; onOpen: () => void }) {
   const { dict } = useI18n();
   const members = useHousehold((s) => s.members);
+  const selfId = useHousehold((s) => s.currentUserId);
   const ago = useAgo();
   const member = members.find((m) => m.id === item.actorId) ?? { id: item.actorId, name: "?", color: MEMBER_COLORS[1] };
 
@@ -206,7 +214,7 @@ function ActivityRow({ item, fresh, onOpen }: { item: ActivityItem; fresh: boole
               <bdi>{member.name}</bdi>
             </span>
             <span className="text-label-secondary"> · </span>
-            <bdi>{activityLine(dict.activity.kinds, item.kind, item.title)}</bdi>
+            <bdi>{activityLine(dict.activity.kinds, item.kind, item.title, item.actorId === selfId)}</bdi>
           </span>
           <span className="mt-0.5 block text-[13px] text-label-secondary">{ago(item.createdAt)}</span>
         </span>

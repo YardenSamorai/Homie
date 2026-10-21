@@ -324,6 +324,7 @@
     "empty": "Nothing here yet. When someone adds a task, something to buy, or an event, it shows up here.",
     "kinds": {
       "task_added": "New task: {title}",
+      "task_assigned": "A task for you: {title}",
       "task_done": "Done: {title}",
       "shopping_added": "Added to shopping: {title}",
       "shopping_bought": "Bought: {title}",
@@ -342,6 +343,15 @@
       "outdated": "This iPhone has an older Homie. Update it in TestFlight to get notifications.",
       "settingsTitle": "Notifications"
     }
+  },
+  "morning": {
+    "title": "Good morning",
+    "oneTask": "One task for today: {list}",
+    "manyTasks": "{count} tasks for today: {list}",
+    "more": "{list} and {count} more",
+    "oneEvent": "Today: {title}",
+    "manyEvents": "{count} events today",
+    "join": " · "
   },
   "crash": {
     "title": "Something went wrong",

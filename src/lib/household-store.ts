@@ -90,14 +90,20 @@ export const useHousehold = create<HouseholdState>()(
       addTask: (task) => {
         const created: Task = { ...task, id: crypto.randomUUID(), spawnedFromId: null, editedAt: null, completedAt: null };
         set(({ tasks }) => ({ tasks: [...tasks, created] }));
-        void saveTask(created).then((ok) => ok && announce("task_added", created.id, created.title));
+        const kind = created.assigneeId !== get().currentUserId ? "task_assigned" : "task_added";
+        void saveTask(created).then((ok) => ok && announce(kind, created.id, created.title));
       },
 
       updateTask: (id, patch) => {
+        const before = get().tasks.find((task) => task.id === id);
         const tasks = get().tasks.map((task) => (task.id === id ? { ...task, ...patch, editedAt: now() } : task));
         set({ tasks });
         const updated = tasks.find((task) => task.id === id);
-        if (updated) void saveTask(updated);
+        if (!updated) return;
+        const save = saveTask(updated);
+        // Handed to the other parent: they hear about it, as if it were new to them.
+        const handedOver = before && before.assigneeId !== updated.assigneeId && updated.assigneeId !== get().currentUserId;
+        if (handedOver) void save.then((ok) => ok && announce("task_assigned", updated.id, updated.title));
       },
 
       deleteTask: (id) => {

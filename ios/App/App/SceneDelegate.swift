@@ -1,4 +1,5 @@
 import UIKit
+import UserNotifications
 import Capacitor
 
 /** Homie's background before the page sets its own: what shows behind the keyboard's rounded corners. */
@@ -50,8 +51,22 @@ public class AppearancePlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "AppearancePlugin"
     public let jsName = "Appearance"
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "setBackground", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "setBackground", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setBadge", returnType: CAPPluginReturnPromise)
     ]
+
+    /** The red number on the app icon: what's new in the bell. */
+    @objc func setBadge(_ call: CAPPluginCall) {
+        let count = max(0, call.getInt("count") ?? 0)
+        if #available(iOS 16.0, *) {
+            UNUserNotificationCenter.current().setBadgeCount(count) { _ in call.resolve() }
+        } else {
+            DispatchQueue.main.async {
+                UIApplication.shared.applicationIconBadgeNumber = count
+                call.resolve()
+            }
+        }
+    }
 
     @objc func setBackground(_ call: CAPPluginCall) {
         guard let hex = call.getString("color"), let color = UIColor(homieHex: hex) else {

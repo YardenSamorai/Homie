@@ -1,6 +1,14 @@
 import { format } from "@/i18n/format";
 
-export const activityKinds = ["task_added", "task_done", "shopping_added", "shopping_bought", "event_added", "story_added"] as const;
+export const activityKinds = [
+  "task_added",
+  "task_assigned",
+  "task_done",
+  "shopping_added",
+  "shopping_bought",
+  "event_added",
+  "story_added",
+] as const;
 export type ActivityKind = (typeof activityKinds)[number];
 
 export type ActivityItem = {
@@ -26,8 +34,17 @@ export function activityPath(locale: string, kind: ActivityKind) {
   return `/${locale}/calendar`;
 }
 
-/** One line, the same in the bell and in the notification: "New task: Fix the shelf". */
-export function activityLine(kinds: Record<ActivityKind, string> & { story_plain: string }, kind: ActivityKind, title: string) {
+/**
+ * One line, the same in the bell and in the notification: "New task: Fix the shelf".
+ * A task given to the other parent reads "A task for you" to them, and a plain new task to whoever gave it.
+ */
+export function activityLine(
+  kinds: Record<ActivityKind, string> & { story_plain: string },
+  kind: ActivityKind,
+  title: string,
+  byViewer = false,
+) {
   if (kind === "story_added" && title === storyWithoutCaption) return kinds.story_plain;
+  if (kind === "task_assigned" && byViewer) return format(kinds.task_added, { title });
   return format(kinds[kind], { title });
 }

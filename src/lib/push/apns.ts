@@ -8,7 +8,14 @@ import http2 from "node:http2";
  */
 type Keys = { keyId: string; teamId: string; privateKey: string; topic: string };
 
-export type ApnsMessage = { title: string; body: string; url: string; collapseId: string };
+export type ApnsMessage = {
+  title: string;
+  body: string;
+  url: string;
+  collapseId: string;
+  /** The red number on the app icon; left as it is when missing. */
+  badge?: number;
+};
 export type ApnsResult = "sent" | "gone" | "failed";
 
 const PRODUCTION = "api.push.apple.com";
@@ -75,7 +82,12 @@ function post(host: string, deviceToken: string, keys: Keys, message: ApnsMessag
     request.setTimeout(10_000, () => request.close(http2.constants.NGHTTP2_CANCEL));
     request.end(
       JSON.stringify({
-        aps: { alert: { title: message.title, body: message.body }, sound: "default", "thread-id": "activity" },
+        aps: {
+          alert: { title: message.title, body: message.body },
+          sound: "default",
+          "thread-id": "activity",
+          ...(message.badge !== undefined ? { badge: message.badge } : {}),
+        },
         url: message.url,
       }),
     );

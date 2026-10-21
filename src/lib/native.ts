@@ -6,12 +6,26 @@ export function isNativeApp() {
 }
 
 /** The app's own plugin (SceneDelegate.swift): what shows behind the web view, e.g. at the keyboard's rounded corners. */
-const Appearance = registerPlugin<{ setBackground(options: { color: string }): Promise<void> }>("Appearance");
+const Appearance = registerPlugin<{
+  setBackground(options: { color: string }): Promise<void>;
+  setBadge(options: { count: number }): Promise<void>;
+}>("Appearance");
 
 export function setNativeBackground(color: string) {
   if (!isNativeApp()) return;
   // Builds before the plugin keep their default; nothing to do.
   Appearance.setBackground({ color }).catch(() => {});
+}
+
+/** The number on the app icon: the iPhone app's own plugin, or the Badging API of a Home Screen web app. */
+export function setAppBadge(count: number) {
+  if (typeof window === "undefined") return;
+  if (isNativeApp()) {
+    Appearance.setBadge({ count }).catch(() => {});
+    return;
+  }
+  const badging = navigator as Navigator & { setAppBadge?: (count?: number) => Promise<void>; clearAppBadge?: () => Promise<void> };
+  void (count > 0 ? badging.setAppBadge?.(count) : badging.clearAppBadge?.())?.catch(() => {});
 }
 
 /** While the keyboard is up, html carries data-keyboard: the tab bar and the + hide behind it, as in iPhone apps. */
