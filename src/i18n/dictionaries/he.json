@@ -304,6 +304,13 @@
     "account": "חשבון",
     "signOut": "יציאה",
     "signOutHint": "אפשר להתחבר אחר כך עם אימייל אחר.",
+    "you": "את/ה",
+    "removeMember": "הוצאה",
+    "removeTitle": "להוציא את {name} מהבית?",
+    "removeBody": "הגישה של {name} לבית תיסגר, ומשימות פתוחות שמוקצות ל{name} יעברו אליך. אפשר להזמין שוב מתי שרוצים.",
+    "removeConfirm": "הוצאה מהבית",
+    "removeCancel": "ביטול",
+    "removeFailed": "לא הצלחנו להוציא מהבית. נסו שוב.",
     "languageNames": {
       "he": "עברית",
       "en": "English"

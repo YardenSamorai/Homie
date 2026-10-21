@@ -46,9 +46,19 @@ export function HouseholdSync() {
             photo: member.avatarPath ? (urls[member.avatarPath] ?? null) : null,
           }));
           setRoster(userId, members.length > 0 ? members : [self]);
+          // The role on this phone dates from sign-in; the house is the authority.
+          const role = house.members.find((member) => member.id === userId)?.role;
+          if (role && role !== useAuth.getState().session?.role) useAuth.getState().patch({ role });
         })
-        .catch(() => {
-          if (alive && useHousehold.getState().members.length === 0) syncSelf(self);
+        .catch((error: { status?: number }) => {
+          if (!alive) return;
+          // The admin removed this parent: the house no longer opens for them, so they start over at setup or join.
+          if (error.status === 404 && supabaseConfigured()) {
+            useAuth.getState().patch({ householdId: null, householdName: null, role: null });
+            syncSelf(self);
+            return;
+          }
+          if (useHousehold.getState().members.length === 0) syncSelf(self);
         });
     };
     loadRoster();

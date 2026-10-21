@@ -35,14 +35,21 @@ export async function createHouseholdForUser(name: string) {
   return { id: data as string, name };
 }
 
+/**
+ * "unknown" when the answer can't be trusted (no session, Supabase unreachable): a phone must not
+ * conclude it was removed from its house over a network error. null only when the house is truly not theirs.
+ */
 export async function readHouseholdForUser(id: string) {
   const supabase = await createServerSupabase();
-  const { data: house } = await supabase.from("households").select("id, name").eq("id", id).maybeSingle();
+  const { data: auth } = await supabase.auth.getUser();
+  if (!auth.user) return "unknown" as const;
+  const { data: house, error } = await supabase.from("households").select("id, name").eq("id", id).maybeSingle();
+  if (error) return "unknown" as const;
   if (!house) return null;
-  const withPhotos = await supabase.from("household_members").select("user_id, profiles(display_name, avatar_path)").eq("household_id", id);
+  const withPhotos = await supabase.from("household_members").select("user_id, role, profiles(display_name, avatar_path)").eq("household_id", id);
   // A project that hasn't run 0005 has no avatar_path yet: list the people without their photos.
   const members = withPhotos.error
-    ? (await supabase.from("household_members").select("user_id, profiles(display_name)").eq("household_id", id)).data
+    ? (await supabase.from("household_members").select("user_id, role, profiles(display_name)").eq("household_id", id)).data
     : withPhotos.data;
   type Profile = { display_name: string | null; avatar_path?: string | null };
   return {
@@ -51,7 +58,12 @@ export async function readHouseholdForUser(id: string) {
     members: (members ?? []).map((member) => {
       const profile = member.profiles as Profile | Profile[] | null;
       const row = Array.isArray(profile) ? profile[0] : profile;
-      return { id: member.user_id as string, name: row?.display_name?.trim() || "Homie", avatarPath: row?.avatar_path ?? null };
+      return {
+        id: member.user_id as string,
+        name: row?.display_name?.trim() || "Homie",
+        avatarPath: row?.avatar_path ?? null,
+        role: member.role === "admin" ? ("admin" as const) : ("member" as const),
+      };
     }),
   };
 }

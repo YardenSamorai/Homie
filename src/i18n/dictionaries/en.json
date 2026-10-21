@@ -304,6 +304,13 @@
     "account": "Account",
     "signOut": "Sign Out",
     "signOutHint": "You can sign in later with a different email.",
+    "you": "You",
+    "removeMember": "Remove",
+    "removeTitle": "Remove {name} from the home?",
+    "removeBody": "{name} will lose access to the home, and open tasks assigned to them move to you. You can invite them again anytime.",
+    "removeConfirm": "Remove from Home",
+    "removeCancel": "Cancel",
+    "removeFailed": "Couldn't remove them. Try again.",
     "languageNames": {
       "he": "עברית",
       "en": "English"
