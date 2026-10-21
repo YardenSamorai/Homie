@@ -8,7 +8,8 @@ import { useI18n } from "@/i18n/dictionary-provider";
 import { pickPhoto, useCameraReady } from "@/lib/camera";
 import { useHousehold } from "@/lib/household-store";
 import { supabaseConfigured } from "@/lib/supabase/env";
-import { compressImage, removeAvatar, saveAvatar, signedUrls } from "@/lib/supabase/media";
+import { avatarUrl } from "@/lib/avatar-url";
+import { compressImage, removeAvatar, saveAvatar } from "@/lib/supabase/media";
 
 /** Settings: this parent's photo, shown instead of the first letter wherever they appear. */
 export function ProfilePhoto() {
@@ -31,7 +32,7 @@ export function ProfilePhoto() {
     try {
       const photo = await compressImage(file, { side: 512, square: true });
       const path = await saveAvatar(currentUserId, photo, me.photoPath ?? null);
-      const url = (await signedUrls([path]))[path] ?? URL.createObjectURL(photo);
+      const url = avatarUrl(path) ?? URL.createObjectURL(photo);
       setMemberPhoto(currentUserId, path, url);
     } catch {
       setMessage(dict.profile.failed);

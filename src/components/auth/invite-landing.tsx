@@ -60,7 +60,7 @@ export function InviteLanding({ token }: { token: string }) {
       hero={
         ok ? (
           <InviteFaces
-            left={memberFrom(invite.inviterName ?? "·", inviterColor, "inviter")}
+            left={memberFrom(invite.inviterName ?? "·", inviterColor, "inviter", invite.inviterPhoto ?? null)}
             right={you}
             emptyLabel={dict.auth.emptySeat}
           />

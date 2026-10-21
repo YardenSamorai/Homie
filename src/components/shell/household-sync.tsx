@@ -6,7 +6,7 @@ import { useAuth, useAuthReady } from "@/lib/auth/session";
 import { MEMBER_COLORS, useHousehold } from "@/lib/household-store";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { onReturn } from "@/lib/on-return";
-import { signedUrls } from "@/lib/supabase/media";
+import { avatarLinks } from "@/lib/supabase/media";
 import { loadHouseholdLists, watchHouseholdLists, watchHouseholdMembers } from "@/lib/supabase/lists";
 import { sending, startOutbox, withPending } from "@/lib/supabase/outbox";
 
@@ -42,7 +42,7 @@ export function HouseholdSync() {
         .household(householdId)
         .then(async (house) => {
           const paths = house.members.flatMap((member) => (member.avatarPath ? [member.avatarPath] : []));
-          const urls = paths.length > 0 ? await signedUrls(paths).catch(() => ({}) as Record<string, string>) : {};
+          const urls = paths.length > 0 ? await avatarLinks(paths) : {};
           if (!alive) return;
           const members = house.members.map((member, index) => ({
             id: member.id,

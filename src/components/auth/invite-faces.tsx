@@ -10,8 +10,8 @@ import type { Member } from "@/lib/tasks";
 export const inviterColor = "var(--indigo)";
 export const partnerColor = "var(--pink)";
 
-export function memberFrom(name: string, color: string, id = "face"): Member {
-  return { id, name: name.trim(), color };
+export function memberFrom(name: string, color: string, id = "face", photo: string | null = null): Member {
+  return { id, name: name.trim(), color, photo };
 }
 
 /** Two overlapping seats: who is already home, and who the invite is for. */

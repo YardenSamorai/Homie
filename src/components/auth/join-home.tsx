@@ -90,7 +90,7 @@ export function JoinHome() {
       hero={
         ok && !blocked && !here ? (
           <InviteFaces
-            left={memberFrom(invite.inviterName ?? "·", inviterColor, "inviter")}
+            left={memberFrom(invite.inviterName ?? "·", inviterColor, "inviter", invite.inviterPhoto ?? null)}
             right={you}
             emptyLabel={dict.auth.emptySeat}
           />

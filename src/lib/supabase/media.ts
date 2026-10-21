@@ -1,6 +1,7 @@
 "use client";
 
 import { storyWithoutCaption } from "@/lib/activity";
+import { avatarUrl, legacyAvatar } from "@/lib/avatar-url";
 import { announce } from "./activity";
 import { createBrowserSupabase } from "./browser";
 import { supabaseConfigured } from "./env";
@@ -134,18 +135,25 @@ export async function markStorySeen(storyId: string, viewerId: string) {
   await createBrowserSupabase().from("story_views").upsert({ story_id: storyId, viewer_id: viewerId }, { ignoreDuplicates: true });
 }
 
-/** Replaces this parent's photo; the old file goes. Returns the new path. */
+/** An old photo leaves whichever bucket it was in: the private one before 0008, the public one since. */
+async function removeAvatarFile(db: ReturnType<typeof createBrowserSupabase>, path: string | null) {
+  if (!path) return;
+  if (legacyAvatar(path)) await db.storage.from(bucket).remove([path]);
+  else await db.storage.from("avatars").remove([path]);
+}
+
+/** Replaces this parent's photo with a new file (a new name, so every phone's cache sees it at once). Returns the path. */
 export async function saveAvatar(userId: string, photo: Blob, previous: string | null) {
   const db = createBrowserSupabase();
-  const path = `avatars/${userId}/${crypto.randomUUID()}.jpg`;
-  const upload = await db.storage.from(bucket).upload(path, photo, { contentType: "image/jpeg", cacheControl: "604800" });
+  const path = `${userId}/${crypto.randomUUID()}.jpg`;
+  const upload = await db.storage.from("avatars").upload(path, photo, { contentType: "image/jpeg", cacheControl: "31536000" });
   if (upload.error) throw upload.error;
   const { error } = await db.from("profiles").update({ avatar_path: path }).eq("id", userId);
   if (error) {
-    await db.storage.from(bucket).remove([path]);
+    await db.storage.from("avatars").remove([path]);
     throw error;
   }
-  if (previous) await db.storage.from(bucket).remove([previous]);
+  await removeAvatarFile(db, previous);
   return path;
 }
 
@@ -153,5 +161,12 @@ export async function removeAvatar(userId: string, previous: string | null) {
   const db = createBrowserSupabase();
   const { error } = await db.from("profiles").update({ avatar_path: null }).eq("id", userId);
   if (error) throw error;
-  if (previous) await db.storage.from(bucket).remove([previous]);
+  await removeAvatarFile(db, previous);
+}
+
+/** Links for the people's photos: fixed public ones, and signed ones only for photos from before 0008. */
+export async function avatarLinks(paths: string[]) {
+  const legacy = paths.filter(legacyAvatar);
+  const signedLinks = legacy.length > 0 ? await signedUrls(legacy).catch(() => ({}) as Record<string, string>) : {};
+  return Object.fromEntries(paths.map((path) => [path, avatarUrl(path) ?? signedLinks[path] ?? null])) as Record<string, string | null>;
 }

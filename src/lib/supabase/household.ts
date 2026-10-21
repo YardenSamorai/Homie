@@ -1,5 +1,6 @@
 import type { InvitePreview, InviteStatus } from "@/lib/auth/types";
 import { INVITE_TTL_MS } from "@/lib/auth/constants";
+import { avatarUrl } from "@/lib/avatar-url";
 import { createServerSupabase } from "./server";
 
 type PreviewRow = {
@@ -7,6 +8,7 @@ type PreviewRow = {
   household_id: string | null;
   household_name: string | null;
   inviter_name: string | null;
+  inviter_photo?: string | null;
   expires_at: string | null;
 };
 
@@ -17,6 +19,8 @@ function asPreview(token: string, row: PreviewRow | null): InvitePreview {
     householdId: row?.household_id ?? null,
     householdName: row?.household_name ?? null,
     inviterName: row?.inviter_name ?? null,
+    // Only photos in the public bucket: whoever opens the invite isn't in the house yet, so can't read private ones.
+    inviterPhoto: avatarUrl(row?.inviter_photo),
     expiresAt: row?.expires_at ?? null,
   };
 }

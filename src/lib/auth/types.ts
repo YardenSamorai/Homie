@@ -6,6 +6,8 @@ export type InvitePreview = {
   householdId: string | null;
   householdName: string | null;
   inviterName: string | null;
+  /** The inviter's profile photo, when they set one. */
+  inviterPhoto?: string | null;
   expiresAt: string | null;
 };
 
