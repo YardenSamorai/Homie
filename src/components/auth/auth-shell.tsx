@@ -35,7 +35,8 @@ export function AuthShell({
   return (
     <main
       aria-busy={busy || undefined}
-      className="relative flex min-h-dvh flex-col bg-bg lg:grid lg:h-dvh lg:min-h-[40rem] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] [@media(min-width:640px)_and_(max-height:560px)]:grid [@media(min-width:640px)_and_(max-height:560px)]:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)]"
+      data-keyboard-aware
+      className="keyboard-fit relative flex flex-col bg-bg lg:grid lg:h-dvh lg:min-h-[40rem] lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] [@media(min-width:640px)_and_(max-height:560px)]:grid [@media(min-width:640px)_and_(max-height:560px)]:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)]"
     >
       <div className="relative min-h-[max(10rem,30dvh)] flex-1 lg:m-3 lg:overflow-hidden lg:rounded-[36px] lg:bg-[color-mix(in_oklab,var(--sage-light)_45%,var(--bg))]">
         <div className="absolute inset-x-0 bottom-0 top-[env(safe-area-inset-top)] lg:top-0">
@@ -43,7 +44,7 @@ export function AuthShell({
         </div>
       </div>
 
-      <div className="relative shrink-0 px-6 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2 lg:flex lg:flex-col lg:items-center lg:justify-center lg:px-12 lg:pb-12 [@media(min-width:640px)_and_(max-height:560px)]:flex [@media(min-width:640px)_and_(max-height:560px)]:flex-col [@media(min-width:640px)_and_(max-height:560px)]:justify-center [@media(min-width:640px)_and_(max-height:560px)]:overflow-y-auto [@media(min-width:640px)_and_(max-height:560px)]:py-4">
+      <div className="relative shrink-0 px-6 pb-[max(1.25rem,var(--safe-bottom))] pt-2 transition-[padding] duration-(--keyboard-duration) ease-(--keyboard-ease) lg:flex lg:flex-col lg:items-center lg:justify-center lg:px-12 lg:pb-12 [@media(min-width:640px)_and_(max-height:560px)]:flex [@media(min-width:640px)_and_(max-height:560px)]:flex-col [@media(min-width:640px)_and_(max-height:560px)]:justify-center [@media(min-width:640px)_and_(max-height:560px)]:overflow-y-auto [@media(min-width:640px)_and_(max-height:560px)]:py-4">
         <div className="mx-auto flex w-full max-w-[24.5rem] flex-col">
           {eyebrow && (
             <p style={reveal(0).style} className="mb-1.5 text-[14px] font-semibold text-accent door-rise">

@@ -277,9 +277,46 @@ html[data-text="1"] :is(input, textarea, select) {
   font-size: max(calc(16px / 0.95), 1em);
 }
 
-/* The iPhone app's web view ends at the keyboard; like a native tab bar, the bottom bar stays behind it. */
+/*
+ * The iPhone app's keyboard (src/lib/keyboard.ts). The web view keeps its full height; what sits low on the
+ * screen moves with these, on the keyboard's own timing, so nothing is covered and nothing snaps into place.
+ * The bottom safe area is under the keyboard while it's up.
+ */
+:root {
+  --keyboard: 0px;
+  --keyboard-room: 0px;
+  --keyboard-duration: 0.42s;
+  --keyboard-ease: var(--ease-ios);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+html {
+  padding-bottom: var(--keyboard-room);
+}
+html[data-keyboard] {
+  --safe-bottom: 0px;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --keyboard-duration: 0s;
+  }
+}
+
+/* Like a native tab bar, the bottom bar stays behind the keyboard: it fades as the keyboard slides over it. */
+.keyboard-hides {
+  transition: opacity 0.2s ease-out;
+}
 html[data-keyboard] .keyboard-hides {
-  display: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.12s ease-out,
+    visibility 0s 0.12s;
+}
+
+/* A full-screen layout that ends where the keyboard begins, shrinking as it rises. */
+@utility keyboard-fit {
+  min-height: calc(100dvh - var(--keyboard));
+  transition: min-height var(--keyboard-duration) var(--keyboard-ease);
 }
 
 button,

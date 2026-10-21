@@ -135,7 +135,7 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
         </button>
       </div>
 
-      <Drawer.Content className="flex min-h-0 flex-1 touch-auto flex-col gap-6 overflow-y-auto overscroll-contain px-4 pb-[max(env(safe-area-inset-bottom),20px)]">
+      <Drawer.Content className="flex min-h-0 flex-1 touch-auto flex-col gap-6 overflow-y-auto overscroll-contain px-4 pb-[max(var(--safe-bottom),20px)]">
         {!editing && (
           <SegmentedControl
             label={dict.add.open}
@@ -291,7 +291,9 @@ export function AddSheet() {
         <Drawer.Portal>
           <Drawer.Backdrop className="fixed inset-0 z-50 min-h-dvh bg-black opacity-[calc(0.3*(1-var(--drawer-swipe-progress)))] transition-opacity duration-[450ms] ease-[var(--ease-ios)] data-swiping:duration-0 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)]" />
           <Drawer.Viewport className="fixed inset-0 z-50 flex touch-none items-end justify-center">
-            <Drawer.Popup className="flex max-h-[calc(100dvh-3rem)] min-h-[60dvh] w-full max-w-lg touch-none flex-col rounded-t-[28px] bg-sheet text-label shadow-[0_-8px_40px_rgb(40_30_20/0.16)] outline-none [transform:translateY(var(--drawer-swipe-movement-y))] transition-transform duration-[450ms] ease-[var(--ease-ios)] will-change-transform data-swiping:select-none data-starting-style:[transform:translateY(100%)] data-ending-style:[transform:translateY(100%)] data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)] motion-reduce:transition-opacity motion-reduce:data-starting-style:[transform:none] motion-reduce:data-starting-style:opacity-0 motion-reduce:data-ending-style:[transform:none] motion-reduce:data-ending-style:opacity-0">
+            <Drawer.Popup
+              data-keyboard-aware
+              className="relative flex max-h-[calc(100dvh_-_3rem_-_var(--keyboard))] min-h-[min(60dvh,calc(100dvh_-_3rem_-_var(--keyboard)))] w-full max-w-lg touch-none flex-col rounded-t-[28px] bg-sheet text-label shadow-[0_-8px_40px_rgb(40_30_20/0.16)] outline-none [transform:translateY(calc(var(--drawer-swipe-movement-y,0px)_-_var(--keyboard)))] transition-[transform,min-height,max-height] duration-[450ms] after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-dvh after:bg-sheet ease-[var(--ease-ios)] will-change-transform data-swiping:select-none data-starting-style:[transform:translateY(100%)] data-ending-style:[transform:translateY(100%)] data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)] motion-reduce:transition-opacity motion-reduce:data-starting-style:[transform:none] motion-reduce:data-starting-style:opacity-0 motion-reduce:data-ending-style:[transform:none] motion-reduce:data-ending-style:opacity-0">
               <div aria-hidden className="mx-auto mb-1 mt-2 h-[5px] w-9 shrink-0 rounded-full bg-label-tertiary" />
               {today && (
                 <AddForm key={edit ? `${edit.kind}-${edit.id}` : "new"} defaultDay={day ?? today} onDone={() => setOpen(false)} />

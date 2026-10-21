@@ -162,7 +162,8 @@ export function StoryComposer() {
               event.preventDefault();
               void share();
             }}
-            className="relative mt-auto flex flex-col gap-3 bg-gradient-to-t from-black/70 to-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-16"
+            data-keyboard-aware
+            className="relative mt-auto flex translate-y-[calc(var(--keyboard)*-1)] flex-col gap-3 bg-gradient-to-t from-black/70 to-transparent px-4 pb-[max(1rem,var(--safe-bottom))] pt-16 transition-[translate,padding] duration-(--keyboard-duration) ease-(--keyboard-ease)"
           >
             {failed && <p className="text-center text-[15px] font-medium text-white">{dict.stories.failed}</p>}
             <div className="flex items-center gap-2">
