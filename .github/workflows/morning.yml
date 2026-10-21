@@ -17,4 +17,5 @@ jobs:
       - name: Send this hour's summaries
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-        run: curl --fail --silent --show-error -H "Authorization: Bearer $CRON_SECRET" https://homie-taupe.vercel.app/api/cron/morning
+        run: |
+          curl --fail --silent --show-error -H "Authorization: Bearer $CRON_SECRET" https://homie-taupe.vercel.app/api/cron/morning
