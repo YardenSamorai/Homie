@@ -1,4 +1,5 @@
 import { AddSheet } from "@/components/add/add-sheet";
+import { ActivitySheet, ActivitySync } from "@/components/shell/activity";
 import { ConnectionBanner } from "@/components/shell/connection-banner";
 import { HouseholdSync } from "@/components/shell/household-sync";
 import { InstallPrompt } from "@/components/shell/install";
@@ -22,6 +23,8 @@ export default function AppLayout({ children }: LayoutProps<"/[lang]">) {
       <InstallPrompt />
       <TabBar />
       <AddSheet />
+      <ActivitySync />
+      <ActivitySheet />
     </div>
     </OnboardingGate>
   );

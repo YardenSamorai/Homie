@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import { ActivityBell } from "@/components/shell/activity";
 
 const subscribeNever = () => () => {};
 
@@ -33,9 +34,14 @@ export function PageHeader({
 
   return (
     <header className="flex flex-col gap-1 pb-6 pt-4 md:pt-10">
-      <h1 ref={titleRef} className="text-[34px] font-bold leading-tight tracking-tight">
-        {title}
-      </h1>
+      <div className="flex items-start justify-between gap-3">
+        <h1 ref={titleRef} className="min-w-0 text-[34px] font-bold leading-tight tracking-tight">
+          {title}
+        </h1>
+        <div className="pt-1">
+          <ActivityBell />
+        </div>
+      </div>
       {subtitle && <p className="text-[15px] leading-snug text-label-secondary">{subtitle}</p>}
       {meta && <div className="text-[15px] leading-snug text-label-secondary">{meta}</div>}
 

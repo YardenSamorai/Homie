@@ -4,6 +4,7 @@ import { create } from "zustand";
 import type { DayKey } from "./dates";
 import type { HouseEvent, ShoppingItem } from "./household";
 import { completeTask, uncompleteTask, type Member, type Task } from "./tasks";
+import { announce } from "./supabase/activity";
 import { removeEvent, removeShoppingItem, removeTask, saveEvent, saveShoppingItem, saveTask } from "./supabase/lists";
 
 type NewTask = Pick<Task, "title" | "assigneeId" | "dueDate" | "recurrence">;
@@ -68,14 +69,18 @@ export const useHousehold = create<HouseholdState>()((set, get) => ({
     // Unchanged tasks keep their identity; resaving them would overwrite the partner's newer edits.
     const before = new Map(previous.map((item) => [item.id, item]));
     const kept = new Set(tasks.map((item) => item.id));
-    for (const item of tasks) if (before.get(item.id) !== item) void saveTask(item);
+    for (const item of tasks) {
+      if (before.get(item.id) === item) continue;
+      const save = saveTask(item);
+      if (item.id === task.id && item.completedAt) void save.then((ok) => ok && announce("task_done", item.id, item.title));
+    }
     for (const item of previous) if (!kept.has(item.id)) void removeTask(item.id);
   },
 
   addTask: (task) => {
     const created: Task = { ...task, id: crypto.randomUUID(), spawnedFromId: null, editedAt: null, completedAt: null };
     set(({ tasks }) => ({ tasks: [...tasks, created] }));
-    void saveTask(created);
+    void saveTask(created).then((ok) => ok && announce("task_added", created.id, created.title));
   },
 
   updateTask: (id, patch) => {
@@ -96,7 +101,9 @@ export const useHousehold = create<HouseholdState>()((set, get) => ({
     );
     set({ shopping });
     const updated = shopping.find((item) => item.id === id);
-    if (updated) void saveShoppingItem(updated);
+    if (!updated) return;
+    const save = saveShoppingItem(updated);
+    if (updated.checkedAt) void save.then((ok) => ok && announce("shopping_bought", updated.id, updated.name));
   },
 
   clearBought: () => {
@@ -108,7 +115,7 @@ export const useHousehold = create<HouseholdState>()((set, get) => ({
   addShoppingItem: (item) => {
     const created: ShoppingItem = { ...item, id: crypto.randomUUID(), addedBy: get().currentUserId, checkedAt: null };
     set(({ shopping }) => ({ shopping: [created, ...shopping] }));
-    void saveShoppingItem(created);
+    void saveShoppingItem(created).then((ok) => ok && announce("shopping_added", created.id, created.name));
   },
 
   updateShoppingItem: (id, patch) => {
@@ -126,7 +133,7 @@ export const useHousehold = create<HouseholdState>()((set, get) => ({
   addEvent: (event) => {
     const created: HouseEvent = { ...event, id: crypto.randomUUID(), createdBy: get().currentUserId };
     set(({ events }) => ({ events: [...events, created] }));
-    void saveEvent(created);
+    void saveEvent(created).then((ok) => ok && announce("event_added", created.id, created.title));
   },
 
   updateEvent: (id, patch) => {

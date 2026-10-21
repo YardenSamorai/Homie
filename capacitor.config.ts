@@ -22,6 +22,8 @@ const config: CapacitorConfig = {
     SplashScreen: { launchShowDuration: 8000, launchAutoHide: true, backgroundColor: "#f8f7f2", showSpinner: false },
     // The web view ends at the keyboard, so screens built on dvh (the sign-in code, the add sheet) stay above it.
     Keyboard: { resize: KeyboardResize.Native, resizeOnFullScreen: true },
+    // Shown even while Homie is open, like Messages does.
+    PushNotifications: { presentationOptions: ["alert", "sound"] },
   },
 };
 

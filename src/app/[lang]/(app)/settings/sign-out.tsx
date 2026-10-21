@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { useAuth } from "@/lib/auth/session";
+import { useActivity } from "@/lib/activity-store";
 import { useHousehold } from "@/lib/household-store";
+import { forgetPush } from "@/lib/push/client";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import { supabaseConfigured } from "@/lib/supabase/env";
 
@@ -14,13 +16,16 @@ export function SignOut() {
   const email = useAuth((s) => s.session?.email);
   const signOut = useAuth((s) => s.signOut);
   const syncSelf = useHousehold((s) => s.syncSelf);
+  const clearActivity = useActivity((s) => s.clear);
   const [busy, setBusy] = useState(false);
 
   const leave = async () => {
     setBusy(true);
     if (supabaseConfigured()) {
+      await forgetPush().catch(() => {});
       await createBrowserSupabase().auth.signOut();
     }
+    clearActivity();
     syncSelf(null);
     signOut();
     router.replace(`/${locale}/login`);

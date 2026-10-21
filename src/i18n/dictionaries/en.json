@@ -309,6 +309,28 @@
       "en": "English"
     }
   },
+  "activity": {
+    "title": "What's new at home",
+    "open": "Home activity",
+    "openUnread": "Home activity, {count} new",
+    "close": "Close",
+    "empty": "Nothing here yet. When someone adds a task, something to buy, or an event, it shows up here.",
+    "kinds": {
+      "task_added": "New task: {title}",
+      "task_done": "Done: {title}",
+      "shopping_added": "Added to shopping: {title}",
+      "shopping_bought": "Bought: {title}",
+      "event_added": "New event: {title}"
+    },
+    "push": {
+      "title": "iPhone notifications",
+      "body": "Get a notification when something new happens at home.",
+      "enable": "Turn On Notifications",
+      "denied": "Homie's notifications are off in the iPhone's Settings.",
+      "settings": "Open Settings",
+      "failed": "Couldn't turn on notifications. Try again."
+    }
+  },
   "install": {
     "title": "Homie on your Home Screen",
     "body": "Opens like an app: full screen, no address bar, and its own icon.",

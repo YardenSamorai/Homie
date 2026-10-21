@@ -5,20 +5,8 @@ import { authApi } from "@/lib/auth/api";
 import { useAuth, useAuthReady } from "@/lib/auth/session";
 import { MEMBER_COLORS, useHousehold } from "@/lib/household-store";
 import { supabaseConfigured } from "@/lib/supabase/env";
+import { onReturn } from "@/lib/on-return";
 import { loadHouseholdLists, watchHouseholdLists, watchHouseholdMembers, writesPending, writesSettled } from "@/lib/supabase/lists";
-
-/** Runs `refresh` when the app comes back to the screen or the network returns: a phone drops the live connection in the background. */
-function onReturn(refresh: () => void) {
-  const visible = () => {
-    if (document.visibilityState === "visible") refresh();
-  };
-  document.addEventListener("visibilitychange", visible);
-  window.addEventListener("online", refresh);
-  return () => {
-    document.removeEventListener("visibilitychange", visible);
-    window.removeEventListener("online", refresh);
-  };
-}
 
 /** The signed-in parents of this household and their shared lists, kept live between both phones. */
 export function HouseholdSync() {
