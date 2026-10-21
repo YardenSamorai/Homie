@@ -6,6 +6,7 @@ import { useAuth, useAuthReady } from "@/lib/auth/session";
 import { MEMBER_COLORS, useHousehold } from "@/lib/household-store";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { onReturn } from "@/lib/on-return";
+import { loadPrefs, usePrefs } from "@/lib/prefs-store";
 import { avatarLinks } from "@/lib/supabase/media";
 import { loadHouseholdLists, watchHouseholdLists, watchHouseholdMembers } from "@/lib/supabase/lists";
 import { sending, startOutbox, withPending } from "@/lib/supabase/outbox";
@@ -20,8 +21,13 @@ export function HouseholdSync() {
 
   useEffect(() => {
     void useHousehold.persist.rehydrate();
+    void usePrefs.persist.rehydrate();
     return startOutbox();
   }, []);
+
+  useEffect(() => {
+    if (ready && session?.userId) void loadPrefs(session.userId).catch(() => {});
+  }, [ready, session?.userId]);
 
   useEffect(() => {
     if (!ready) return;

@@ -344,6 +344,81 @@
       "settingsTitle": "Notifications"
     }
   },
+  "prefs": {
+    "notifyTitle": "Notify Me About",
+    "notifyHint": "Only what your partner does. Everything still shows in the bell.",
+    "kinds": {
+      "tasks": "New tasks",
+      "done": "Finished tasks",
+      "shopping": "New shopping items",
+      "bought": "Bought items",
+      "events": "New events",
+      "stories": "Status photos"
+    },
+    "morningTitle": "Morning Summary",
+    "morningOn": "A summary of the day, in the morning",
+    "morningHint": "Today's tasks and events, only on days that have some.",
+    "morningAt": "Time",
+    "newTaskTitle": "New Task",
+    "assignee": "For",
+    "me": "Me",
+    "partnerFallback": "My partner",
+    "due": "When",
+    "dueToday": "Today",
+    "dueNone": "No date",
+    "newTaskHint": "How a new task starts. You can change it on each task.",
+    "nameTitle": "My Name",
+    "nameHint": "The name your household and your notifications show.",
+    "save": "Save",
+    "saved": "Saved",
+    "nameFailed": "Couldn't save the name. Try again.",
+    "makeAdmin": "Make Admin",
+    "makeAdminTitle": "Hand the home over to {name}?",
+    "makeAdminBody": "The admin renames the home, invites, and removes people.",
+    "makeAdminConfirm": "Hand Over",
+    "leave": "Leave Home",
+    "leaveTitle": "Leave the home?",
+    "leaveBody": "The home stays with {name}, along with your open tasks. You can come back with a new invite.",
+    "leaveAlone": "No one else lives here, so leaving deletes the home and everything in it.",
+    "leaveConfirm": "Leave",
+    "cancel": "Cancel",
+    "actionFailed": "That didn't work. Try again.",
+    "deleteAccount": "Delete Account",
+    "deleteTitle": "Delete your account for good?",
+    "deleteBody": "Your account and photos are deleted. What's in the home stays with {name}.",
+    "deleteAlone": "Your account and the home, with everything in it, are deleted for good.",
+    "deleteConfirm": "Delete for Good",
+    "deleteUnavailable": "Your account can't be deleted right now. Try again later.",
+    "aboutTitle": "About",
+    "version": "Version",
+    "app": "App {version} ({build})",
+    "web": "Website",
+    "feedback": "Send Feedback",
+    "privacy": "Privacy Policy"
+  },
+  "privacyPage": {
+    "title": "Privacy Policy",
+    "updated": "Updated October 21, 2026",
+    "back": "Back",
+    "sections": [
+      {
+        "title": "What's stored",
+        "body": "The email you sign in with, the name you chose, a profile photo if you added one, and status photos, which are deleted after 24 hours. Also your home's tasks, shopping and events, and your choices in Settings. If you turned on notifications, an identifier for your device so they can reach it."
+      },
+      {
+        "title": "Who sees it",
+        "body": "Only the people you live with in Homie. Your profile photo sits at an address that can't be guessed, and status photos only inside the home. We don't sell or share anything, and there are no ads or tracking in the app."
+      },
+      {
+        "title": "Where it's kept",
+        "body": "Data is kept in Supabase (database and photo storage), the site runs on Vercel, notifications go through Apple, and the sign-in code is sent by email through Gmail."
+      },
+      {
+        "title": "Deleting",
+        "body": "You can delete your account anytime, in Settings under Account. Your account, photos and device identifiers are deleted for good. What's in the home stays with whoever lives there; if no one else does, the home is deleted with everything in it."
+      }
+    ]
+  },
   "sky": {
     "sunrise": "Sunrise at {time}",
     "sunset": "Sunset at {time}",

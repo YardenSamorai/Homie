@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
+  // Settings › About names the site's version by the day it was built.
+  env: { NEXT_PUBLIC_BUILD_DATE: new Date().toISOString().slice(0, 10) },
   partialPrefetching: true,
   // Every corner of the phone layout holds a control (add button, tab bar, settings, greeting).
   devIndicators: false,

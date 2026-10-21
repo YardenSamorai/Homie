@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/i18n/dictionary-provider";
 import type { DayKey } from "@/lib/dates";
 import { useAddSheet, useHousehold, type AddKind } from "@/lib/household-store";
+import { usePrefs } from "@/lib/prefs-store";
 import type { Recurrence } from "@/lib/tasks";
 import { useClock } from "@/lib/use-clock";
 
@@ -65,8 +66,13 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
     if ("prep" in seed) return seed.prep ?? "";
     return "";
   });
-  const [assigneeId, setAssigneeId] = useState(() => (seed && "assigneeId" in seed ? seed.assigneeId : currentUserId));
-  const [hasDate, setHasDate] = useState(() => (seed && "dueDate" in seed ? Boolean(seed.dueDate) : true));
+  const newTask = usePrefs((s) => s.prefs.newTask);
+  const [assigneeId, setAssigneeId] = useState(() => {
+    if (seed && "assigneeId" in seed) return seed.assigneeId;
+    const partner = members.find((member) => member.id !== currentUserId);
+    return newTask.assignee === "partner" && partner ? partner.id : currentUserId;
+  });
+  const [hasDate, setHasDate] = useState(() => (seed && "dueDate" in seed ? Boolean(seed.dueDate) : newTask.due === "today"));
   const [date, setDate] = useState<DayKey>(() => {
     if (seed && "dueDate" in seed && seed.dueDate) return seed.dueDate;
     if (seed && "date" in seed) return seed.date;

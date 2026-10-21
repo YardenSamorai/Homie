@@ -9,6 +9,7 @@ import { TaskRow, type RowKind } from "@/components/today/task-row";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { fromDayKey } from "@/lib/dates";
 import { useAddSheet, useHousehold } from "@/lib/household-store";
+import { usePrefs } from "@/lib/prefs-store";
 import type { Task } from "@/lib/tasks";
 import { useClock } from "@/lib/use-clock";
 
@@ -22,6 +23,7 @@ export function TasksView() {
   const today = useClock()?.today ?? null;
   const { tasks, members, currentUserId, toggleTask, addTask } = useHousehold();
   const showEdit = useAddSheet((s) => s.showEdit);
+  const newTask = usePrefs((s) => s.prefs.newTask);
   const [scope, setScope] = useState<Scope>("all");
   const [showDone, setShowDone] = useState(false);
   const [title, setTitle] = useState("");
@@ -31,7 +33,13 @@ export function TasksView() {
     event.preventDefault();
     const clean = title.trim();
     if (!clean) return;
-    addTask({ title: clean, assigneeId: currentUserId, dueDate: today, recurrence: "none" });
+    const partner = members.find((member) => member.id !== currentUserId);
+    addTask({
+      title: clean,
+      assigneeId: newTask.assignee === "partner" && partner ? partner.id : currentUserId,
+      dueDate: newTask.due === "today" ? today : null,
+      recurrence: "none",
+    });
     setTitle("");
   };
 

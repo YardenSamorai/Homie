@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import en from "@/i18n/dictionaries/en.json";
 import he from "@/i18n/dictionaries/he.json";
 import { format } from "@/i18n/format";
+import { readPrefs } from "@/lib/prefs";
 import { apnsKeys, sendApns } from "@/lib/push/apns";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 
@@ -10,8 +11,9 @@ const dictionaries = { he, en } as const;
 type Task = { assignee_id: string; title: string; household_id: string };
 type Event = { title: string; time: string | null; household_id: string };
 
-/** Today's date in Israel, where the house is: the job runs at 05:00 UTC, already morning there. */
+/** Today's date and the hour in Israel, where the house is. */
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date());
+const israelHour = () => Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Jerusalem", hour: "2-digit", hourCycle: "h23" }).format(new Date()));
 
 function summary(locale: "he" | "en", tasks: Task[], events: Event[]) {
   const copy = dictionaries[locale].morning;
@@ -31,7 +33,8 @@ function summary(locale: "he" | "en", tasks: Task[], events: Event[]) {
 }
 
 /**
- * Once a morning (vercel.json): each parent with tasks due today or overdue, or an event today, hears about it.
+ * Every hour (.github/workflows/morning.yml): each parent whose chosen hour it is, with tasks due today or
+ * overdue or an event today, hears about it.
  * The same pass clears status photos past their 24 hours, files and rows.
  */
 export async function GET(request: Request) {
@@ -40,16 +43,29 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "auth" }, { status: 401 });
   }
   const db = createAdminSupabase();
-  if (!db) return NextResponse.json({ error: "SUPABASE_SERVICE_ROLE_KEY is not set" }, { status: 503 });
+  // Not a failure: until the key is set there is simply nothing this job may do (and the hourly run stays green).
+  if (!db) return NextResponse.json({ skipped: "SUPABASE_SERVICE_ROLE_KEY is not set" });
 
   const cleared = await clearExpiredStories(db);
 
   const keys = apnsKeys();
   if (!keys) return NextResponse.json({ cleared, sent: 0 });
 
-  const { data: devices } = await db.from("push_devices").select("token, locale, user_id");
-  if (!devices?.length) return NextResponse.json({ cleared, sent: 0 });
-  const people = [...new Set(devices.map((device) => device.user_id as string))];
+  const { data: phones } = await db.from("push_devices").select("token, locale, user_id");
+  if (!phones?.length) return NextResponse.json({ cleared, sent: 0 });
+  // Runs every hour: each parent hears at the hour they chose in Settings, if they kept it on.
+  const hour = israelHour();
+  const owners = [...new Set(phones.map((device) => device.user_id as string))];
+  const { data: profiles } = await db.from("profiles").select("id, prefs").in("id", owners);
+  const wants = new Set(
+    owners.filter((person) => {
+      const { morning } = readPrefs(profiles?.find((row) => row.id === person)?.prefs);
+      return morning.on && morning.hour === hour;
+    }),
+  );
+  const devices = phones.filter((device) => wants.has(device.user_id as string));
+  if (devices.length === 0) return NextResponse.json({ cleared, sent: 0, hour });
+  const people = [...wants];
   const { data: memberships } = await db.from("household_members").select("user_id, household_id").in("user_id", people);
   const houseOf = new Map((memberships ?? []).map((row) => [row.user_id as string, row.household_id as string]));
   const houses = [...new Set(houseOf.values())];

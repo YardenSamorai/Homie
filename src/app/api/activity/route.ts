@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import en from "@/i18n/dictionaries/en.json";
 import he from "@/i18n/dictionaries/he.json";
 import { activityLine, activityPath, isActivityKind, type ActivityKind } from "@/lib/activity";
+import { notifyKindOf, readPrefs, type Prefs } from "@/lib/prefs";
 import { apnsKeys, sendApns } from "@/lib/push/apns";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -43,9 +44,12 @@ export async function POST(request: Request) {
   const keys = apnsKeys();
   if (keys) {
     const { data } = await db.rpc("partner_push_devices");
-    const devices = (data ?? []) as { token: string; locale: string; user_id?: string }[];
+    const all = (data ?? []) as { token: string; locale: string; user_id?: string }[];
     const name = profile?.display_name?.trim() || "Homie";
-    const badges = await unreadFor(db, household, devices);
+    const recipients = await recipientsOf(db, all);
+    // Each parent chose in Settings what reaches their phone; the bell still shows everything.
+    const devices = all.filter((device) => !device.user_id || recipients.get(device.user_id)?.notify[notifyKindOf(kind)] !== false);
+    const badges = await unreadFor(db, household, devices, recipients);
     const results = await Promise.all(
       devices.map(async (device) => {
         const locale = device.locale === "en" ? "en" : "he";
@@ -71,15 +75,31 @@ export async function POST(request: Request) {
   return NextResponse.json({ id: row.id });
 }
 
+type Recipient = { seenAt: string | null; notify: Prefs["notify"] };
+
+/** The phones' owners: what they last saw in the bell and what they want to hear about. */
+async function recipientsOf(db: Db, devices: { user_id?: string }[]) {
+  const people = [...new Set(devices.flatMap((device) => (device.user_id ? [device.user_id] : [])))];
+  const found = new Map<string, Recipient>();
+  if (people.length === 0) return found;
+  type Row = { id: string; activity_seen_at: string | null; prefs?: unknown };
+  let rows = (await db.from("profiles").select("id, activity_seen_at, prefs").in("id", people)).data as Row[] | null;
+  // A project without 0009 has no prefs yet: everyone hears about everything.
+  rows ??= (await db.from("profiles").select("id, activity_seen_at").in("id", people)).data as Row[] | null;
+  for (const row of rows ?? []) {
+    found.set(row.id, { seenAt: row.activity_seen_at, notify: readPrefs(row.prefs).notify });
+  }
+  return found;
+}
+
 /** The red number on each partner's app icon: what the other parent did since they last opened the bell. */
-async function unreadFor(db: Db, household: string, devices: { user_id?: string }[]) {
+async function unreadFor(db: Db, household: string, devices: { user_id?: string }[], recipients: Map<string, Recipient>) {
   const people = [...new Set(devices.flatMap((device) => (device.user_id ? [device.user_id] : [])))];
   const counts = new Map<string, number>();
   if (people.length === 0) return counts;
-  const { data: profiles } = await db.from("profiles").select("id, activity_seen_at").in("id", people);
   await Promise.all(
     people.map(async (person) => {
-      const seen = profiles?.find((row) => row.id === person)?.activity_seen_at ?? "1970-01-01T00:00:00Z";
+      const seen = recipients.get(person)?.seenAt ?? "1970-01-01T00:00:00Z";
       const { count } = await db
         .from("activity")
         .select("id", { count: "exact", head: true })

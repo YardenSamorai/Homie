@@ -10,6 +10,7 @@ import { GuideReplay } from "@/components/shell/guide-replay";
 import { NotificationsCard } from "@/components/shell/activity";
 import { InstallCard } from "@/components/shell/install";
 import { LanguagePicker } from "./language-picker";
+import { AboutCard, DeleteAccount, MyName, NewTaskDefaults, NotificationPrefs } from "./preferences";
 import { ProfilePhoto } from "./profile-photo";
 import { SignOut } from "./sign-out";
 
@@ -25,6 +26,7 @@ export default async function SettingsPage() {
       <PageHeader title={dict.settings.title} subtitle={dict.settings.lead} />
       <div className="flex flex-col gap-8">
         <ProfilePhoto />
+        <MyName />
         <Card title={dict.settings.homeName}>
           <HouseholdName />
         </Card>
@@ -34,6 +36,9 @@ export default async function SettingsPage() {
         <Card title={dict.settings.invite}>
           <InviteCard />
         </Card>
+        <NotificationsCard />
+        <NotificationPrefs />
+        <NewTaskDefaults />
         <Card title={dict.settings.appearance}>
           <AppearancePicker />
         </Card>
@@ -41,10 +46,11 @@ export default async function SettingsPage() {
           <LanguagePicker />
           <GuideReplay />
         </Card>
-        <NotificationsCard />
         <InstallCard />
+        <AboutCard />
         <Card title={dict.settings.account}>
           <SignOut />
+          <DeleteAccount />
         </Card>
       </div>
     </>
