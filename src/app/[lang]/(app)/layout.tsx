@@ -1,5 +1,6 @@
 import { AddSheet } from "@/components/add/add-sheet";
 import { ActivitySheet, ActivitySync } from "@/components/shell/activity";
+import { StoryComposer, StorySync, StoryViewer } from "@/components/stories/stories";
 import { ConnectionBanner } from "@/components/shell/connection-banner";
 import { HouseholdSync } from "@/components/shell/household-sync";
 import { InstallPrompt } from "@/components/shell/install";
@@ -25,6 +26,9 @@ export default function AppLayout({ children }: LayoutProps<"/[lang]">) {
       <AddSheet />
       <ActivitySync />
       <ActivitySheet />
+      <StorySync />
+      <StoryComposer />
+      <StoryViewer />
     </div>
     </OnboardingGate>
   );

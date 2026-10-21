@@ -6,6 +6,9 @@ export type Member = {
   id: string;
   name: string;
   color: string;
+  /** Profile photo: where it's stored, and a short-lived link to show it. */
+  photoPath?: string | null;
+  photo?: string | null;
 };
 
 export type Task = {

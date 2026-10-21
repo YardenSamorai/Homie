@@ -78,7 +78,7 @@ export function TodayView() {
           </Link>
         </div>
       </header>
-      {members.length > 1 && <HouseholdMembers members={members} tasks={tasks} today={today} />}
+      {members.length > 0 && <HouseholdMembers members={members} self={currentUser?.id ?? ""} tasks={tasks} today={today} />}
       {today && selected ? (
         <DateStrip
           compact

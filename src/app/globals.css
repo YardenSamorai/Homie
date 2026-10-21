@@ -1039,3 +1039,47 @@ body {
     transform: translate(45cqw, -22cqh);
   }
 }
+
+/* Status photos: the ring around a parent's circle. Turning colors while there's something new to see, still once seen. */
+@property --story-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.story-ring {
+  background: conic-gradient(from var(--story-angle), var(--coral), #f4b46a, var(--green), #9b8cc9, var(--coral));
+}
+
+.story-ring[data-fresh] {
+  animation:
+    story-turn 6s linear infinite,
+    story-glow 2.4s ease-in-out infinite;
+}
+
+.story-ring[data-seen] {
+  background: color-mix(in oklab, var(--label-secondary) 35%, transparent);
+}
+
+@keyframes story-turn {
+  to {
+    --story-angle: 360deg;
+  }
+}
+
+@keyframes story-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 6px 0 color-mix(in oklab, var(--coral) 30%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 16px 3px color-mix(in oklab, var(--coral) 55%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story-ring[data-fresh] {
+    animation: none;
+    box-shadow: 0 0 10px 1px color-mix(in oklab, var(--coral) 40%, transparent);
+  }
+}

@@ -49,7 +49,7 @@ export const authApi = {
     ),
 
   household: (id: string) =>
-    parse<{ id: string; name: string; members: { id: string; name: string }[] }>(
+    parse<{ id: string; name: string; members: { id: string; name: string; avatarPath?: string | null }[] }>(
       fetch(`/api/household?id=${encodeURIComponent(id)}`),
     ),
 

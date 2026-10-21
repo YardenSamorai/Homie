@@ -320,7 +320,9 @@
       "task_done": "בוצע: {title}",
       "shopping_added": "נוסף לקניות: {title}",
       "shopping_bought": "נקנה: {title}",
-      "event_added": "אירוע חדש: {title}"
+      "event_added": "אירוע חדש: {title}",
+      "story_added": "תמונת מצב חדשה: {title}",
+      "story_plain": "תמונת מצב חדשה"
     },
     "push": {
       "title": "התראות לאייפון",
@@ -333,6 +335,31 @@
       "outdated": "הגרסה של Homie באייפון הזה ישנה. עדכנו אותה ב-TestFlight כדי לקבל התראות.",
       "settingsTitle": "התראות"
     }
+  },
+  "stories": {
+    "add": "הוספת תמונת מצב",
+    "open": "תמונות המצב של {name}",
+    "share": "שיתוף",
+    "sharing": "משתף…",
+    "cancel": "ביטול",
+    "close": "סגירה",
+    "captionPlaceholder": "כמה מילים, לא חובה",
+    "failed": "לא הצלחנו לשתף. נסו שוב.",
+    "seenBy": "נצפה על ידי {name}",
+    "notSeen": "עוד לא נצפה",
+    "delete": "מחיקה",
+    "deleteConfirm": "למחוק?",
+    "update": "כדי לצלם, עדכנו את Homie ב-TestFlight לגרסה האחרונה.",
+    "next": "הבא",
+    "previous": "הקודם"
+  },
+  "profile": {
+    "title": "תמונת פרופיל",
+    "change": "בחירת תמונה",
+    "remove": "הסרת התמונה",
+    "saving": "שומר…",
+    "hint": "התמונה מופיעה במקום האות הראשונה, אצלך ואצל מי שגר איתך.",
+    "failed": "לא הצלחנו לשמור את התמונה. נסו שוב."
   },
   "install": {
     "title": "Homie במסך הבית",

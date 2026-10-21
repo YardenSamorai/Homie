@@ -10,6 +10,7 @@ import { GuideReplay } from "@/components/shell/guide-replay";
 import { NotificationsCard } from "@/components/shell/activity";
 import { InstallCard } from "@/components/shell/install";
 import { LanguagePicker } from "./language-picker";
+import { ProfilePhoto } from "./profile-photo";
 import { SignOut } from "./sign-out";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,6 +24,7 @@ export default async function SettingsPage() {
     <>
       <PageHeader title={dict.settings.title} subtitle={dict.settings.lead} />
       <div className="flex flex-col gap-8">
+        <ProfilePhoto />
         <Card title={dict.settings.homeName}>
           <HouseholdName />
         </Card>

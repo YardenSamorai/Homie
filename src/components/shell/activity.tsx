@@ -107,7 +107,7 @@ export function ActivityBell() {
   );
 }
 
-function useAgo() {
+export function useAgo() {
   const { locale } = useI18n();
   const rtf = useMemo(() => new Intl.RelativeTimeFormat(locale === "he" ? "he-IL" : "en-US", { numeric: "auto" }), [locale]);
   // Hebrew data repeats the count after singular and dual forms: "לפני שעתיים (2)".

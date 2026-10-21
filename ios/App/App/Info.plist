@@ -13,6 +13,10 @@
 	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>Homie משתמש במצלמה כדי לצלם תמונת מצב או תמונת פרופיל שרק בני הבית רואים.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Homie משתמש בתמונות שלך כדי לבחור תמונת פרופיל שרק בני הבית רואים.</string>
 	<key>CFBundleDisplayName</key>
         <string>Homie</string>
 	<key>CFBundleExecutable</key>

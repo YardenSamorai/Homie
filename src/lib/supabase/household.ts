@@ -41,15 +41,16 @@ export async function readHouseholdForUser(id: string) {
   if (!house) return null;
   const { data: members } = await supabase
     .from("household_members")
-    .select("user_id, profiles(display_name)")
+    .select("user_id, profiles(display_name, avatar_path)")
     .eq("household_id", id);
+  type Profile = { display_name: string | null; avatar_path: string | null };
   return {
     id: house.id,
     name: house.name,
     members: (members ?? []).map((member) => {
-      const profile = member.profiles as { display_name: string | null } | { display_name: string | null }[] | null;
+      const profile = member.profiles as Profile | Profile[] | null;
       const row = Array.isArray(profile) ? profile[0] : profile;
-      return { id: member.user_id as string, name: row?.display_name?.trim() || "Homie" };
+      return { id: member.user_id as string, name: row?.display_name?.trim() || "Homie", avatarPath: row?.avatar_path ?? null };
     }),
   };
 }

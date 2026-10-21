@@ -320,7 +320,9 @@
       "task_done": "Done: {title}",
       "shopping_added": "Added to shopping: {title}",
       "shopping_bought": "Bought: {title}",
-      "event_added": "New event: {title}"
+      "event_added": "New event: {title}",
+      "story_added": "New status photo: {title}",
+      "story_plain": "New status photo"
     },
     "push": {
       "title": "iPhone notifications",
@@ -333,6 +335,31 @@
       "outdated": "This iPhone has an older Homie. Update it in TestFlight to get notifications.",
       "settingsTitle": "Notifications"
     }
+  },
+  "stories": {
+    "add": "Add a status photo",
+    "open": "{name}'s status photos",
+    "share": "Share",
+    "sharing": "Sharing…",
+    "cancel": "Cancel",
+    "close": "Close",
+    "captionPlaceholder": "A few words, optional",
+    "failed": "Couldn't share. Try again.",
+    "seenBy": "Seen by {name}",
+    "notSeen": "Not seen yet",
+    "delete": "Delete",
+    "deleteConfirm": "Delete it?",
+    "update": "To take a photo, update Homie in TestFlight to the latest version.",
+    "next": "Next",
+    "previous": "Previous"
+  },
+  "profile": {
+    "title": "Profile Photo",
+    "change": "Choose Photo",
+    "remove": "Remove Photo",
+    "saving": "Saving…",
+    "hint": "Your photo replaces the first letter of your name, for you and whoever lives with you.",
+    "failed": "Couldn't save the photo. Try again."
   },
   "install": {
     "title": "Homie on your Home Screen",
