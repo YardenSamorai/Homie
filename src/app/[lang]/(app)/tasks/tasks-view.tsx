@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ListChecks, Plus } from "lucide-react";
+import { PageStage } from "@/components/shell/page-stage";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { TaskRow, type RowKind } from "@/components/today/task-row";
@@ -79,6 +80,37 @@ export function TasksView() {
     );
   }
 
+  // The stage shows what's next: overdue first, then today, then later, then whenever.
+  const open = tasks
+    .filter((t) => !t.completedAt)
+    .sort((a, b) => ((a.dueDate ?? "9999") < (b.dueDate ?? "9999") ? -1 : 1));
+  const whenOf = (task: Task) =>
+    !task.dueDate ? null : task.dueDate < today ? dict.today.overdue : task.dueDate === today ? dict.tasks.today : shortDate.format(fromDayKey(task.dueDate));
+  const stage = (
+    <PageStage
+      icon={ListChecks}
+      tint={["#8f93c9", "#565c9c"]}
+      count={open.length}
+      chips={open.map((task) => {
+        const assignee = members.find((m) => m.id === task.assigneeId);
+        const note = [assignee ? assignee.name.trim().split(/\s+/)[0] : null, whenOf(task)].filter(Boolean).join(" · ");
+        return {
+          id: task.id,
+          title: task.title,
+          note: note || null,
+          visual: (
+            <span className="flex size-8 shrink-0 items-center justify-center">
+              <span
+                className="size-[22px] rounded-full border-2"
+                style={{ borderColor: assignee?.color ?? "var(--accent)" }}
+              />
+            </span>
+          ),
+        };
+      })}
+    />
+  );
+
   const visible = tasks
     .filter((t) => scope === "all" || t.assigneeId === currentUserId)
     .filter((t) => showDone || !t.completedAt)
@@ -99,6 +131,7 @@ export function TasksView() {
 
   return (
     <div className="flex flex-col gap-6">
+      {stage}
       {field}
       {control}
       {groups.length === 0 ? (

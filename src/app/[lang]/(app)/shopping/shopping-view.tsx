@@ -2,7 +2,8 @@
 
 import { motion } from "motion/react";
 import { ShoppingBasket } from "lucide-react";
-import { CartBanner } from "@/components/shopping/cart-banner";
+import { PageStage } from "@/components/shell/page-stage";
+import { QuickAddItem } from "@/components/shopping/quick-add-item";
 import { Avatar } from "@/components/ui/avatar";
 import { CheckCircle } from "@/components/ui/check-circle";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -10,7 +11,6 @@ import { StrikeText } from "@/components/ui/strike-text";
 import { SyncCaption, SyncRetry } from "@/components/ui/sync-note";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
-import { dropInCart } from "@/lib/cart-drop";
 import { completionHaptic } from "@/lib/haptics";
 import type { ShoppingItem } from "@/lib/household";
 import { useAddSheet, useHousehold } from "@/lib/household-store";
@@ -63,23 +63,36 @@ function ItemRow({ item }: { item: ShoppingItem }) {
   );
 }
 
+const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;
+
 export function ShoppingView() {
   const { dict } = useI18n();
-  const { shopping, addShoppingItem, clearBought } = useHousehold();
+  const { shopping, members, addShoppingItem, clearBought } = useHousehold();
 
   const toBuy = shopping.filter((item) => !item.checkedAt);
   const boughtCount = shopping.length - toBuy.length;
 
   return (
     <div className="flex flex-col gap-6">
-      <CartBanner
-        history={shopping.map((item) => ({ name: item.name, note: item.note }))}
-        inCart={toBuy.map((item) => ({ id: item.id, name: item.name }))}
-        onAdd={(name, note, from) => {
-          addShoppingItem({ name, note });
-          dropInCart({ name, from });
-        }}
+      <PageStage
+        icon={ShoppingBasket}
+        tint={["#e9a77f", "#c26a44"]}
+        count={toBuy.length}
+        chips={toBuy.map((item) => {
+          const adder = members.find((member) => member.id === item.addedBy);
+          return {
+            id: item.id,
+            title: item.name,
+            note: item.note ?? (adder ? firstName(adder.name) : null),
+            visual: (
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-[color-mix(in_oklab,var(--green)_14%,var(--surface))] text-green">
+                <ShoppingBasket size={17} strokeWidth={2.1} />
+              </span>
+            ),
+          };
+        })}
       />
+      <QuickAddItem history={shopping.map((item) => ({ name: item.name, note: item.note }))} onAdd={(name, note) => addShoppingItem({ name, note })} />
       {shopping.length === 0 ? (
         <div className="rounded-card bg-surface shadow-card">
           <EmptyState icon={ShoppingBasket} title={dict.shopping.empty} hint={dict.shopping.emptyHint} />

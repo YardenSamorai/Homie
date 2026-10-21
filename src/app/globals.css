@@ -471,6 +471,7 @@ a,
   }
 }
 
+.page-stage[data-paused] :is(.door-float, .door-sway, .door-drift, .door-breathe),
 .door-stage[data-paused] .door-float,
 .door-stage[data-paused] .door-sway,
 .door-stage[data-paused] .door-drift,
