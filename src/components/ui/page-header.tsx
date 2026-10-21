@@ -9,10 +9,13 @@ const subscribeNever = () => () => {};
 /** iOS large title: once it scrolls under the top edge, a compact copy fades in so the screen stays named. */
 export function PageHeader({
   title,
+  eyebrow,
   subtitle,
   meta,
 }: {
   title: React.ReactNode;
+  /** A small line above the title, e.g. the day it's about. */
+  eyebrow?: React.ReactNode;
   subtitle?: React.ReactNode;
   /** A live sentence under the large title — counts, not a section label. */
   meta?: React.ReactNode;
@@ -35,9 +38,12 @@ export function PageHeader({
   return (
     <header className="flex flex-col gap-1 pb-6 pt-4 md:pt-10">
       <div className="flex items-start justify-between gap-3">
-        <h1 ref={titleRef} className="min-w-0 text-[34px] font-bold leading-tight tracking-tight">
-          {title}
-        </h1>
+        <div className="min-w-0">
+          {eyebrow && <p className="mb-0.5 text-[15px] font-medium text-label-secondary">{eyebrow}</p>}
+          <h1 ref={titleRef} className="text-balance text-[34px] font-bold leading-tight tracking-tight">
+            {title}
+          </h1>
+        </div>
         <div className="pt-0.5">
           <ActivityBell />
         </div>
