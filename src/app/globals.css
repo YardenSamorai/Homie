@@ -268,6 +268,20 @@ select {
   font-size: max(16px, 1em);
 }
 
+/* The smaller text sizes zoom the body below 1; iOS zooms into any field that renders under 16px. */
+html[data-text="0"] :is(input, textarea, select) {
+  font-size: max(calc(16px / 0.9), 1em);
+}
+
+html[data-text="1"] :is(input, textarea, select) {
+  font-size: max(calc(16px / 0.95), 1em);
+}
+
+/* The iPhone app's web view ends at the keyboard; like a native tab bar, the bottom bar stays behind it. */
+html[data-keyboard] .keyboard-hides {
+  display: none;
+}
+
 button,
 a,
 [role="button"] {

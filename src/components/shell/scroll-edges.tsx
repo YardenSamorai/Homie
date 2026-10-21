@@ -8,7 +8,7 @@ export function ScrollEdges() {
       />
       <div
         aria-hidden
-        className="scroll-edge-bottom pointer-events-none fixed inset-x-0 bottom-0 z-30 h-[calc(env(safe-area-inset-bottom,0px)+96px)] md:hidden"
+        className="keyboard-hides scroll-edge-bottom pointer-events-none fixed inset-x-0 bottom-0 z-30 h-[calc(env(safe-area-inset-bottom,0px)+96px)] md:hidden"
       />
     </>
   );

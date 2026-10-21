@@ -1,8 +1,25 @@
-import { Capacitor } from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 
 /** Running inside the iPhone app (Capacitor) rather than a browser. */
 export function isNativeApp() {
   return typeof window !== "undefined" && Capacitor.isNativePlatform();
+}
+
+/** The app's own plugin (SceneDelegate.swift): what shows behind the web view, e.g. at the keyboard's rounded corners. */
+const Appearance = registerPlugin<{ setBackground(options: { color: string }): Promise<void> }>("Appearance");
+
+export function setNativeBackground(color: string) {
+  if (!isNativeApp()) return;
+  // Builds before the plugin keep their default; nothing to do.
+  Appearance.setBackground({ color }).catch(() => {});
+}
+
+/** While the keyboard is up, html carries data-keyboard: the tab bar and the + hide behind it, as in iPhone apps. */
+async function trackKeyboard() {
+  const { Keyboard } = await import("@capacitor/keyboard");
+  const root = document.documentElement;
+  await Keyboard.addListener("keyboardWillShow", () => root.setAttribute("data-keyboard", ""));
+  await Keyboard.addListener("keyboardWillHide", () => root.removeAttribute("data-keyboard"));
 }
 
 const handledLaunch = "homie-launch-url";
@@ -16,6 +33,7 @@ export async function startNativeShell() {
   await followAppLinks();
   // No Safari-style ⌃ ⌄ Done bar over the keyboard; a build without the plugin just keeps it.
   void import("@capacitor/keyboard").then(({ Keyboard }) => Keyboard.setAccessoryBarVisible({ isVisible: false })).catch(() => {});
+  void trackKeyboard().catch(() => {});
   const { SplashScreen } = await import("@capacitor/splash-screen");
   requestAnimationFrame(() => void SplashScreen.hide({ fadeOutDuration: 250 }));
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useSyncExternalStore } from "react";
+import { setNativeBackground } from "./native";
 import { themeStorageKey } from "./theme-script";
 
 export const themes = ["light", "dark", "system"] as const;
@@ -38,10 +39,12 @@ export function useThemeColorSync() {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => {
       const dark = theme === "dark" || (theme === "system" && media.matches);
+      const color = dark ? statusBar.dark : statusBar.light;
       document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
-        meta.setAttribute("content", dark ? statusBar.dark : statusBar.light);
+        meta.setAttribute("content", color);
         meta.removeAttribute("media");
       });
+      setNativeBackground(color);
     };
     apply();
     media.addEventListener("change", apply);

@@ -17,7 +17,7 @@ export function TabBar() {
   const selectedDay = useSelectedDay((s) => s.day);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),10px)] md:hidden">
+    <div className="keyboard-hides pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),10px)] md:hidden">
       <div className="relative mx-auto max-w-lg">
         <button
           type="button"

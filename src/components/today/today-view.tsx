@@ -16,6 +16,9 @@ import { DayTasks } from "./day-tasks";
 import { HouseCard } from "./house-card";
 import { HouseholdMembers } from "./household-members";
 
+/** A greeting says "Good afternoon, Yarden", never the full name. */
+const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;
+
 const DAYS_BACK = 30;
 const DAYS_AHEAD = 90;
 
@@ -62,8 +65,8 @@ export function TodayView() {
     <div className="flex flex-col gap-5 pt-4 md:pt-8">
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-[32px] font-bold leading-[1.1] tracking-tight">
-            <bdi>{currentUser ? `${greeting}, ${currentUser.name}` : greeting || "\u00a0"}</bdi>
+          <h1 className="text-balance text-[clamp(1.625rem,7.4vw,2rem)] font-bold leading-[1.12] tracking-tight [overflow-wrap:anywhere]">
+            <bdi>{currentUser ? `${greeting}, ${firstName(currentUser.name)}` : greeting || "\u00a0"}</bdi>
           </h1>
           <p className="mt-1 text-[15px] capitalize text-label-secondary">{dateLine || "\u00a0"}</p>
         </div>
