@@ -7,6 +7,7 @@ import { HouseholdCard } from "./household-card";
 import { HouseholdName } from "./household-name";
 import { InviteCard } from "./invite-card";
 import { GuideReplay } from "@/components/shell/guide-replay";
+import { NotificationsCard } from "@/components/shell/activity";
 import { InstallCard } from "@/components/shell/install";
 import { LanguagePicker } from "./language-picker";
 import { SignOut } from "./sign-out";
@@ -38,6 +39,7 @@ export default async function SettingsPage() {
           <LanguagePicker />
           <GuideReplay />
         </Card>
+        <NotificationsCard />
         <InstallCard />
         <Card title={dict.settings.account}>
           <SignOut />

@@ -328,7 +328,10 @@
       "enable": "Turn On Notifications",
       "denied": "Homie's notifications are off in the iPhone's Settings.",
       "settings": "Open Settings",
-      "failed": "Couldn't turn on notifications. Try again."
+      "failed": "Couldn't turn on notifications. Try again.",
+      "on": "Notifications are on. You'll hear when something new happens at home.",
+      "outdated": "This iPhone has an older Homie. Update it in TestFlight to get notifications.",
+      "settingsTitle": "Notifications"
     }
   },
   "install": {

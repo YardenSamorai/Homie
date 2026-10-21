@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Drawer } from "@base-ui/react/drawer";
 import { AnimatePresence, motion, useAnimationControls } from "motion/react";
 import { Bell, BellRing } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
 import { activityLine, activityPath, type ActivityItem } from "@/lib/activity";
@@ -13,6 +14,7 @@ import { isUnread, unreadCount, useActivity } from "@/lib/activity-store";
 import { useAuth, useAuthReady } from "@/lib/auth/session";
 import { MEMBER_COLORS, useHousehold } from "@/lib/household-store";
 import { spring } from "@/lib/motion";
+import { isNativeApp } from "@/lib/native";
 import { onReturn } from "@/lib/on-return";
 import { enablePush, followNotificationTaps, openAppSettings, pushState, refreshPush, type PushState } from "@/lib/push/client";
 import { loadActivity, watchActivity } from "@/lib/supabase/activity";
@@ -119,8 +121,11 @@ function useAgo() {
   };
 }
 
-/** Only in the iPhone app: the one place that asks for notifications, in context, from a tap. */
-function PushOffer() {
+/**
+ * Only in the iPhone app, from a tap. In the bell it appears until notifications are on;
+ * in Settings (`always`) it stays, saying they're on.
+ */
+export function PushControl({ always = false }: { always?: boolean }) {
   const { locale, dict } = useI18n();
   const [state, setState] = useState<PushState | null>(null);
   const [busy, setBusy] = useState(false);
@@ -138,13 +143,13 @@ function PushOffer() {
     };
   }, []);
 
-  if (state !== "prompt" && state !== "denied") return null;
+  if (state === null || state === "unsupported" || (state === "on" && !always)) return null;
 
   const turnOn = async () => {
     setBusy(true);
     setFailed(false);
     try {
-      setState((await enablePush(locale)) ? "on" : "denied");
+      setState(await enablePush(locale));
     } catch {
       setFailed(true);
     } finally {
@@ -152,25 +157,31 @@ function PushOffer() {
     }
   };
 
+  const copy = dict.activity.push;
+  const message = failed
+    ? copy.failed
+    : { prompt: copy.body, denied: copy.denied, outdated: copy.outdated, on: copy.on }[state];
+  const action = state === "denied" ? copy.settings : state === "prompt" ? copy.enable : null;
+
   return (
-    <div className="mx-4 mb-4 flex items-center gap-3 rounded-[20px] bg-fill p-4">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface text-accent shadow-card">
+    <div className={`flex items-center gap-3 rounded-[20px] p-4 ${always ? "" : "mx-4 mb-4 bg-fill"}`}>
+      <span className={`flex size-10 shrink-0 items-center justify-center rounded-full shadow-card ${state === "on" ? "bg-accent text-accent-contrast" : "bg-surface text-accent"}`}>
         <BellRing aria-hidden size={19} strokeWidth={1.9} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[15px] font-semibold">{dict.activity.push.title}</p>
-        <p className="mt-0.5 text-[13px] leading-snug text-label-secondary">
-          {failed ? dict.activity.push.failed : state === "denied" ? dict.activity.push.denied : dict.activity.push.body}
-        </p>
+        <p className="text-[15px] font-semibold">{copy.title}</p>
+        <p className="mt-0.5 text-[13px] leading-snug text-label-secondary">{message}</p>
       </div>
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => (state === "denied" ? openAppSettings() : void turnOn())}
-        className="min-h-10 shrink-0 rounded-full bg-accent px-4 text-[14px] font-semibold text-accent-contrast transition-transform duration-150 ease-out active:scale-[0.97] disabled:opacity-60"
-      >
-        {state === "denied" ? dict.activity.push.settings : dict.activity.push.enable}
-      </button>
+      {action && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => (state === "denied" ? openAppSettings() : void turnOn())}
+          className="min-h-10 shrink-0 rounded-full bg-accent px-4 text-[14px] font-semibold text-accent-contrast transition-transform duration-150 ease-out active:scale-[0.97] disabled:opacity-60"
+        >
+          {action}
+        </button>
+      )}
     </div>
   );
 }
@@ -205,6 +216,20 @@ function ActivityRow({ item, fresh, onOpen }: { item: ActivityItem; fresh: boole
   );
 }
 
+const subscribeNever = () => () => {};
+
+/** Settings: where notifications stand on this iPhone. Nothing on the site, which gets none. */
+export function NotificationsCard() {
+  const { dict } = useI18n();
+  const native = useSyncExternalStore(subscribeNever, isNativeApp, () => false);
+  if (!native) return null;
+  return (
+    <Card title={dict.activity.push.settingsTitle}>
+      <PushControl always />
+    </Card>
+  );
+}
+
 /** What the other parent has been doing, newest first. Opening it marks everything as seen. */
 export function ActivitySheet() {
   const { locale, dict } = useI18n();
@@ -229,7 +254,7 @@ export function ActivitySheet() {
               <Drawer.Close className="py-2 text-[17px] font-semibold text-accent">{dict.activity.close}</Drawer.Close>
             </div>
             <Drawer.Content className="flex min-h-0 flex-1 touch-auto flex-col overflow-y-auto overscroll-contain pb-[max(env(safe-area-inset-bottom),20px)]">
-              <PushOffer />
+              <PushControl />
               {items.length === 0 ? (
                 <div className="flex flex-1 flex-col items-center justify-center gap-3 px-10 py-12 text-center">
                   <span className="flex size-14 items-center justify-center rounded-full bg-fill text-accent">

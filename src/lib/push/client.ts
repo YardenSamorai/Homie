@@ -8,8 +8,9 @@ import { isNativeApp } from "@/lib/native";
  * prompt      – never asked, or asked and the answer is still open.
  * denied      – turned off in the iPhone's Settings; only Settings can turn it back on.
  * on          – this phone is registered and gets notifications.
+ * outdated    – an app build from before notifications; TestFlight has a newer one.
  */
-export type PushState = "unsupported" | "prompt" | "denied" | "on";
+export type PushState = "unsupported" | "prompt" | "denied" | "on" | "outdated";
 
 const tokenKey = "homie-push-token";
 
@@ -19,11 +20,22 @@ const tokenKey = "homie-push-token";
  */
 const plugin = () => import("@capacitor/push-notifications");
 
+const unimplemented = (error: unknown) => (error as { code?: string } | null)?.code === "UNIMPLEMENTED";
+
+/** Never hangs: if the phone doesn't answer in a few seconds, offer the button anyway; tapping it reports what's wrong. */
 export async function pushState(): Promise<PushState> {
   if (!isNativeApp()) return "unsupported";
-  const { receive } = await (await plugin()).PushNotifications.checkPermissions();
-  if (receive === "denied") return "denied";
-  return receive === "granted" && localStorage.getItem(tokenKey) ? "on" : "prompt";
+  const late = new Promise<PushState>((resolve) => window.setTimeout(() => resolve("prompt"), 4000));
+  const check = (async (): Promise<PushState> => {
+    try {
+      const { receive } = await (await plugin()).PushNotifications.checkPermissions();
+      if (receive === "denied") return "denied";
+      return receive === "granted" && localStorage.getItem(tokenKey) ? "on" : "prompt";
+    } catch (error) {
+      return unimplemented(error) ? "outdated" : "prompt";
+    }
+  })();
+  return Promise.race([check, late]);
 }
 
 /** Registers with Apple and waits for this phone's token. */
@@ -53,19 +65,28 @@ async function register(locale: string) {
   localStorage.setItem(tokenKey, token);
 }
 
-/** Asks for permission (call it from a tap). False when the person said no. */
-export async function enablePush(locale: string): Promise<boolean> {
-  const { receive } = await (await plugin()).PushNotifications.requestPermissions();
-  if (receive !== "granted") return false;
+/** Asks for permission (call it from a tap). */
+export async function enablePush(locale: string): Promise<"on" | "denied" | "outdated"> {
+  try {
+    const { receive } = await (await plugin()).PushNotifications.requestPermissions();
+    if (receive !== "granted") return "denied";
+  } catch (error) {
+    if (unimplemented(error)) return "outdated";
+    throw error;
+  }
   await register(locale);
-  return true;
+  return "on";
 }
 
 /** On every launch with permission: Apple can hand out a new token, and the locale may have changed. */
 export async function refreshPush(locale: string) {
   if (!isNativeApp()) return;
-  const { receive } = await (await plugin()).PushNotifications.checkPermissions();
-  if (receive === "granted") await register(locale).catch(() => {});
+  try {
+    const { receive } = await (await plugin()).PushNotifications.checkPermissions();
+    if (receive === "granted") await register(locale);
+  } catch {
+    // An older build without notifications, or Apple didn't answer; the bell and Settings say so.
+  }
 }
 
 /** Signing out: this phone stops hearing about a house it's no longer in. */
