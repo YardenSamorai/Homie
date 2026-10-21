@@ -3,12 +3,15 @@
 import { useEffect } from "react";
 import { HomieMark } from "@/components/brand/homie-mark";
 import { useI18n } from "@/i18n/dictionary-provider";
+import { reloadForNewVersion } from "@/lib/report-errors";
 
 /** A screen that crashed: say so calmly, keep the rest of the app, report it, and offer to try again. */
 export default function ScreenError({ error, retry }: { error: unknown; retry: () => void }) {
   const { dict } = useI18n();
 
   useEffect(() => {
+    // A new version went live while this screen was open: its code moved on. Load the new version once.
+    if (reloadForNewVersion(error)) return;
     const failure = error instanceof Error ? error : new Error(String(error));
     const body = JSON.stringify({ message: `render: ${failure.message}`, stack: failure.stack, path: location.pathname });
     void fetch("/api/client-error", { method: "POST", headers: { "content-type": "application/json" }, body, keepalive: true }).catch(() => {});

@@ -79,15 +79,14 @@ export function PageStage({
         {[0, 1, 2].map((ring) => (
           <span key={ring} className="door-ring-in absolute left-0 top-0 size-0" style={vars({ "--d": `${0.3 + ring * 0.1}s` })}>
             <span
-              className="door-ring door-drift absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full"
-              style={{
-                width: `${7.5 + ring * 5.5}rem`,
-                height: `${7.5 + ring * 5.5}rem`,
-                ...vars({ "--float": `${11 + ring * 2}s`, "--d": `${1.4 + ring * 0.4}s` }),
-              }}
+              className="door-ring stage-ring absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full"
+              style={{ width: `${7.5 + ring * 5.5}rem`, height: `${7.5 + ring * 5.5}rem`, ...vars({ "--d": `${ring * 0.35}s` }) }}
             />
           </span>
         ))}
+        <span className="door-fade-in absolute left-0 top-0 size-0" style={vars({ "--d": "0.6s" })}>
+          <span className="stage-ripple absolute -left-[3.25rem] -top-[3.25rem] size-[6.5rem] rounded-full border-[1.5px] border-[color-mix(in_oklab,var(--accent)_40%,transparent)]" />
+        </span>
         <span className="door-fade-in absolute left-0 top-0 size-0" style={vars({ "--d": "0.2s" })}>
           <span className="door-halo door-breathe absolute left-0 top-0 size-[9.5rem] -translate-x-1/2 -translate-y-1/2 rounded-full" />
         </span>

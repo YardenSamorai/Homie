@@ -1141,3 +1141,49 @@ body {
 :root[data-starry] .sky-stage-halo {
   background: radial-gradient(closest-side, rgb(214 224 250 / 0.3), rgb(214 224 250 / 0.08) 55%, transparent);
 }
+/*
+ * The rings around a stage's icon (Shopping, Tasks, Today) never stop: a soft wave outward every 3.6s,
+ * each ring a beat after the one inside it, with a ripple leaving the icon on the same beat.
+ */
+.stage-ring {
+  animation: stage-ring 3.6s ease-in-out var(--d, 0s) infinite;
+}
+.stage-ripple {
+  animation: stage-ripple 3.6s cubic-bezier(0.2, 0.6, 0.35, 1) infinite;
+}
+@keyframes stage-ring {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.55;
+  }
+}
+@keyframes stage-ripple {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2.7);
+    opacity: 0;
+  }
+}
+.page-stage[data-paused] :is(.stage-ring, .stage-ripple) {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .stage-ring,
+  .stage-ripple {
+    animation: none;
+  }
+  .stage-ripple {
+    opacity: 0;
+  }
+}

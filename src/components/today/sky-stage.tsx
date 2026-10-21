@@ -227,15 +227,14 @@ export function SkyStage({ today, openCount }: { today: DayKey | null; openCount
           {[0, 1, 2].map((ring) => (
             <span key={ring} className="door-ring-in absolute left-0 top-0 size-0" style={vars({ "--d": `${0.3 + ring * 0.1}s` })}>
               <span
-                className="sky-stage-ring door-drift absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full"
-                style={{
-                  width: `${8 + ring * 6}rem`,
-                  height: `${8 + ring * 6}rem`,
-                  ...vars({ "--float": `${11 + ring * 2}s`, "--d": `${1.4 + ring * 0.4}s` }),
-                }}
+                className="sky-stage-ring stage-ring absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full"
+                style={{ width: `${8 + ring * 6}rem`, height: `${8 + ring * 6}rem`, ...vars({ "--d": `${ring * 0.35}s` }) }}
               />
             </span>
           ))}
+          <span className="door-fade-in absolute left-0 top-0 size-0" style={vars({ "--d": "0.6s" })}>
+            <span className="stage-ripple absolute -left-[3.25rem] -top-[3.25rem] size-[6.5rem] rounded-full border-[1.5px] border-[color-mix(in_oklab,var(--scene-ink)_30%,transparent)]" />
+          </span>
           <span className="door-fade-in absolute left-0 top-0 size-0" style={vars({ "--d": "0.2s" })}>
             <span className="sky-stage-halo door-breathe absolute left-0 top-0 size-[10.5rem] -translate-x-1/2 -translate-y-1/2 rounded-full" />
           </span>
