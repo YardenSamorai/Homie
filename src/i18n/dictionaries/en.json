@@ -344,6 +344,15 @@
       "settingsTitle": "Notifications"
     }
   },
+  "sky": {
+    "sunrise": "Sunrise at {time}",
+    "sunset": "Sunset at {time}",
+    "noTasks": "No tasks today",
+    "calm": "A calm day",
+    "toBuyOne": "1 to buy",
+    "toBuyMany": "{count} to buy",
+    "preview": "Preview time"
+  },
   "morning": {
     "title": "Good morning",
     "oneTask": "One task for today: {list}",

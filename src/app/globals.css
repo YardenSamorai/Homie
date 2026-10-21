@@ -1098,3 +1098,46 @@ body {
     box-shadow: 0 0 10px 1px color-mix(in oklab, var(--coral) 40%, transparent);
   }
 }
+/*
+ * Today's sky stage (src/components/today/sky-stage.tsx): the sky of this moment as a wash that fades
+ * into the page, under the sign-in stage's rings. The sun's path, drawn for the old painted scene from
+ * 1% to 57%, is spread across the whole stage here: rising on the left, setting on the right.
+ */
+.sky-stage {
+  --stage-sun-x: calc(8% + (var(--sky-sun-x) - 1%) * 1.5);
+  --stage-moon-x: calc(8% + (var(--sky-moon-x) - 1%) * 1.5);
+  --stage-glow-x: calc(8% + (var(--sky-glow-x) - 1%) * 1.5);
+}
+.sky-stage-wash {
+  mask-image: radial-gradient(125% 100% at 50% 38%, black 50%, transparent 100%);
+}
+.sky-stage .sky-sun {
+  left: var(--stage-sun-x);
+}
+.sky-stage .sky-moon {
+  left: var(--stage-moon-x);
+}
+.sky-stage .sky-glow {
+  background: radial-gradient(
+    var(--sky-glow-w) var(--sky-glow-h) at var(--stage-glow-x) var(--sky-glow-y),
+    rgb(var(--sky-glow) / var(--sky-glow-a)),
+    rgb(var(--sky-glow) / calc(var(--sky-glow-a) * 0.4)) 45%,
+    transparent
+  );
+}
+.sky-stage-ring {
+  border: 1px solid color-mix(in oklab, var(--scene-ink) 16%, transparent);
+  background: radial-gradient(closest-side, transparent 82%, rgb(255 255 255 / 0.08));
+}
+/* The light behind the house: the sun's color by day, the moon's silver once the stars are out. */
+.sky-stage-halo {
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--sky-sun) 50%, transparent),
+    color-mix(in oklab, var(--sky-horizon) 30%, transparent) 55%,
+    transparent
+  );
+}
+:root[data-starry] .sky-stage-halo {
+  background: radial-gradient(closest-side, rgb(214 224 250 / 0.3), rgb(214 224 250 / 0.08) 55%, transparent);
+}

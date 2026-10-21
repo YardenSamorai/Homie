@@ -131,7 +131,7 @@ export function HouseholdMembers({
                   <bdi>{member.name.trim().split(/\s+/)[0]}</bdi>
                 </p>
                 {caption && (
-                  <p className={`truncate text-[12px] leading-snug ${caption.tone}`}>{caption.text}</p>
+                  <p className={`line-clamp-2 text-balance text-[12px] leading-snug ${caption.tone}`}>{caption.text}</p>
                 )}
               </div>
             </li>

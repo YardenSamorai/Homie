@@ -13,7 +13,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { DomainTiles } from "./briefing";
 import { DateStrip } from "./date-strip";
 import { DayTasks } from "./day-tasks";
-import { HouseCard } from "./house-card";
+import { SkyStage } from "./sky-stage";
 import { HouseholdMembers } from "./household-members";
 
 /** A greeting says "Good afternoon, Yarden", never the full name. */
@@ -95,7 +95,7 @@ export function TodayView() {
       ) : (
         <div aria-hidden className="h-16" />
       )}
-      <HouseCard openCount={openToday} day={selected} />
+      <SkyStage today={today} openCount={openToday} />
       {today && <DomainTiles today={today} />}
       {today && selected ? (
           <>

@@ -344,6 +344,15 @@
       "settingsTitle": "התראות"
     }
   },
+  "sky": {
+    "sunrise": "זריחה {time}",
+    "sunset": "שקיעה {time}",
+    "noTasks": "אין משימות להיום",
+    "calm": "יום רגוע",
+    "toBuyOne": "פריט לקנות",
+    "toBuyMany": "{count} לקנות",
+    "preview": "שעה לבדיקה"
+  },
   "morning": {
     "title": "בוקר טוב",
     "oneTask": "משימה אחת להיום: {list}",
