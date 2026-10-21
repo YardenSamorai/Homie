@@ -5,9 +5,22 @@ import { authApi } from "@/lib/auth/api";
 import { useAuth, useAuthReady } from "@/lib/auth/session";
 import { MEMBER_COLORS, useHousehold } from "@/lib/household-store";
 import { supabaseConfigured } from "@/lib/supabase/env";
-import { loadHouseholdLists, watchHouseholdLists } from "@/lib/supabase/lists";
+import { loadHouseholdLists, watchHouseholdLists, watchHouseholdMembers, writesPending, writesSettled } from "@/lib/supabase/lists";
 
-/** The signed-in parents of this household. Lists start empty — no demo chores. */
+/** Runs `refresh` when the app comes back to the screen or the network returns: a phone drops the live connection in the background. */
+function onReturn(refresh: () => void) {
+  const visible = () => {
+    if (document.visibilityState === "visible") refresh();
+  };
+  document.addEventListener("visibilitychange", visible);
+  window.addEventListener("online", refresh);
+  return () => {
+    document.removeEventListener("visibilitychange", visible);
+    window.removeEventListener("online", refresh);
+  };
+}
+
+/** The signed-in parents of this household and their shared lists, kept live between both phones. */
 export function HouseholdSync() {
   const ready = useAuthReady();
   const session = useAuth((s) => s.session);
@@ -21,32 +34,37 @@ export function HouseholdSync() {
       syncSelf(null);
       return;
     }
-    const self = {
-      id: session.userId,
-      name: session.displayName,
-      color: MEMBER_COLORS[0],
-    };
+    const userId = session.userId;
+    const self = { id: userId, name: session.displayName, color: MEMBER_COLORS[0] };
     if (!session.householdId) {
       syncSelf(self);
       return;
     }
+    const householdId = session.householdId;
     let alive = true;
-    void authApi
-      .household(session.householdId)
-      .then((house) => {
-        if (!alive) return;
-        const members = house.members.map((member, index) => ({
-          id: member.id,
-          name: member.name,
-          color: MEMBER_COLORS[index] ?? MEMBER_COLORS[0],
-        }));
-        setRoster(session.userId, members.length > 0 ? members : [self]);
-      })
-      .catch(() => {
-        if (alive) syncSelf(self);
-      });
+    const loadRoster = () => {
+      void authApi
+        .household(householdId)
+        .then((house) => {
+          if (!alive) return;
+          const members = house.members.map((member, index) => ({
+            id: member.id,
+            name: member.name,
+            color: MEMBER_COLORS[index] ?? MEMBER_COLORS[0],
+          }));
+          setRoster(userId, members.length > 0 ? members : [self]);
+        })
+        .catch(() => {
+          if (alive && useHousehold.getState().members.length === 0) syncSelf(self);
+        });
+    };
+    loadRoster();
+    const stopWatching = watchHouseholdMembers(householdId, loadRoster);
+    const stopReturn = onReturn(loadRoster);
     return () => {
       alive = false;
+      stopWatching();
+      stopReturn();
     };
   }, [ready, session?.userId, session?.displayName, session?.householdId, syncSelf, setRoster]);
 
@@ -54,16 +72,39 @@ export function HouseholdSync() {
     if (!ready || !session?.householdId || !supabaseConfigured()) return;
     const householdId = session.householdId;
     let alive = true;
-    const load = () => {
-      void loadHouseholdLists(householdId).then((lists) => {
-        if (alive) replaceLists(lists);
-      });
+    let latest = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const load = async () => {
+      const request = ++latest;
+      await writesSettled();
+      try {
+        const lists = await loadHouseholdLists(householdId);
+        if (!alive || request !== latest) return;
+        // A change made while this was loading would be undone by the older copy; its own event reloads again.
+        if (writesPending()) return;
+        replaceLists(lists);
+      } catch {
+        // Offline or a dropped request: keep what's on screen; the next event or return reloads.
+      }
     };
-    load();
-    const stop = watchHouseholdLists(householdId, load);
+    // Several events arrive together (completing a repeating task writes two rows): one reload for all of them.
+    const soon = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => void load(), 150);
+    };
+
+    void load();
+    const stopWatching = watchHouseholdLists(householdId, {
+      onChange: soon,
+      knowsShoppingItem: (id) => useHousehold.getState().shopping.some((item) => item.id === id),
+    });
+    const stopReturn = onReturn(soon);
     return () => {
       alive = false;
-      stop();
+      clearTimeout(timer);
+      stopWatching();
+      stopReturn();
     };
   }, [ready, session?.householdId, replaceLists]);
 

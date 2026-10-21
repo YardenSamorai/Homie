@@ -38,7 +38,7 @@ type HouseholdState = {
 
 const now = () => new Date().toISOString();
 
-/** Client-side household data. Stands in for Supabase until the backend is wired (SPEC §9). */
+/** The household's lists on this device: changes apply here first, then save to Supabase; HouseholdSync keeps them live. */
 export const useHousehold = create<HouseholdState>()((set, get) => ({
   currentUserId: "",
   members: [],
@@ -65,8 +65,10 @@ export const useHousehold = create<HouseholdState>()((set, get) => ({
       ? uncompleteTask(previous, task.id)
       : completeTask(previous, task.id, today, now(), crypto.randomUUID());
     set({ tasks });
+    // Unchanged tasks keep their identity; resaving them would overwrite the partner's newer edits.
+    const before = new Map(previous.map((item) => [item.id, item]));
     const kept = new Set(tasks.map((item) => item.id));
-    for (const item of tasks) void saveTask(item);
+    for (const item of tasks) if (before.get(item.id) !== item) void saveTask(item);
     for (const item of previous) if (!kept.has(item.id)) void removeTask(item.id);
   },
 
