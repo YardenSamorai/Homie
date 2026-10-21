@@ -4,16 +4,11 @@ import { useId, useState, type Ref } from "react";
 import { motion, useReducedMotion } from "motion/react";
 
 /**
- * Supabase sends 8 digits unless the project's Email OTP Length says otherwise; the demo login uses 6.
- * NEXT_PUBLIC_OTP_LENGTH overrides both if the Supabase setting changes.
+ * Matches the Supabase project's Email OTP Length (Authentication → Providers → Email), set to 6.
+ * NEXT_PUBLIC_OTP_LENGTH follows it if that setting ever changes.
  */
 const configured = Number(process.env.NEXT_PUBLIC_OTP_LENGTH);
-export const CODE_LENGTH =
-  Number.isInteger(configured) && configured >= 6 && configured <= 10
-    ? configured
-    : process.env.NEXT_PUBLIC_SUPABASE_URL
-      ? 8
-      : 6;
+export const CODE_LENGTH = Number.isInteger(configured) && configured >= 6 && configured <= 10 ? configured : 6;
 
 export type OtpState = "idle" | "error" | "success";
 
