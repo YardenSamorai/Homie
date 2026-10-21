@@ -7,7 +7,8 @@ import { MEMBER_COLORS, useHousehold } from "@/lib/household-store";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { onReturn } from "@/lib/on-return";
 import { signedUrls } from "@/lib/supabase/media";
-import { loadHouseholdLists, watchHouseholdLists, watchHouseholdMembers, writesPending, writesSettled } from "@/lib/supabase/lists";
+import { loadHouseholdLists, watchHouseholdLists, watchHouseholdMembers } from "@/lib/supabase/lists";
+import { sending, startOutbox, withPending } from "@/lib/supabase/outbox";
 
 /** The signed-in parents of this household and their shared lists, kept live between both phones. */
 export function HouseholdSync() {
@@ -16,6 +17,11 @@ export function HouseholdSync() {
   const syncSelf = useHousehold((s) => s.syncSelf);
   const setRoster = useHousehold((s) => s.setRoster);
   const replaceLists = useHousehold((s) => s.replaceLists);
+
+  useEffect(() => {
+    void useHousehold.persist.rehydrate();
+    return startOutbox();
+  }, []);
 
   useEffect(() => {
     if (!ready) return;
@@ -80,13 +86,12 @@ export function HouseholdSync() {
 
     const load = async () => {
       const request = ++latest;
-      await writesSettled();
       try {
         const lists = await loadHouseholdLists(householdId);
         if (!alive || request !== latest) return;
-        // A change made while this was loading would be undone by the older copy; its own event reloads again.
-        if (writesPending()) return;
-        replaceLists(lists);
+        // A save that finished while this was loading isn't in this copy yet; its own event reloads again.
+        if (sending()) return soon();
+        replaceLists(withPending(lists));
       } catch {
         // Offline or a dropped request: keep what's on screen; the next event or return reloads.
       }

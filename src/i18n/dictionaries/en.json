@@ -343,6 +343,16 @@
       "settingsTitle": "Notifications"
     }
   },
+  "crash": {
+    "title": "Something went wrong",
+    "body": "This screen ran into a problem. Nothing you saved was lost.",
+    "retry": "Try Again"
+  },
+  "sync": {
+    "waiting": "Waiting for connection",
+    "failed": "Not saved",
+    "retry": "Try saving again"
+  },
   "stories": {
     "add": "Add a status photo",
     "open": "{name}'s status photos",

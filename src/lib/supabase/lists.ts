@@ -1,49 +1,10 @@
 "use client";
 
-import { useAuth } from "@/lib/auth/session";
 import type { HouseEvent, ShoppingItem } from "@/lib/household";
 import type { Task } from "@/lib/tasks";
 import { createBrowserSupabase } from "./browser";
 import { supabaseConfigured } from "./env";
-
-type Remote = { db: ReturnType<typeof createBrowserSupabase>; householdId: string; userId: string };
-
-function remote(): Remote | null {
-  if (!supabaseConfigured()) return null;
-  const session = useAuth.getState().session;
-  if (!session?.householdId || !session.userId) return null;
-  return { db: createBrowserSupabase(), householdId: session.householdId, userId: session.userId };
-}
-
-let pending = 0;
-let settled: Array<() => void> = [];
-
-/** Every write goes through here, so a reload never lands on top of a change that is still saving. Resolves false if it didn't save. */
-function write(work: (ctx: Remote) => Promise<unknown>): Promise<boolean> {
-  const ctx = remote();
-  if (!ctx) return Promise.resolve(false);
-  pending += 1;
-  return work(ctx)
-    .then(() => true)
-    .catch(() => false)
-    .finally(() => {
-      pending -= 1;
-      if (pending === 0) {
-        const waiting = settled;
-        settled = [];
-        waiting.forEach((resolve) => resolve());
-      }
-    });
-}
-
-/** Supabase reports failures in the result rather than throwing. */
-async function saved(query: PromiseLike<{ error: unknown }>) {
-  const { error } = await query;
-  if (error) throw error;
-}
-
-export const writesPending = () => pending > 0;
-export const writesSettled = () => (pending === 0 ? Promise.resolve() : new Promise<void>((resolve) => settled.push(resolve)));
+import { enqueue } from "./outbox";
 
 /** Throws when any list fails to load, so a dropped connection never empties the screen. */
 export async function loadHouseholdLists(householdId: string) {
@@ -132,53 +93,10 @@ export function watchHouseholdMembers(householdId: string, onChange: () => void)
   };
 }
 
-/** Update first: the insert policy only accepts rows added by the signed-in parent, so an upsert of the partner's item fails. */
-export function saveShoppingItem(item: ShoppingItem) {
-  return write(async (ctx) => {
-    const fields = { name: item.name, quantity_note: item.note, checked_at: item.checkedAt };
-    const updated = await ctx.db.from("shopping_items").update(fields).eq("id", item.id).select("id");
-    if (updated.error) throw updated.error;
-    if (updated.data.length > 0) return;
-    await saved(ctx.db.from("shopping_items").insert({ ...fields, id: item.id, household_id: ctx.householdId, added_by: item.addedBy }));
-  });
-}
-
-export function removeShoppingItem(id: string) {
-  return write((ctx) => saved(ctx.db.from("shopping_items").delete().eq("id", id)));
-}
-
-export function saveTask(task: Task) {
-  return write(async (ctx) => {
-    const fields = {
-      title: task.title,
-      assignee_id: task.assigneeId,
-      due_date: task.dueDate,
-      recurrence: task.recurrence,
-      spawned_from_id: task.spawnedFromId,
-      edited_at: task.editedAt,
-      completed_at: task.completedAt,
-    };
-    const updated = await ctx.db.from("tasks").update(fields).eq("id", task.id).select("id");
-    if (updated.error) throw updated.error;
-    if (updated.data.length > 0) return;
-    await saved(ctx.db.from("tasks").insert({ ...fields, id: task.id, household_id: ctx.householdId, created_by: ctx.userId }));
-  });
-}
-
-export function removeTask(id: string) {
-  return write((ctx) => saved(ctx.db.from("tasks").update({ deleted_at: new Date().toISOString() }).eq("id", id)));
-}
-
-export function saveEvent(event: HouseEvent) {
-  return write(async (ctx) => {
-    const fields = { title: event.title, date: event.date, time: event.time, prep_note: event.prep };
-    const updated = await ctx.db.from("events").update(fields).eq("id", event.id).select("id");
-    if (updated.error) throw updated.error;
-    if (updated.data.length > 0) return;
-    await saved(ctx.db.from("events").insert({ ...fields, id: event.id, household_id: ctx.householdId, created_by: event.createdBy }));
-  });
-}
-
-export function removeEvent(id: string) {
-  return write((ctx) => saved(ctx.db.from("events").update({ deleted_at: new Date().toISOString() }).eq("id", id)));
-}
+/** Each change goes through the outbox: saved in order, kept while offline. Resolves true once it's on the server. */
+export const saveShoppingItem = (item: ShoppingItem) => enqueue({ table: "shopping_items", action: "save", id: item.id, row: item });
+export const removeShoppingItem = (id: string) => enqueue({ table: "shopping_items", action: "remove", id });
+export const saveTask = (task: Task) => enqueue({ table: "tasks", action: "save", id: task.id, row: task });
+export const removeTask = (id: string) => enqueue({ table: "tasks", action: "remove", id });
+export const saveEvent = (event: HouseEvent) => enqueue({ table: "events", action: "save", id: event.id, row: event });
+export const removeEvent = (id: string) => enqueue({ table: "events", action: "remove", id });

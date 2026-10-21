@@ -1,6 +1,7 @@
 "use client";
 
 import { ClipboardList } from "lucide-react";
+import { SyncCaption } from "@/components/ui/sync-note";
 import { useI18n } from "@/i18n/dictionary-provider";
 import type { HouseEvent } from "@/lib/household";
 
@@ -31,6 +32,7 @@ export function EventRow({ event, caption }: { event: HouseEvent; caption?: stri
             )}
           </span>
         )}
+        <SyncCaption id={event.id} />
       </div>
     </div>
   );

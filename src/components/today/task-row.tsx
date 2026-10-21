@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import { Repeat } from "lucide-react";
 import { CheckCircle } from "@/components/ui/check-circle";
 import { StrikeText } from "@/components/ui/strike-text";
+import { SyncCaption, SyncRetry } from "@/components/ui/sync-note";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
 import { completionHaptic } from "@/lib/haptics";
@@ -53,6 +54,7 @@ export function TaskRow({
           ))}
         </span>
       )}
+      <SyncCaption id={task.id} />
     </>
   );
 
@@ -92,6 +94,7 @@ export function TaskRow({
         <div className="flex min-w-0 flex-1 flex-col">{body}</div>
       )}
 
+      <SyncRetry id={task.id} label={task.title} />
       {assignee && (
         <span
           title={format(dict.today.assignedTo, { name: assignee.name })}

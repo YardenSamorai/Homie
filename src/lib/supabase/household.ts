@@ -75,7 +75,7 @@ export async function renameHouseholdForUser(id: string, name: string) {
   return data;
 }
 
-export async function createInviteForUser(householdName: string) {
+export async function createInviteForUser() {
   const supabase = await createServerSupabase();
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;

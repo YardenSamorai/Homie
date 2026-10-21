@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { DayKey } from "./dates";
 import type { HouseEvent, ShoppingItem } from "./household";
 import { completeTask, uncompleteTask, type Member, type Task } from "./tasks";
@@ -40,118 +41,131 @@ type HouseholdState = {
 
 const now = () => new Date().toISOString();
 
-/** The household's lists on this device: changes apply here first, then save to Supabase; HouseholdSync keeps them live. */
-export const useHousehold = create<HouseholdState>()((set, get) => ({
-  currentUserId: "",
-  members: [],
-  tasks: [],
-  shopping: [],
-  events: [],
-
-  syncSelf: (self) =>
-    set({
-      currentUserId: self?.id ?? "",
-      members: self ? [self] : [],
+/**
+ * The household's lists on this device: changes apply here first, then go out through the outbox;
+ * HouseholdSync keeps them live. Kept on the phone too, so the app opens on the last lists even offline.
+ */
+export const useHousehold = create<HouseholdState>()(
+  persist(
+    (set, get) => ({
+      currentUserId: "",
+      members: [],
       tasks: [],
       shopping: [],
       events: [],
+
+      syncSelf: (self) =>
+        set({
+          currentUserId: self?.id ?? "",
+          members: self ? [self] : [],
+          tasks: [],
+          shopping: [],
+          events: [],
+        }),
+
+      setRoster: (currentUserId, members) => set({ currentUserId, members }),
+
+      setMemberPhoto: (id, photoPath, photo) =>
+        set(({ members }) => ({ members: members.map((member) => (member.id === id ? { ...member, photoPath, photo } : member)) })),
+
+      replaceLists: (lists) => set(lists),
+
+      toggleTask: (task, today) => {
+        const previous = get().tasks;
+        const tasks = task.completedAt
+          ? uncompleteTask(previous, task.id)
+          : completeTask(previous, task.id, today, now(), crypto.randomUUID());
+        set({ tasks });
+        // Unchanged tasks keep their identity; resaving them would overwrite the partner's newer edits.
+        const before = new Map(previous.map((item) => [item.id, item]));
+        const kept = new Set(tasks.map((item) => item.id));
+        for (const item of tasks) {
+          if (before.get(item.id) === item) continue;
+          const save = saveTask(item);
+          if (item.id === task.id && item.completedAt) void save.then((ok) => ok && announce("task_done", item.id, item.title));
+        }
+        for (const item of previous) if (!kept.has(item.id)) void removeTask(item.id);
+      },
+
+      addTask: (task) => {
+        const created: Task = { ...task, id: crypto.randomUUID(), spawnedFromId: null, editedAt: null, completedAt: null };
+        set(({ tasks }) => ({ tasks: [...tasks, created] }));
+        void saveTask(created).then((ok) => ok && announce("task_added", created.id, created.title));
+      },
+
+      updateTask: (id, patch) => {
+        const tasks = get().tasks.map((task) => (task.id === id ? { ...task, ...patch, editedAt: now() } : task));
+        set({ tasks });
+        const updated = tasks.find((task) => task.id === id);
+        if (updated) void saveTask(updated);
+      },
+
+      deleteTask: (id) => {
+        set(({ tasks }) => ({ tasks: tasks.filter((task) => task.id !== id) }));
+        void removeTask(id);
+      },
+
+      toggleShoppingItem: (id) => {
+        const shopping = get().shopping.map((item) =>
+          item.id === id ? { ...item, checkedAt: item.checkedAt ? null : now() } : item,
+        );
+        set({ shopping });
+        const updated = shopping.find((item) => item.id === id);
+        if (!updated) return;
+        const save = saveShoppingItem(updated);
+        if (updated.checkedAt) void save.then((ok) => ok && announce("shopping_bought", updated.id, updated.name));
+      },
+
+      clearBought: () => {
+        const bought = get().shopping.filter((item) => item.checkedAt);
+        set(({ shopping }) => ({ shopping: shopping.filter((item) => !item.checkedAt) }));
+        for (const item of bought) void removeShoppingItem(item.id);
+      },
+
+      addShoppingItem: (item) => {
+        const created: ShoppingItem = { ...item, id: crypto.randomUUID(), addedBy: get().currentUserId, checkedAt: null };
+        set(({ shopping }) => ({ shopping: [created, ...shopping] }));
+        void saveShoppingItem(created).then((ok) => ok && announce("shopping_added", created.id, created.name));
+      },
+
+      updateShoppingItem: (id, patch) => {
+        const shopping = get().shopping.map((item) => (item.id === id ? { ...item, ...patch } : item));
+        set({ shopping });
+        const updated = shopping.find((item) => item.id === id);
+        if (updated) void saveShoppingItem(updated);
+      },
+
+      deleteShoppingItem: (id) => {
+        set(({ shopping }) => ({ shopping: shopping.filter((item) => item.id !== id) }));
+        void removeShoppingItem(id);
+      },
+
+      addEvent: (event) => {
+        const created: HouseEvent = { ...event, id: crypto.randomUUID(), createdBy: get().currentUserId };
+        set(({ events }) => ({ events: [...events, created] }));
+        void saveEvent(created).then((ok) => ok && announce("event_added", created.id, created.title));
+      },
+
+      updateEvent: (id, patch) => {
+        const events = get().events.map((event) => (event.id === id ? { ...event, ...patch } : event));
+        set({ events });
+        const updated = events.find((event) => event.id === id);
+        if (updated) void saveEvent(updated);
+      },
+
+      deleteEvent: (id) => {
+        set(({ events }) => ({ events: events.filter((event) => event.id !== id) }));
+        void removeEvent(id);
+      },
     }),
-
-  setRoster: (currentUserId, members) => set({ currentUserId, members }),
-
-  setMemberPhoto: (id, photoPath, photo) =>
-    set(({ members }) => ({ members: members.map((member) => (member.id === id ? { ...member, photoPath, photo } : member)) })),
-
-  replaceLists: (lists) => set(lists),
-
-  toggleTask: (task, today) => {
-    const previous = get().tasks;
-    const tasks = task.completedAt
-      ? uncompleteTask(previous, task.id)
-      : completeTask(previous, task.id, today, now(), crypto.randomUUID());
-    set({ tasks });
-    // Unchanged tasks keep their identity; resaving them would overwrite the partner's newer edits.
-    const before = new Map(previous.map((item) => [item.id, item]));
-    const kept = new Set(tasks.map((item) => item.id));
-    for (const item of tasks) {
-      if (before.get(item.id) === item) continue;
-      const save = saveTask(item);
-      if (item.id === task.id && item.completedAt) void save.then((ok) => ok && announce("task_done", item.id, item.title));
-    }
-    for (const item of previous) if (!kept.has(item.id)) void removeTask(item.id);
-  },
-
-  addTask: (task) => {
-    const created: Task = { ...task, id: crypto.randomUUID(), spawnedFromId: null, editedAt: null, completedAt: null };
-    set(({ tasks }) => ({ tasks: [...tasks, created] }));
-    void saveTask(created).then((ok) => ok && announce("task_added", created.id, created.title));
-  },
-
-  updateTask: (id, patch) => {
-    const tasks = get().tasks.map((task) => (task.id === id ? { ...task, ...patch, editedAt: now() } : task));
-    set({ tasks });
-    const updated = tasks.find((task) => task.id === id);
-    if (updated) void saveTask(updated);
-  },
-
-  deleteTask: (id) => {
-    set(({ tasks }) => ({ tasks: tasks.filter((task) => task.id !== id) }));
-    void removeTask(id);
-  },
-
-  toggleShoppingItem: (id) => {
-    const shopping = get().shopping.map((item) =>
-      item.id === id ? { ...item, checkedAt: item.checkedAt ? null : now() } : item,
-    );
-    set({ shopping });
-    const updated = shopping.find((item) => item.id === id);
-    if (!updated) return;
-    const save = saveShoppingItem(updated);
-    if (updated.checkedAt) void save.then((ok) => ok && announce("shopping_bought", updated.id, updated.name));
-  },
-
-  clearBought: () => {
-    const bought = get().shopping.filter((item) => item.checkedAt);
-    set(({ shopping }) => ({ shopping: shopping.filter((item) => !item.checkedAt) }));
-    for (const item of bought) void removeShoppingItem(item.id);
-  },
-
-  addShoppingItem: (item) => {
-    const created: ShoppingItem = { ...item, id: crypto.randomUUID(), addedBy: get().currentUserId, checkedAt: null };
-    set(({ shopping }) => ({ shopping: [created, ...shopping] }));
-    void saveShoppingItem(created).then((ok) => ok && announce("shopping_added", created.id, created.name));
-  },
-
-  updateShoppingItem: (id, patch) => {
-    const shopping = get().shopping.map((item) => (item.id === id ? { ...item, ...patch } : item));
-    set({ shopping });
-    const updated = shopping.find((item) => item.id === id);
-    if (updated) void saveShoppingItem(updated);
-  },
-
-  deleteShoppingItem: (id) => {
-    set(({ shopping }) => ({ shopping: shopping.filter((item) => item.id !== id) }));
-    void removeShoppingItem(id);
-  },
-
-  addEvent: (event) => {
-    const created: HouseEvent = { ...event, id: crypto.randomUUID(), createdBy: get().currentUserId };
-    set(({ events }) => ({ events: [...events, created] }));
-    void saveEvent(created).then((ok) => ok && announce("event_added", created.id, created.title));
-  },
-
-  updateEvent: (id, patch) => {
-    const events = get().events.map((event) => (event.id === id ? { ...event, ...patch } : event));
-    set({ events });
-    const updated = events.find((event) => event.id === id);
-    if (updated) void saveEvent(updated);
-  },
-
-  deleteEvent: (id) => {
-    set(({ events }) => ({ events: events.filter((event) => event.id !== id) }));
-    void removeEvent(id);
-  },
-}));
+    {
+      name: "homie-house",
+      // Read after the first paint (HouseholdSync), so the server's empty first render matches the client's.
+      skipHydration: true,
+      partialize: ({ currentUserId, members, tasks, shopping, events }) => ({ currentUserId, members, tasks, shopping, events }),
+    },
+  ),
+);
 
 export type AddKind = "task" | "shopping" | "event";
 export type EditTarget = { kind: AddKind; id: string };

@@ -7,6 +7,7 @@ import type { Dictionary } from "@/i18n/get-dictionary";
 import { useEffect } from "react";
 import { registerServiceWorker } from "@/lib/install";
 import { startNativeShell } from "@/lib/native";
+import { reportErrors } from "@/lib/report-errors";
 import { useThemeColorSync } from "@/lib/theme";
 
 export function Providers({
@@ -22,6 +23,7 @@ export function Providers({
   useEffect(() => {
     void startNativeShell();
     registerServiceWorker();
+    return reportErrors();
   }, []);
   return (
     <DictionaryProvider locale={locale} dict={dict}>

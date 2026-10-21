@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "generic" }, { status: 400 });
   }
   if (supabaseConfigured()) {
-    const invite = await createInviteForUser(body.householdName);
+    const invite = await createInviteForUser();
     if (!invite) return NextResponse.json({ error: "generic" }, { status: 400 });
     return NextResponse.json(invite);
   }

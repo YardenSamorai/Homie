@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { CheckCircle } from "@/components/ui/check-circle";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StrikeText } from "@/components/ui/strike-text";
+import { SyncCaption, SyncRetry } from "@/components/ui/sync-note";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
 import { dropInCart } from "@/lib/cart-drop";
@@ -49,7 +50,9 @@ function ItemRow({ item }: { item: ShoppingItem }) {
       >
         <StrikeText done={bought}>{item.name}</StrikeText>
         {item.note && <span className="truncate text-[13px] text-label-secondary">{item.note}</span>}
+        <SyncCaption id={item.id} />
       </button>
+      <SyncRetry id={item.id} label={item.name} />
       {addedBy && (
         <span title={format(dict.shopping.addedBy, { name: addedBy.name })} className="flex">
           <Avatar member={addedBy} size={24} />
