@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { authApi } from "@/lib/auth/api";
@@ -15,35 +15,27 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const ready = useAuthReady();
   const session = useAuth((s) => s.session);
-  const [allowed, setAllowed] = useState(false);
+  const allowed = ready && Boolean(session?.displayName && session.householdId);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || allowed) return;
     let cancelled = false;
-    if (!session) {
-      setAllowed(false);
-      router.replace(`/${locale}/login`);
-    } else if (!session.displayName) {
-      setAllowed(false);
-      router.replace(`/${locale}/welcome`);
-    } else if (!session.householdId) {
-      setAllowed(false);
+    if (!session) router.replace(`/${locale}/login`);
+    else if (!session.displayName) router.replace(`/${locale}/welcome`);
+    else {
       void authApi
         .pendingInvite()
         .then((pending) => {
-          if (cancelled) return;
-          router.replace(pending.status === "ok" ? `/${locale}/join` : `/${locale}/setup`);
+          if (!cancelled) router.replace(pending.status === "ok" ? `/${locale}/join` : `/${locale}/setup`);
         })
         .catch(() => {
           if (!cancelled) router.replace(`/${locale}/setup`);
         });
-    } else {
-      setAllowed(true);
     }
     return () => {
       cancelled = true;
     };
-  }, [ready, session, locale, router]);
+  }, [ready, allowed, session, locale, router]);
 
   return (
     <>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { useI18n } from "@/i18n/dictionary-provider";
@@ -8,6 +8,8 @@ import { useAuth } from "@/lib/auth/session";
 import { easeOut } from "@/lib/motion";
 
 const GUIDE_KEY = "homie-guides";
+
+const subscribeNever = () => () => {};
 
 type GuideId = "today" | "tasks" | "shopping" | "calendar" | "settings";
 
@@ -50,20 +52,18 @@ export function ScreenGuide() {
   const { locale, dict } = useI18n();
   const userId = useAuth((s) => s.session?.userId) ?? "local";
   const id = guideId(pathname, locale);
-  const [open, setOpen] = useState(false);
+  // What was seen lives in localStorage, so it's only known after the first paint on this device.
+  const mounted = useSyncExternalStore(subscribeNever, () => true, () => false);
+  const [closed, setClosed] = useState<string[]>([]);
+  const key = id ? `${userId}:${id}` : null;
+  const open = Boolean(id && key && mounted && !closed.includes(key) && !readDone(userId)[`${id}-v1`]);
 
-  useEffect(() => {
-    if (!id) return;
-    const seen = readDone(userId)[`${id}-v1`];
-    setOpen(!seen);
-  }, [id, userId]);
-
-  if (!id) return null;
+  if (!id || !key) return null;
   const copy = dict.guides[id];
 
   const close = (status: "done" | "skipped") => {
     writeDone(userId, `${id}-v1`, status);
-    setOpen(false);
+    setClosed((list) => [...list, key]);
   };
 
   return (

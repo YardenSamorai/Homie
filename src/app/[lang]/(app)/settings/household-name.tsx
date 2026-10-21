@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { btnPrimarySm } from "@/components/ui/button";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { authApi } from "@/lib/auth/api";
@@ -14,6 +14,7 @@ export function HouseholdName() {
   const online = useOnlineStatus();
   const saved = session?.householdName ?? "";
   const [name, setName] = useState(saved);
+  const [shown, setShown] = useState(saved);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -21,9 +22,11 @@ export function HouseholdName() {
   const clean = name.trim();
   const dirty = clean.length > 0 && clean !== saved;
 
-  useEffect(() => {
+  // The other parent renamed the home: show the new name (adjusted while rendering, not after).
+  if (saved !== shown) {
+    setShown(saved);
     setName(saved);
-  }, [saved]);
+  }
 
   const save = async () => {
     if (!session?.householdId || !dirty) return;

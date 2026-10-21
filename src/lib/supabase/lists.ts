@@ -43,7 +43,8 @@ export async function loadHouseholdLists(householdId: string) {
         id: row.id,
         title: row.title,
         date: row.date,
-        time: row.time,
+        // Postgres sends "19:30:00"; the app shows and edits "19:30".
+        time: row.time ? String(row.time).slice(0, 5) : null,
         prep: row.prep_note,
         createdBy: row.created_by,
       }),
