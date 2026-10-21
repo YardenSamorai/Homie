@@ -46,6 +46,12 @@ jobs:
           mkdir -p "$RUNNER_TEMP/keys"
           printf '%s' "$ASC_KEY_P8" > "$RUNNER_TEMP/keys/AuthKey.p8"
 
+      - name: Clear certificates left by earlier builds
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: node .github/scripts/revoke-ci-certificates.mjs "$RUNNER_TEMP/keys/AuthKey.p8"
+
       - name: Archive
         run: |
           xcodebuild archive \
