@@ -484,15 +484,6 @@
       }
     ]
   },
-  "sky": {
-    "sunrise": "Sunrise at {time}",
-    "sunset": "Sunset at {time}",
-    "noTasks": "No tasks today",
-    "calm": "A calm day",
-    "toBuyOne": "1 to buy",
-    "toBuyMany": "{count} to buy",
-    "preview": "Preview time"
-  },
   "morning": {
     "title": "Good morning",
     "oneTask": "One task for today: {list}",
@@ -559,7 +550,7 @@
     "replay": "Show the guides again",
     "today": {
       "title": "This is where the day starts",
-      "body": "The greeting, the week, and the illustrated home show what's waiting. Pick a day to see its tasks and events."
+      "body": "The greeting says what's waiting today. Pick a day to see its tasks and events."
     },
     "tasks": {
       "title": "Everything in one place",
