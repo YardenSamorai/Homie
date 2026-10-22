@@ -17,25 +17,23 @@ function captionFor(
   load: ReturnType<typeof loadForMember>,
   dict: {
     memberClear: string;
-    memberOpenOne: string;
-    memberOpen: string;
+    memberShare: string;
     memberOverdueOne: string;
     memberOverdue: string;
   },
 ) {
-  if (load.overdue > 0) {
+  if (load.total > 0) {
     return {
-      text: load.overdue === 1 ? dict.memberOverdueOne : format(dict.memberOverdue, { count: load.overdue }),
-      tone: "text-danger" as const,
+      text: format(dict.memberShare, { done: load.doneToday, total: load.total }),
+      spoken:
+        load.overdue > 0
+          ? load.overdue === 1
+            ? dict.memberOverdueOne
+            : format(dict.memberOverdue, { count: load.overdue })
+          : format(dict.memberShare, { done: load.doneToday, total: load.total }),
     };
   }
-  if (load.open > 0) {
-    return {
-      text: load.open === 1 ? dict.memberOpenOne : format(dict.memberOpen, { count: load.open }),
-      tone: "text-label-secondary" as const,
-    };
-  }
-  return { text: dict.memberClear, tone: "text-label-secondary" as const };
+  return { text: dict.memberClear, spoken: dict.memberClear };
 }
 
 /**
@@ -122,23 +120,29 @@ export function HouseholdMembers({
 
   return (
     <section aria-label={dict.today.household}>
-      {/* Stories-style: from the start edge, circle and first name; the day's load is the ring, and spoken. */}
-      <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 py-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {members.map((member) => {
+      <ul className="flex flex-wrap items-center gap-x-5 gap-y-3">
+        {[...members].sort((a, b) => (a.id === self ? -1 : b.id === self ? 1 : 0)).map((member) => {
           const load = today ? loadForMember(tasks, member.id, today) : null;
           const caption = load ? captionFor(load, dict.today) : null;
           return (
-            <li key={member.id} className="flex w-14 shrink-0 flex-col items-center gap-1">
+            <li key={member.id} className="flex min-w-0 items-center gap-2.5">
               <MemberCircle member={member} self={self} load={load} />
-              <p className="w-full truncate text-center text-[12px] font-medium leading-tight text-label-secondary">
-                <bdi>{member.name.trim().split(/\s+/)[0]}</bdi>
-                {caption && <span className="sr-only">, {caption.text}</span>}
-              </p>
+              <div className="min-w-0 leading-tight">
+                <p className="truncate text-[15px] font-semibold">
+                  <bdi>{member.name.trim().split(/\s+/)[0]}</bdi>
+                </p>
+                {caption && (
+                  <p className="truncate text-[13px] tabular-nums text-label/60">
+                    {caption.text}
+                    {caption.spoken !== caption.text && <span className="sr-only">, {caption.spoken}</span>}
+                  </p>
+                )}
+              </div>
             </li>
           );
         })}
         {canInvite && (
-          <li className="flex w-14 shrink-0 flex-col items-center gap-1">
+          <li className="flex items-center gap-2.5">
             <Link
               href={`/${locale}/setup/invite`}
               aria-label={dict.today.inviteLabel}
@@ -146,7 +150,7 @@ export function HouseholdMembers({
             >
               <UserPlus aria-hidden size={19} strokeWidth={2} />
             </Link>
-            <p aria-hidden className="w-full truncate text-center text-[12px] font-medium leading-tight text-label-secondary">
+            <p aria-hidden className="text-[15px] font-semibold text-label-secondary">
               {dict.today.invite}
             </p>
           </li>

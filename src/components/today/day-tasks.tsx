@@ -10,13 +10,13 @@ import { diffDays, type DayKey } from "@/lib/dates";
 import { easeOut } from "@/lib/motion";
 import { isProjectedOn, tasksOfDay, type Member, type Task } from "@/lib/tasks";
 import { useAddSheet } from "@/lib/household-store";
+import { WaitingRow } from "./later-today";
 import { TaskRow, type RowKind } from "./task-row";
 
 type Row = { task: Task; kind: RowKind; caption?: string };
 
 /** How long a finished task stays where it was, checked and struck through, before it folds away. */
 const SETTLE_MS = 900;
-const ATTENTION_LIMIT = 3;
 const DAY_LIMIT = 6;
 
 const rowRule =
@@ -25,15 +25,6 @@ const rowRule =
 const addRule = "relative after:absolute after:inset-x-0 after:top-0 after:ms-[54px] after:h-px after:bg-separator";
 
 const byDue = (a: Task, b: Task) => ((a.dueDate ?? "") < (b.dueDate ?? "") ? -1 : 1);
-
-function GroupHeader({ title, count, tone = "text-label" }: { title: string; count: number; tone?: string }) {
-  return (
-    <h3 className={`flex items-baseline gap-1.5 px-1 text-[15px] font-semibold ${tone}`}>
-      {title}
-      <span className="text-[14px] font-medium tabular-nums text-label-tertiary">{count}</span>
-    </h3>
-  );
-}
 
 function Rows({
   rows,
@@ -139,9 +130,8 @@ export function DayTasks({
   };
 
   const relative = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
-  const { fromBefore, open, done } = tasksOfDay(tasks, day, today);
+  const { fromBefore, done } = tasksOfDay(tasks, day, today);
   const justDone = done.filter((t) => settling.has(t.id));
-  const isToday = day === today;
 
   const attention: Row[] = [...fromBefore, ...justDone.filter((t) => t.dueDate !== day)]
     .sort(byDue)
@@ -161,14 +151,11 @@ export function DayTasks({
     .sort((a, b) => ((a.completedAt ?? "") > (b.completedAt ?? "") ? -1 : 1))
     .map((task): Row => ({ task, kind: "done" }));
 
-  const attentionShown = expanded.attention ? attention : attention.slice(0, ATTENTION_LIMIT);
   const dayShown = expanded.day ? ofDay : ofDay.slice(0, DAY_LIMIT);
   const showAssignee = members.length > 1;
-  const openCount = open.length;
 
   const forward = day >= previousDay ? 1 : -1;
   const shift = 16 * forward * (localeDirection[locale] === "rtl" ? -1 : 1);
-  const dayTitle = isToday ? dict.today.groupToday : dict.nav.tasks;
 
   return (
     <section aria-label={dict.nav.tasks}>
@@ -190,24 +177,7 @@ export function DayTasks({
           exit="exit"
           className="flex flex-col gap-6"
         >
-          {attention.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <GroupHeader title={dict.today.groupAttention} count={fromBefore.length} tone="text-orange" />
-              <div className={card}>
-                <Rows rows={attentionShown} members={members} showAssignee={showAssignee} onToggle={toggle} />
-                <MoreButton
-                  shown={ATTENTION_LIMIT}
-                  total={attention.length}
-                  open={expanded.attention}
-                  onToggle={() => setExpanded((e) => ({ ...e, attention: !e.attention }))}
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="flex flex-col gap-2">
-            {ofDay.length > 0 && <GroupHeader title={dayTitle} count={openCount} />}
-            <div className={card}>
+          <div className={card}>
               <Rows rows={dayShown} members={members} showAssignee={showAssignee} onToggle={toggle} />
               <MoreButton
                 shown={DAY_LIMIT}
@@ -226,7 +196,31 @@ export function DayTasks({
                 {dict.tasks.newTask}
               </button>
             </div>
-          </div>
+
+          {fromBefore.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <WaitingRow
+                count={fromBefore.length}
+                open={expanded.attention}
+                onToggle={() => setExpanded((e) => ({ ...e, attention: !e.attention }))}
+              />
+              <AnimatePresence initial={false}>
+                {expanded.attention && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.24, ease: easeOut }}
+                    className="overflow-hidden"
+                  >
+                    <div className={card}>
+                      <Rows rows={attention} members={members} showAssignee={showAssignee} onToggle={toggle} />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
 
           {finished.length > 0 && (
             <div className="flex flex-col gap-2">

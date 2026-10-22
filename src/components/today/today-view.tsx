@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { addDays, dayRange, diffDays, fromDayKey, type DayKey } from "@/lib/dates";
-import { sortEvents } from "@/lib/household";
+import { addDays, dayRange, fromDayKey, type DayKey } from "@/lib/dates";
 import { useHousehold, useSelectedDay } from "@/lib/household-store";
 import { useAuth } from "@/lib/auth/session";
+import { firstName, laterEvents, nextOpenEvent, tellDay } from "@/lib/day-story";
 import { periodFor } from "@/lib/period";
 import { isProjectedOn, tasksOfDay, type Task } from "@/lib/tasks";
 import { useClock } from "@/lib/use-clock";
@@ -13,26 +13,22 @@ import { useI18n } from "@/i18n/dictionary-provider";
 import { ActivityBell } from "@/components/shell/activity";
 import { UndoToast } from "@/components/ui/undo-toast";
 import { DateStrip } from "./date-strip";
-import { DayOverview } from "./day-overview";
 import { DayTasks } from "./day-tasks";
 import { HouseholdMembers } from "./household-members";
-
-/** A greeting says "Good afternoon, Yarden", never the full name. */
-const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;
+import { LaterToday } from "./later-today";
 
 const DAYS_BACK = 30;
 const DAYS_AHEAD = 90;
 
 /**
- * Home: who's home and what the day holds. A greeting under the light of the hour, the household, the week,
- * then the chosen day: how far along it is, and its tasks.
+ * Home: one sentence for the day, the people, what's still coming, then the list.
+ * The greeting does not animate — this screen opens tens of times a day.
  */
 export function TodayView() {
   const { locale, dict } = useI18n();
   const clock = useClock();
   const today = clock?.today ?? null;
-  const { currentUserId, members, tasks, events, shopping, toggleTask } = useHousehold();
-  const householdName = useAuth((s) => s.session?.householdName ?? null);
+  const { currentUserId, members, tasks, events, toggleTask } = useHousehold();
   const householdId = useAuth((s) => s.session?.householdId ?? null);
   const setSharedDay = useSelectedDay((s) => s.setDay);
   const currentUser = members.find((member) => member.id === currentUserId) ?? members[0];
@@ -77,28 +73,24 @@ export function TodayView() {
     setToast(null);
   };
 
-  const overview = (() => {
-    if (!today || !selected) return null;
-    const { fromBefore, open, done } = tasksOfDay(tasks, selected, today);
-    const offset = diffDays(selected, today);
-    const heading =
-      offset === 0
-        ? dict.today.overviewToday
-        : offset === 1
-          ? dict.today.overviewTomorrow
-          : offset === -1
-            ? new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(-1, "day").replace(/^\p{Ll}/u, (c) => c.toUpperCase())
-            : new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long" }).format(fromDayKey(selected));
-    return {
-      heading,
-      counts: { open: open.length + fromBefore.length, done: done.length, fromBefore: fromBefore.length },
-      events: events.filter((e) => e.date === selected).sort(sortEvents),
-      toBuy: offset === 0 ? shopping.filter((item) => !item.checkedAt).length : null,
-    };
-  })();
+  const isToday = Boolean(today && selected && selected === today);
+  const ofDay = today && selected ? tasksOfDay(tasks, selected, today) : null;
+  const next = today && selected ? nextOpenEvent(events, selected, clock?.hour ?? null, isToday) : null;
+  const coming = today && selected ? laterEvents(events, selected, clock?.hour ?? null, isToday) : [];
+  const story =
+    ofDay && selected
+      ? tellDay({
+          open: ofDay.open.length,
+          done: ofDay.done.length,
+          isToday,
+          event: next ? { title: next.title, time: next.time, who: null } : null,
+          copy: dict.today,
+        })
+      : "";
+  const yours = isToday && currentUser ? (ofDay?.open.find((task) => task.assigneeId === currentUser.id) ?? null) : null;
 
   return (
-    <div className="relative isolate flex flex-col gap-7 pt-5 md:pt-10">
+    <div className="relative isolate flex flex-col gap-6 pt-5 md:pt-10">
       <AnimatePresence initial={false}>
         {period && (
           <motion.div
@@ -114,43 +106,40 @@ export function TodayView() {
         )}
       </AnimatePresence>
 
-      {/* Greeting, people and week read as one block: who's home and which day, before the day itself. */}
-      <div className="flex flex-col gap-4">
-        <header className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[14px] font-semibold text-label-secondary first-letter:uppercase">{dateLine || "\u00a0"}</p>
-            <h1 className="mt-0.5 text-balance text-[clamp(1.75rem,8.4vw,2.125rem)] font-bold leading-[1.1] tracking-tight [overflow-wrap:anywhere]">
-              <bdi>{currentUser ? `${greeting}, ${firstName(currentUser.name)}` : greeting || "\u00a0"}</bdi>
-            </h1>
-            {householdName && (
-              <p className="mt-1 truncate text-[15px] text-label-secondary">
-                <bdi>{householdName}</bdi>
-              </p>
-            )}
-          </div>
-          <div className="mt-1 shrink-0">
-            <ActivityBell />
-          </div>
-        </header>
-        {members.length > 0 && (
-          <HouseholdMembers
-            members={members}
-            self={currentUser?.id ?? ""}
-            tasks={tasks}
-            today={today}
-            canInvite={members.length < 2 && householdId != null}
-          />
-        )}
-        {today && selected ? (
-          <DateStrip from={days[0]} to={days[days.length - 1]} today={today} selected={selected} marked={marked} onSelect={select} />
-        ) : (
-          <div aria-hidden className="h-[104px]" />
-        )}
-      </div>
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[14px] font-semibold text-label/60 first-letter:uppercase">{dateLine || "\u00a0"}</p>
+          <h1 className="mt-1 text-balance text-[clamp(2rem,9vw,2.25rem)] font-bold leading-[1.08] tracking-[-0.025em] [overflow-wrap:anywhere]">
+            <bdi>{currentUser ? `${greeting}, ${firstName(currentUser.name)}` : greeting || "\u00a0"}</bdi>
+          </h1>
+          {story && (
+            <p className="mt-3 text-[20px] font-medium leading-[1.45] text-pretty text-label/65">{story}</p>
+          )}
+        </div>
+        <div className="mt-1 shrink-0">
+          <ActivityBell />
+        </div>
+      </header>
 
-      {today && selected && overview ? (
+      {members.length > 0 && (
+        <HouseholdMembers
+          members={members}
+          self={currentUser?.id ?? ""}
+          tasks={tasks}
+          today={today}
+          canInvite={members.length < 2 && householdId != null}
+        />
+      )}
+
+      {today && selected ? (
+        <DateStrip from={days[0]} to={days[days.length - 1]} today={today} selected={selected} marked={marked} onSelect={select} />
+      ) : (
+        <div aria-hidden className="h-[104px]" />
+      )}
+
+      {today && selected && ofDay ? (
         <>
-          <DayOverview heading={overview.heading} isToday={selected === today} counts={overview.counts} events={overview.events} toBuy={overview.toBuy} />
+          <LaterToday isToday={isToday} events={coming} yours={yours} />
           <DayTasks
             day={selected}
             previousDay={selection.previous ?? selected}
