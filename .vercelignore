@@ -2,3 +2,6 @@ ios
 assets
 native
 .env*.local
+.agents
+src/app/[lang]/proto
+public/proto
