@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { Repeat } from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
 import { CheckCircle } from "@/components/ui/check-circle";
 import { StrikeText } from "@/components/ui/strike-text";
 import { SyncCaption, SyncRetry } from "@/components/ui/sync-note";
@@ -18,6 +19,7 @@ export function TaskRow({
   assignee,
   kind,
   caption,
+  showAssignee = true,
   onToggle,
   onOpen,
 }: {
@@ -25,6 +27,8 @@ export function TaskRow({
   assignee: Member | undefined;
   kind: RowKind;
   caption?: string;
+  /** Off in a home of one, where every task is yours. */
+  showAssignee?: boolean;
   onToggle: (task: Task) => void;
   onOpen?: (task: Task) => void;
 }) {
@@ -33,22 +37,22 @@ export function TaskRow({
   const projected = kind === "projected";
   const color = assignee?.color ?? "var(--accent)";
   const meta = [
-    caption ? { text: caption, danger: kind === "overdue" } : null,
-    projected ? { text: dict.today.projected, danger: false } : null,
-    task.recurrence !== "none" ? { text: dict.today.recurrence[task.recurrence], danger: false, repeat: true } : null,
-  ].filter(Boolean) as { text: string; danger: boolean; repeat?: boolean }[];
+    caption ? { text: caption } : null,
+    projected ? { text: dict.today.projected } : null,
+    task.recurrence !== "none" ? { text: dict.today.recurrence[task.recurrence], repeat: true } : null,
+  ].filter(Boolean) as { text: string; repeat?: boolean }[];
 
   const body = (
     <>
       <StrikeText done={done}>{task.title}</StrikeText>
       {meta.length > 0 && (
-        <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[13px] text-label-secondary">
+        <span className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-1.5 text-[13px] text-label-secondary">
           {meta.map((item, index) => (
             <span key={item.text} className="flex min-w-0 items-center gap-1.5">
               {index > 0 && <span aria-hidden className="text-label-tertiary">·</span>}
-              <span className={`flex min-w-0 items-center gap-1 ${item.danger ? "text-danger" : ""}`}>
+              <span className="flex min-w-0 items-center gap-1">
                 {item.repeat && <Repeat aria-hidden size={11} strokeWidth={2.25} />}
-                <span className="truncate">{item.text}</span>
+                <span>{item.text}</span>
               </span>
             </span>
           ))}
@@ -59,10 +63,12 @@ export function TaskRow({
   );
 
   return (
-    <div className={`flex min-h-[52px] items-center gap-3 px-4 py-2 ${projected ? "opacity-55" : ""} ${done ? "opacity-70" : ""}`}>
+    <div
+      className={`flex min-h-[56px] items-center gap-3 py-2.5 ps-4 pe-3.5 transition-opacity duration-200 ${projected ? "opacity-55" : ""} ${done ? "opacity-75" : ""}`}
+    >
       {projected ? (
-        <span aria-hidden className="flex size-11 shrink-0 items-center justify-center">
-          <span className="size-[26px] rounded-full border-2 border-dashed border-label-tertiary" />
+        <span aria-hidden className="flex size-[26px] shrink-0 items-center justify-center">
+          <span className="size-[24px] rounded-full border-[1.5px] border-dashed border-label-tertiary" />
         </span>
       ) : (
         <motion.button
@@ -95,13 +101,11 @@ export function TaskRow({
       )}
 
       <SyncRetry id={task.id} label={task.title} />
-      {assignee && (
-        <span
-          title={format(dict.today.assignedTo, { name: assignee.name })}
-          aria-label={format(dict.today.assignedTo, { name: assignee.name })}
-          style={{ backgroundColor: color }}
-          className="size-2.5 shrink-0 rounded-full"
-        />
+      {assignee && showAssignee && (
+        <span title={format(dict.today.assignedTo, { name: assignee.name })} className="shrink-0 rounded-full">
+          <span className="sr-only">{format(dict.today.assignedTo, { name: assignee.name })}</span>
+          <Avatar member={assignee} size={24} />
+        </span>
       )}
     </div>
   );

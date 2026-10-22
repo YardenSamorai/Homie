@@ -20,7 +20,7 @@ export function EventRow({ event, caption }: { event: HouseEvent; caption?: stri
         {when}
       </span>
       <div className="flex min-w-0 flex-1 flex-col justify-center text-start">
-        <span dir="auto" className="line-clamp-2 text-[17px] font-medium leading-snug [overflow-wrap:anywhere]">
+        <span dir="auto" className="align-ui line-clamp-2 text-[17px] font-medium leading-snug [overflow-wrap:anywhere]">
           {event.title}
         </span>
         {(event.prep || extra) && (

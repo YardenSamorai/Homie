@@ -1,86 +1,106 @@
 "use client";
 
-import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { CalendarCheck } from "lucide-react";
-import { EmptyState } from "@/components/ui/empty-state";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { ChevronDown, Plus } from "lucide-react";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
 import { localeDirection } from "@/i18n/config";
-import { diffDays, fromDayKey, type DayKey } from "@/lib/dates";
-import { easeOut, spring } from "@/lib/motion";
-import { isProjectedOn, type Member, type Task } from "@/lib/tasks";
-import { EventRow } from "@/components/events/event-row";
-import { sortEvents, type HouseEvent } from "@/lib/household";
+import { diffDays, type DayKey } from "@/lib/dates";
+import { easeOut } from "@/lib/motion";
+import { isProjectedOn, tasksOfDay, type Member, type Task } from "@/lib/tasks";
 import { useAddSheet } from "@/lib/household-store";
 import { TaskRow, type RowKind } from "./task-row";
 
 type Row = { task: Task; kind: RowKind; caption?: string };
 
-const rowRule =
-  "relative after:absolute after:inset-x-0 after:bottom-0 after:ms-12 after:h-px after:bg-separator last:after:hidden";
+/** How long a finished task stays where it was, checked and struck through, before it folds away. */
+const SETTLE_MS = 900;
+const ATTENTION_LIMIT = 3;
+const DAY_LIMIT = 6;
 
-function GroupLabel({ children, danger }: { children: string; danger?: boolean }) {
+const rowRule =
+  "relative after:absolute after:inset-x-0 after:top-0 after:ms-[54px] after:h-px after:bg-separator first:after:hidden";
+
+const addRule = "relative after:absolute after:inset-x-0 after:top-0 after:ms-[54px] after:h-px after:bg-separator";
+
+const byDue = (a: Task, b: Task) => ((a.dueDate ?? "") < (b.dueDate ?? "") ? -1 : 1);
+
+function GroupHeader({ title, count, tone = "text-label" }: { title: string; count: number; tone?: string }) {
   return (
-    <h3 className={`px-1 pb-1.5 text-[13px] font-semibold ${danger ? "text-danger" : "text-label-secondary"}`}>
-      {children}
+    <h3 className={`flex items-baseline gap-1.5 px-1 text-[15px] font-semibold ${tone}`}>
+      {title}
+      <span className="text-[14px] font-medium tabular-nums text-label-tertiary">{count}</span>
     </h3>
   );
 }
 
-function Inset({ children }: { children: React.ReactNode }) {
-  return <div className="overflow-hidden rounded-[20px] bg-surface">{children}</div>;
-}
-
-function TaskItems({
+function Rows({
   rows,
-  day,
   members,
+  showAssignee,
   onToggle,
 }: {
   rows: Row[];
-  day: DayKey;
   members: Member[];
+  showAssignee: boolean;
   onToggle: (task: Task) => void;
 }) {
   const showEdit = useAddSheet((s) => s.showEdit);
-  if (rows.length === 0) return null;
   return (
     <ul>
       <AnimatePresence initial={false}>
-        {rows.map(({ task, kind, caption }) => {
-          const rowKey = kind === "projected" ? `${task.id}:projected` : task.id;
-          return (
-            <motion.li
-              key={rowKey}
-              layoutId={`${day}-${rowKey}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ layout: spring.gentle, opacity: { duration: 0.2, ease: easeOut } }}
-              className={rowRule}
-            >
-              <TaskRow
-                task={task}
-                kind={kind}
-                caption={caption}
-                assignee={members.find((m) => m.id === task.assigneeId)}
-                onToggle={onToggle}
-                onOpen={kind === "projected" ? undefined : (next) => showEdit({ kind: "task", id: next.id })}
-              />
-            </motion.li>
-          );
-        })}
+        {rows.map(({ task, kind, caption }) => (
+          <motion.li
+            key={kind === "projected" ? `${task.id}:projected` : task.id}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.24, ease: easeOut }}
+            className={`${rowRule} overflow-hidden`}
+          >
+            <TaskRow
+              task={task}
+              kind={kind}
+              caption={caption}
+              showAssignee={showAssignee}
+              assignee={members.find((m) => m.id === task.assigneeId)}
+              onToggle={onToggle}
+              onOpen={kind === "projected" ? undefined : (next) => showEdit({ kind: "task", id: next.id })}
+            />
+          </motion.li>
+        ))}
       </AnimatePresence>
     </ul>
   );
 }
 
+function MoreButton({ shown, total, open, onToggle }: { shown: number; total: number; open: boolean; onToggle: () => void }) {
+  const { dict } = useI18n();
+  if (total <= shown && !open) return null;
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={open}
+      className={`${rowRule} flex min-h-12 w-full items-center ps-[54px] pe-4 text-[15px] font-medium text-accent transition-colors duration-150 active:bg-fill`}
+    >
+      {open ? dict.today.showLess : format(dict.today.showAll, { count: total })}
+    </button>
+  );
+}
+
+const card = "overflow-hidden rounded-card bg-surface shadow-card ring-1 ring-hairline";
+
+/**
+ * The day's tasks: what's left over from earlier days first, then the day's own, then what's done, folded.
+ * A task ticked off here stays put for a moment, so the tick is seen, then leaves for the done group.
+ */
 export function DayTasks({
   day,
   previousDay,
   today,
   tasks,
-  events,
   members,
   onToggle,
 }: {
@@ -88,42 +108,70 @@ export function DayTasks({
   previousDay: DayKey;
   today: DayKey;
   tasks: Task[];
-  events: HouseEvent[];
   members: Member[];
   onToggle: (task: Task) => void;
 }) {
   const { locale, dict } = useI18n();
-  const showEdit = useAddSheet((s) => s.showEdit);
+  const show = useAddSheet((s) => s.show);
+  const [settling, setSettling] = useState<ReadonlySet<string>>(new Set());
+  const [expanded, setExpanded] = useState<{ attention: boolean; day: boolean; done: boolean }>({
+    attention: false,
+    day: false,
+    done: false,
+  });
+  const timers = useRef<number[]>([]);
+  useEffect(() => () => timers.current.forEach((timer) => window.clearTimeout(timer)), []);
+
+  const toggle = (task: Task) => {
+    if (!task.completedAt) {
+      setSettling((current) => new Set(current).add(task.id));
+      timers.current.push(
+        window.setTimeout(() => {
+          setSettling((current) => {
+            const next = new Set(current);
+            next.delete(task.id);
+            return next;
+          });
+        }, SETTLE_MS),
+      );
+    }
+    onToggle(task);
+  };
+
   const relative = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
-  const shortDate = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" });
+  const { fromBefore, open, done } = tasksOfDay(tasks, day, today);
+  const justDone = done.filter((t) => settling.has(t.id));
+  const isToday = day === today;
 
-  const offset = diffDays(day, today);
-  const heading =
-    Math.abs(offset) <= 1
-      ? relative.format(offset, "day").replace(/^\p{Ll}/u, (c) => c.toUpperCase())
-      : new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long" }).format(fromDayKey(day));
+  const attention: Row[] = [...fromBefore, ...justDone.filter((t) => t.dueDate !== day)]
+    .sort(byDue)
+    .map((task): Row => ({
+      task,
+      kind: task.completedAt ? "done" : "overdue",
+      caption: relative.format(-diffDays(today, task.dueDate!), "day"),
+    }));
+  const ofDay: Row[] = [
+    ...tasks
+      .filter((t) => t.dueDate === day && (!t.completedAt || settling.has(t.id)))
+      .map((task): Row => ({ task, kind: task.completedAt ? "done" : "open" })),
+    ...tasks.filter((t) => isProjectedOn(t, day, today)).map((task): Row => ({ task, kind: "projected" })),
+  ];
+  const finished: Row[] = done
+    .filter((t) => !settling.has(t.id))
+    .sort((a, b) => ((a.completedAt ?? "") > (b.completedAt ?? "") ? -1 : 1))
+    .map((task): Row => ({ task, kind: "done" }));
 
-  const overdue: Row[] =
-    day === today
-      ? tasks
-          .filter((t) => !t.completedAt && t.dueDate && t.dueDate < today)
-          .map((t) => ({ task: t, kind: "overdue", caption: shortDate.format(fromDayKey(t.dueDate!)) }))
-      : [];
-  const ofDay: Row[] = tasks
-    .filter((t) => t.dueDate === day)
-    .map((t) => ({ task: t, kind: t.completedAt ? "done" : "open" }));
-  const projected: Row[] = tasks.filter((t) => isProjectedOn(t, day, today)).map((t) => ({ task: t, kind: "projected" }));
-  const dayEvents = events.filter((e) => e.date === day).sort(sortEvents);
-  const dayTasks = [...ofDay, ...projected];
-  const isEmpty = overdue.length + dayTasks.length + dayEvents.length === 0;
-  const mixed = [dayEvents.length > 0, overdue.length > 0, dayTasks.length > 0].filter(Boolean).length > 1;
+  const attentionShown = expanded.attention ? attention : attention.slice(0, ATTENTION_LIMIT);
+  const dayShown = expanded.day ? ofDay : ofDay.slice(0, DAY_LIMIT);
+  const showAssignee = members.length > 1;
+  const openCount = open.length;
 
   const forward = day >= previousDay ? 1 : -1;
   const shift = 16 * forward * (localeDirection[locale] === "rtl" ? -1 : 1);
+  const dayTitle = isToday ? dict.today.groupToday : dict.nav.tasks;
 
   return (
-    <section aria-label={heading} className="flex flex-col gap-3">
-      <h2 className="px-1 text-[22px] font-semibold tracking-tight">{heading}</h2>
+    <section aria-label={dict.nav.tasks}>
       <AnimatePresence mode="popLayout" initial={false} custom={shift}>
         <motion.div
           key={day}
@@ -140,52 +188,79 @@ export function DayTasks({
           initial="enter"
           animate="center"
           exit="exit"
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-6"
         >
-          {isEmpty ? (
-            <Inset>
-              <EmptyState icon={CalendarCheck} tint="var(--green)" title={dict.today.noTasksForDay} hint={dict.today.noTasksForDayHint} />
-            </Inset>
-          ) : (
-            <LayoutGroup id={day}>
-              {dayEvents.length > 0 && (
-                <div>
-                  {mixed && <GroupLabel>{dict.events.title}</GroupLabel>}
-                  <Inset>
-                    <ul>
-                      {dayEvents.map((event) => (
-                        <li key={event.id} className={rowRule}>
-                          <button
-                            type="button"
-                            onClick={() => showEdit({ kind: "event", id: event.id })}
-                            aria-label={format(dict.add.editNamed, { title: event.title })}
-                            className="block w-full touch-manipulation select-none text-start active:bg-fill"
-                          >
-                            <EventRow event={event} />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </Inset>
-                </div>
-              )}
-              {overdue.length > 0 && (
-                <div>
-                  <GroupLabel danger>{dict.today.overdue}</GroupLabel>
-                  <Inset>
-                    <TaskItems rows={overdue} day={day} members={members} onToggle={onToggle} />
-                  </Inset>
-                </div>
-              )}
-              {dayTasks.length > 0 && (
-                <div>
-                  {mixed && <GroupLabel>{dict.nav.tasks}</GroupLabel>}
-                  <Inset>
-                    <TaskItems rows={dayTasks} day={day} members={members} onToggle={onToggle} />
-                  </Inset>
-                </div>
-              )}
-            </LayoutGroup>
+          {attention.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <GroupHeader title={dict.today.groupAttention} count={fromBefore.length} tone="text-orange" />
+              <div className={card}>
+                <Rows rows={attentionShown} members={members} showAssignee={showAssignee} onToggle={toggle} />
+                <MoreButton
+                  shown={ATTENTION_LIMIT}
+                  total={attention.length}
+                  open={expanded.attention}
+                  onToggle={() => setExpanded((e) => ({ ...e, attention: !e.attention }))}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2">
+            {ofDay.length > 0 && <GroupHeader title={dayTitle} count={openCount} />}
+            <div className={card}>
+              <Rows rows={dayShown} members={members} showAssignee={showAssignee} onToggle={toggle} />
+              <MoreButton
+                shown={DAY_LIMIT}
+                total={ofDay.length}
+                open={expanded.day}
+                onToggle={() => setExpanded((e) => ({ ...e, day: !e.day }))}
+              />
+              <button
+                type="button"
+                onClick={() => show("task", day)}
+                className={`${dayShown.length > 0 ? addRule : ""} flex min-h-[52px] w-full items-center gap-3 px-4 text-start text-[17px] text-accent transition-colors duration-150 active:bg-fill`}
+              >
+                <span aria-hidden className="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-accent text-accent-contrast">
+                  <Plus size={16} strokeWidth={2.75} />
+                </span>
+                {dict.tasks.newTask}
+              </button>
+            </div>
+          </div>
+
+          {finished.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => setExpanded((e) => ({ ...e, done: !e.done }))}
+                aria-expanded={expanded.done}
+                className="flex min-h-11 items-center gap-1.5 self-start rounded-full px-1 text-[15px] font-semibold text-label-secondary"
+              >
+                {dict.today.groupDone}
+                <span className="text-[14px] font-medium tabular-nums text-label-tertiary">{finished.length}</span>
+                <ChevronDown
+                  aria-hidden
+                  size={16}
+                  strokeWidth={2.5}
+                  className={`text-label-tertiary transition-transform duration-200 ease-[var(--ease-out-strong)] ${expanded.done ? "rotate-180" : ""}`}
+                />
+              </button>
+              <AnimatePresence initial={false}>
+                {expanded.done && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.24, ease: easeOut }}
+                    className="-mx-4 -mb-6 overflow-hidden px-4 pb-6"
+                  >
+                    <div className={card}>
+                      <Rows rows={finished} members={members} showAssignee={showAssignee} onToggle={toggle} />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           )}
         </motion.div>
       </AnimatePresence>

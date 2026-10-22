@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Plus, UserPlus } from "lucide-react";
 import { openStoriesOf } from "@/components/stories/stories";
 import { Avatar } from "@/components/ui/avatar";
 import { ProgressRing } from "@/components/ui/progress-ring";
@@ -66,14 +67,13 @@ function MemberCircle({ member, self, load }: { member: Member; self: string; lo
   const ringColor = load && load.open === 0 ? "var(--green)" : member.color;
   const face =
     theirs.length > 0 ? (
-      <span data-fresh={fresh || undefined} data-seen={!fresh && !mine ? "" : undefined} className="story-ring flex size-[52px] items-center justify-center rounded-full">
-        <span className="flex size-[48px] items-center justify-center rounded-full bg-bg">
-          <Avatar member={member} size={42} />
-        </span>
-      </span>
-    ) : load ? (
-      <ProgressRing value={load.progress} size={52} stroke={2.5} color={ringColor}>
+      <span className="relative flex size-12 items-center justify-center">
+        <span aria-hidden data-fresh={fresh || undefined} className="story-ring absolute inset-0 rounded-full" />
         <Avatar member={member} size={40} />
+      </span>
+    ) : load && load.total > 0 ? (
+      <ProgressRing value={load.progress} size={48} stroke={2.5} color={ringColor}>
+        <Avatar member={member} size={38} />
       </ProgressRing>
     ) : (
       <Avatar member={member} size={44} />
@@ -95,7 +95,7 @@ function MemberCircle({ member, self, load }: { member: Member; self: string; lo
           type="button"
           onClick={() => void capture()}
           aria-label={dict.stories.add}
-          className="absolute -bottom-0.5 -end-0.5 flex size-[22px] items-center justify-center rounded-full bg-accent text-accent-contrast ring-[2.5px] ring-bg transition-transform duration-150 ease-out before:absolute before:-inset-2 active:scale-90"
+          className="absolute -bottom-0.5 -end-0.5 flex size-5 items-center justify-center rounded-full bg-accent text-accent-contrast ring-[2.5px] ring-bg transition-transform duration-150 ease-out before:absolute before:-inset-2 active:scale-90"
         >
           <Plus aria-hidden size={14} strokeWidth={2.75} />
         </button>
@@ -109,31 +109,48 @@ export function HouseholdMembers({
   self,
   tasks,
   today,
+  canInvite,
 }: {
   members: Member[];
   self: string;
   tasks: Task[];
   today: DayKey | null;
+  /** The other parent hasn't joined yet: an empty seat that opens the invite link. */
+  canInvite: boolean;
 }) {
-  const { dict } = useI18n();
+  const { locale, dict } = useI18n();
 
   return (
     <section aria-label={dict.today.household}>
       {/* Stories-style: from the start edge, circle and first name; the day's load is the ring, and spoken. */}
-      <ul className="-mx-4 flex gap-4 overflow-x-auto px-4 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <ul className="-mx-4 flex gap-3 overflow-x-auto px-4 py-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {members.map((member) => {
           const load = today ? loadForMember(tasks, member.id, today) : null;
           const caption = load ? captionFor(load, dict.today) : null;
           return (
-            <li key={member.id} className="flex w-16 shrink-0 flex-col items-center gap-1">
+            <li key={member.id} className="flex w-14 shrink-0 flex-col items-center gap-1">
               <MemberCircle member={member} self={self} load={load} />
-              <p className="w-full truncate text-center text-[13px] font-medium leading-tight">
+              <p className="w-full truncate text-center text-[12px] font-medium leading-tight text-label-secondary">
                 <bdi>{member.name.trim().split(/\s+/)[0]}</bdi>
                 {caption && <span className="sr-only">, {caption.text}</span>}
               </p>
             </li>
           );
         })}
+        {canInvite && (
+          <li className="flex w-14 shrink-0 flex-col items-center gap-1">
+            <Link
+              href={`/${locale}/setup/invite`}
+              aria-label={dict.today.inviteLabel}
+              className="flex size-12 items-center justify-center rounded-full border-[1.5px] border-dashed border-label-tertiary text-label-secondary transition-transform duration-150 ease-out active:scale-95"
+            >
+              <UserPlus aria-hidden size={19} strokeWidth={2} />
+            </Link>
+            <p aria-hidden className="w-full truncate text-center text-[12px] font-medium leading-tight text-label-secondary">
+              {dict.today.invite}
+            </p>
+          </li>
+        )}
       </ul>
     </section>
   );

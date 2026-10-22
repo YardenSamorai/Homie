@@ -72,7 +72,27 @@
     "houseCalm": "A calm day starts with a tidy home",
     "atHome": "Around the house",
     "nextEvent": "Next event",
-    "noNextEvent": "Nothing coming up"
+    "noNextEvent": "Nothing coming up",
+    "overviewToday": "What's waiting for us today?",
+    "overviewTomorrow": "What's waiting tomorrow?",
+    "noTasksToday": "No tasks today",
+    "leftOne": "One task left",
+    "left": "{count} tasks left",
+    "allDone": "All done",
+    "doneOne": "One done",
+    "done": "{count} done",
+    "fromBeforeOne": "One waiting from earlier",
+    "fromBefore": "{count} waiting from earlier",
+    "dayProgress": "{done} of {total} done",
+    "groupAttention": "Needs attention",
+    "groupToday": "For today",
+    "groupDone": "Completed",
+    "showAll": "Show all ({count})",
+    "showLess": "Show less",
+    "markedDone": "Done",
+    "undo": "Undo",
+    "invite": "Invite",
+    "inviteLabel": "Invite the other parent"
   },
   "events": {
     "title": "Events",
@@ -550,7 +570,7 @@
     "replay": "Show the guides again",
     "today": {
       "title": "This is where the day starts",
-      "body": "The greeting says what's waiting today. Pick a day to see its tasks and events."
+      "body": "See what's waiting today, and tick a task off when it's done. Pick a day in the week to see its tasks and events."
     },
     "tasks": {
       "title": "Everything in one place",

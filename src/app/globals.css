@@ -576,3 +576,75 @@ body {
     opacity: 0;
   }
 }
+/*
+ * Home's light: a soft wash at the top of the page that follows the time of day, the way the sky behind a
+ * window does. Two pools of color fading into the page; no images, no motion beyond a cross-fade.
+ */
+.atmosphere {
+  position: absolute;
+  inset-inline: -1rem;
+  top: calc(-1 * env(safe-area-inset-top, 0px));
+  height: calc(env(safe-area-inset-top, 0px) + 22rem);
+  z-index: -1;
+  pointer-events: none;
+  --glow-x: 82%;
+  --pool-x: 8%;
+  background:
+    radial-gradient(85% 75% at var(--glow-x) -12%, var(--glow), transparent 72%),
+    radial-gradient(65% 60% at var(--pool-x) -4%, var(--pool), transparent 70%);
+  mask-image: linear-gradient(to bottom, black 38%, transparent);
+}
+.atmosphere:dir(rtl) {
+  --glow-x: 18%;
+  --pool-x: 92%;
+}
+.atmosphere[data-period="morning"] {
+  --glow: light-dark(#fbe2c6, #3b2c1f);
+  --pool: light-dark(#fcf0dc, #2b2a20);
+}
+.atmosphere[data-period="afternoon"] {
+  --glow: light-dark(#d9e9f2, #1d2e36);
+  --pool: light-dark(#eaf3ea, #1c2a23);
+}
+.atmosphere[data-period="evening"] {
+  --glow: light-dark(#f7d0b8, #3d2621);
+  --pool: light-dark(#f3dce5, #33212b);
+}
+.atmosphere[data-period="night"] {
+  --glow: light-dark(#d6dcf0, #1a2342);
+  --pool: light-dark(#e5e1f2, #231f38);
+}
+@media (min-width: 48rem) {
+  .atmosphere {
+    inset-inline: -2rem;
+    mask-image:
+      linear-gradient(to bottom, black 38%, transparent),
+      linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+    mask-composite: intersect;
+  }
+}
+
+/* A title in the other script keeps its own direction but lines up with the list, like iOS's natural alignment. */
+html[dir="rtl"] .align-ui {
+  text-align: right;
+}
+html[dir="ltr"] .align-ui {
+  text-align: left;
+}
+
+/* A parent with status photos: a still ring in the accent while one is unseen, gray once all are seen. */
+.story-ring {
+  background: var(--label-tertiary);
+  mask-image: radial-gradient(farthest-side, transparent calc(100% - 2.5px), black calc(100% - 2px));
+}
+.story-ring[data-fresh] {
+  background: conic-gradient(from 210deg, var(--accent), color-mix(in oklab, var(--accent) 55%, var(--coral)), var(--accent));
+}
+
+/* At rest at the top of a page there's nothing to soften under the status bar; Home's light shows through. */
+.scroll-edge-top {
+  transition: opacity 0.2s ease-out;
+}
+html:not([data-scrolled]) .scroll-edge-top {
+  opacity: 0;
+}

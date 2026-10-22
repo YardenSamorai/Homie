@@ -1,4 +1,4 @@
-import { addDays, diffDays, type DayKey } from "./dates";
+import { addDays, diffDays, toDayKey, type DayKey } from "./dates";
 
 export type Recurrence = "none" | "daily" | "weekly";
 
@@ -31,6 +31,23 @@ export function nextOccurrence(due: DayKey, recurrence: Exclude<Recurrence, "non
   return addDays(due, step * k);
 }
 
+/**
+ * A day's tasks as Home shows them. Today also gathers what's left over from earlier days, and counts as done
+ * what was due today or finished today.
+ */
+export function tasksOfDay(tasks: Task[], day: DayKey, today: DayKey) {
+  const isToday = day === today;
+  const fromBefore = isToday ? tasks.filter((t) => !t.completedAt && t.dueDate && t.dueDate < today) : [];
+  const open = tasks.filter((t) => !t.completedAt && t.dueDate === day);
+  const done = tasks.filter(
+    (t) =>
+      t.completedAt &&
+      t.dueDate &&
+      (t.dueDate === day || (isToday && t.dueDate < today && toDayKey(new Date(t.completedAt)) === today)),
+  );
+  return { fromBefore, open, done };
+}
+
 /** Open work due today or earlier, plus what this person already finished today. */
 export function loadForMember(tasks: Task[], memberId: string, today: DayKey) {
   const open = tasks.filter((t) => t.assigneeId === memberId && !t.completedAt && t.dueDate && t.dueDate <= today);
@@ -45,7 +62,7 @@ export function loadForMember(tasks: Task[], memberId: string, today: DayKey) {
   };
 }
 
-/** Future occurrence preview for an open recurring task (SPEC §6.4). */
+/** Future occurrence preview for an open recurring task (SPEC §6.5). */
 export function isProjectedOn(task: Task, day: DayKey, today: DayKey): boolean {
   if (task.recurrence === "none" || !task.dueDate || task.completedAt) return false;
   if (day <= task.dueDate || day < today) return false;
