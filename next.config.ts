@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   // Every corner of the phone layout holds a control (add button, tab bar, settings, greeting).
   devIndicators: false,
   // Opening the dev server from a phone on the home network uses the LAN address.
-  allowedDevOrigins: ["10.0.0.44"],
+  allowedDevOrigins: ["10.0.0.44", "192.168.168.49", "127.0.0.1"],
   async headers() {
     return [
       {

@@ -211,9 +211,12 @@ export function createInvite(input: {
   householdName: string;
   inviterName: string;
   inviterUserId?: string;
-}): InvitePreview {
+  fresh?: boolean;
+}): InvitePreview | "full" {
   const householdId = input.householdId ?? crypto.randomUUID();
+  if ((households.get(householdId)?.memberIds.length ?? 0) >= 2) return "full";
   const existing = [...invites.values()].find((row) => row.householdId === householdId && inviteStatus(row) === "ok");
+  if (existing && !input.fresh) return preview(existing, existing.token);
   if (existing) {
     existing.revokedAt = Date.now();
   }

@@ -30,7 +30,14 @@ export const authApi = {
 
   clearInvite: () => fetch("/api/invite", { method: "DELETE" }),
 
-  createInvite: (input: { householdId?: string; householdName: string; inviterName: string; inviterUserId?: string }) =>
+  /** Hands back the link already out there; `fresh` revokes it and mints a new one. */
+  createInvite: (input: {
+    householdId?: string;
+    householdName: string;
+    inviterName: string;
+    inviterUserId?: string;
+    fresh?: boolean;
+  }) =>
     parse<InvitePreview>(post("/api/invite", input)),
 
   acceptInvite: (userId: string) =>

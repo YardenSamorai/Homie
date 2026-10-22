@@ -79,7 +79,11 @@ export async function renameHouseholdForUser(id: string, name: string) {
   return data;
 }
 
-export async function createInviteForUser() {
+/**
+ * The link already sent stays valid: opening the invite screen again hands back the live invite.
+ * Only `fresh` (the "new link" button) revokes it and mints another.
+ */
+export async function createInviteForUser({ fresh = false }: { fresh?: boolean } = {}) {
   const supabase = await createServerSupabase();
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
@@ -90,6 +94,26 @@ export async function createInviteForUser() {
     .eq("user_id", user.id)
     .maybeSingle();
   if (!membership) return null;
+
+  const { count } = await supabase
+    .from("household_members")
+    .select("user_id", { count: "exact", head: true })
+    .eq("household_id", membership.household_id);
+  if ((count ?? 0) >= 2) return "full" as const;
+
+  if (!fresh) {
+    const { data: live } = await supabase
+      .from("household_invites")
+      .select("token")
+      .eq("household_id", membership.household_id)
+      .is("accepted_by", null)
+      .is("revoked_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (live) return previewInvite(live.token);
+  }
 
   await supabase
     .from("household_invites")

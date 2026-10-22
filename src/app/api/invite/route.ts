@@ -36,23 +36,23 @@ export async function POST(request: Request) {
     householdName?: string;
     inviterName?: string;
     inviterUserId?: string;
+    fresh?: boolean;
   };
   if (!body.householdName?.trim() || !body.inviterName?.trim()) {
     return NextResponse.json({ error: "generic" }, { status: 400 });
   }
-  if (supabaseConfigured()) {
-    const invite = await createInviteForUser();
-    if (!invite) return NextResponse.json({ error: "generic" }, { status: 400 });
-    return NextResponse.json(invite);
-  }
-  return NextResponse.json(
-    createInvite({
-      householdId: body.householdId,
-      householdName: body.householdName,
-      inviterName: body.inviterName,
-      inviterUserId: body.inviterUserId,
-    }),
-  );
+  const invite = supabaseConfigured()
+    ? await createInviteForUser({ fresh: body.fresh === true })
+    : createInvite({
+        householdId: body.householdId,
+        householdName: body.householdName,
+        inviterName: body.inviterName,
+        inviterUserId: body.inviterUserId,
+        fresh: body.fresh === true,
+      });
+  if (invite === "full") return NextResponse.json({ error: "full" }, { status: 409 });
+  if (!invite) return NextResponse.json({ error: "generic" }, { status: 400 });
+  return NextResponse.json(invite);
 }
 
 export async function DELETE() {

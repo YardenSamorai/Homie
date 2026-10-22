@@ -33,9 +33,7 @@ export default async function SettingsPage() {
         <Card title={dict.settings.household}>
           <HouseholdCard />
         </Card>
-        <Card title={dict.settings.invite}>
-          <InviteCard />
-        </Card>
+        <InviteCard />
         <NotificationsCard />
         <NotificationPrefs />
         <NewTaskDefaults />

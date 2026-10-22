@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { btnPrimarySm, btnSecondarySm } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { authApi } from "@/lib/auth/api";
 import { useAuth } from "@/lib/auth/session";
@@ -19,10 +20,13 @@ export function InviteCard() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const inviter = session?.displayName ?? members.find((member) => member.id === currentUserId)?.name ?? "Homie";
+  const inviter =
+    session?.displayName ??
+    members.find((member) => member.id === currentUserId)?.name ??
+    "Homie";
   const householdName = session?.householdName || dict.settings.household;
 
-  const mint = async () => {
+  const mint = async (fresh: boolean) => {
     if (!online) return setError(dict.auth.errors.offline);
     if (!session?.householdId) return setError(dict.auth.errors.generic);
     setBusy(true);
@@ -33,6 +37,7 @@ export function InviteCard() {
         householdName,
         inviterName: inviter,
         inviterUserId: session.userId,
+        fresh,
       });
       setUrl(`${window.location.origin}/${locale}/invite/${invite.token}`);
       setCopied(false);
@@ -44,7 +49,7 @@ export function InviteCard() {
   };
 
   const copy = async () => {
-    if (!url) return void mint();
+    if (!url) return void mint(false);
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
@@ -53,21 +58,46 @@ export function InviteCard() {
     }
   };
 
+  // Only a parent alone at home has someone to invite. Zero means the members haven't loaded yet.
+  if (members.length !== 1) return null;
+
   return (
-    <div className="flex flex-col gap-3 px-4 py-4">
-      <p className="text-[15px] leading-snug text-label-secondary">{dict.settings.inviteHint}</p>
-      {url && <p className="break-all text-[13px] leading-snug text-label-secondary">{url}</p>}
-      {error && <p className="text-[13px] text-danger">{error}</p>}
-      <div className="flex flex-wrap gap-2">
-        <button type="button" disabled={busy} onClick={() => void copy()} className={btnPrimarySm}>
-          {copied ? dict.auth.copied : url ? dict.auth.copyLink : dict.auth.inviteTitle}
-        </button>
+    <Card title={dict.settings.invite}>
+      <div className="flex flex-col gap-3 px-4 py-4">
+        <p className="text-[15px] leading-snug text-label-secondary">
+          {dict.settings.inviteHint}
+        </p>
         {url && (
-          <button type="button" disabled={busy} onClick={() => void mint()} className={btnSecondarySm}>
-            {dict.auth.newLink}
-          </button>
+          <p className="break-all text-[13px] leading-snug text-label-secondary">
+            {url}
+          </p>
         )}
+        {error && <p className="text-[13px] text-danger">{error}</p>}
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void copy()}
+            className={btnPrimarySm}
+          >
+            {copied
+              ? dict.auth.copied
+              : url
+              ? dict.auth.copyLink
+              : dict.auth.inviteTitle}
+          </button>
+          {url && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void mint(true)}
+              className={btnSecondarySm}
+            >
+              {dict.auth.newLink}
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </Card>
   );
 }
