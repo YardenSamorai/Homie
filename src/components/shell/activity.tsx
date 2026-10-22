@@ -68,7 +68,7 @@ export function ActivitySync() {
 }
 
 /** The bell in the top corner of Today and of every page title. */
-export function ActivityBell() {
+export function ActivityBell({ glass = false }: { glass?: boolean }) {
   const { dict } = useI18n();
   const selfId = useHousehold((s) => s.currentUserId);
   const items = useActivity((s) => s.items);
@@ -91,7 +91,11 @@ export function ActivityBell() {
       type="button"
       onClick={() => show(selfId)}
       aria-label={count > 0 ? format(dict.activity.openUnread, { count }) : dict.activity.open}
-      className="relative flex size-11 shrink-0 items-center justify-center rounded-full bg-surface text-label shadow-card ring-1 ring-[light-dark(rgb(40_30_20/0.05),rgb(255_255_255/0.08))] transition-[scale,background-color] duration-150 ease-out active:scale-95"
+      className={`relative flex size-11 shrink-0 items-center justify-center rounded-full text-label transition-[scale,background-color] duration-150 ease-out active:scale-95 ${
+        glass
+          ? "bg-white/55 backdrop-blur-xl"
+          : "bg-surface shadow-card ring-1 ring-[light-dark(rgb(40_30_20/0.05),rgb(255_255_255/0.08))]"
+      }`}
     >
       <motion.span animate={ring} style={{ originY: 0.15 }} className="flex">
         <Icon aria-hidden size={20} strokeWidth={1.75} />

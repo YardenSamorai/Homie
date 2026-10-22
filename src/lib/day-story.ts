@@ -38,8 +38,10 @@ export function tellDay({
   isToday: boolean;
   event: { title: string; time: string | null; who: string | null } | null;
   copy: Copy;
-}): string {
+}): { text: string; marks: string[] } {
   const many = (one: string, other: string, count: number) => (count === 1 ? one : format(other, { count }));
+  const marks: string[] = [];
+  if (open > 0) marks.push(open === 1 ? copy.storyMarkOne : format(copy.storyMark, { count: open }));
   const base =
     open > 0
       ? isToday
@@ -53,9 +55,10 @@ export function tellDay({
           ? copy.storyClear
           : copy.storyClearOther;
 
-  if (!event) return `${base}.`;
+  const time = event?.time ? event.time.slice(0, 5) : null;
+  if (time) marks.push(time);
+  if (!event) return { text: `${base}.`, marks };
 
-  const time = event.time ? event.time.slice(0, 5) : null;
   const who = event.who;
   const values = { time: time ?? "", who: who ?? "", title: event.title };
 
@@ -67,7 +70,7 @@ export function tellDay({
       : who
         ? format(copy.storyOnlyAllWho, values)
         : event.title;
-    return `${solo}.`;
+    return { text: `${solo}.`, marks };
   }
 
   const clause = time
@@ -77,5 +80,5 @@ export function tellDay({
     : who
       ? format(copy.storyEventAllWho, values)
       : format(copy.storyEventAll, values);
-  return `${base}, ${clause}.`;
+  return { text: `${base}, ${clause}.`, marks };
 }

@@ -584,15 +584,15 @@ body {
   position: absolute;
   inset-inline: -1rem;
   top: calc(-1 * env(safe-area-inset-top, 0px));
-  height: calc(env(safe-area-inset-top, 0px) + 22rem);
+  height: calc(env(safe-area-inset-top, 0px) + 32rem);
   z-index: -1;
   pointer-events: none;
   --glow-x: 82%;
   --pool-x: 8%;
   background:
-    radial-gradient(85% 75% at var(--glow-x) -12%, var(--glow), transparent 72%),
-    radial-gradient(65% 60% at var(--pool-x) -4%, var(--pool), transparent 70%);
-  mask-image: linear-gradient(to bottom, black 38%, transparent);
+    radial-gradient(120% 72% at var(--glow-x) 0%, var(--glow), transparent 62%),
+    radial-gradient(110% 80% at var(--pool-x) 10%, var(--pool), transparent 66%);
+  mask-image: linear-gradient(to bottom, black 62%, transparent);
 }
 .atmosphere:dir(rtl) {
   --glow-x: 18%;
@@ -618,7 +618,7 @@ body {
   .atmosphere {
     inset-inline: -2rem;
     mask-image:
-      linear-gradient(to bottom, black 38%, transparent),
+      linear-gradient(to bottom, black 62%, transparent),
       linear-gradient(to right, transparent, black 12%, black 88%, transparent);
     mask-composite: intersect;
   }

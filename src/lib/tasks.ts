@@ -48,6 +48,13 @@ export function tasksOfDay(tasks: Task[], day: DayKey, today: DayKey) {
   return { fromBefore, open, done };
 }
 
+/** This person's tasks whose due date is exactly that day — the ring on Home, not the backlog. */
+export function shareForDay(tasks: Task[], memberId: string, day: DayKey) {
+  const due = tasks.filter((task) => task.assigneeId === memberId && task.dueDate === day);
+  const done = due.filter((task) => task.completedAt).length;
+  return { done, total: due.length, progress: due.length === 0 ? 0 : done / due.length };
+}
+
 /** Open work due today or earlier, plus what this person already finished today. */
 export function loadForMember(tasks: Task[], memberId: string, today: DayKey) {
   const open = tasks.filter((t) => t.assigneeId === memberId && !t.completedAt && t.dueDate && t.dueDate <= today);

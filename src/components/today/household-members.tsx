@@ -10,37 +10,19 @@ import { format } from "@/i18n/format";
 import { pickPhoto, useCameraReady } from "@/lib/camera";
 import { seenBy, storiesBy, useStories } from "@/lib/stories-store";
 import { supabaseConfigured } from "@/lib/supabase/env";
-import { loadForMember, type Member, type Task } from "@/lib/tasks";
+import { shareForDay, type Member, type Task } from "@/lib/tasks";
 import type { DayKey } from "@/lib/dates";
 
-function captionFor(
-  load: ReturnType<typeof loadForMember>,
-  dict: {
-    memberClear: string;
-    memberShare: string;
-    memberOverdueOne: string;
-    memberOverdue: string;
-  },
-) {
-  if (load.total > 0) {
-    return {
-      text: format(dict.memberShare, { done: load.doneToday, total: load.total }),
-      spoken:
-        load.overdue > 0
-          ? load.overdue === 1
-            ? dict.memberOverdueOne
-            : format(dict.memberOverdue, { count: load.overdue })
-          : format(dict.memberShare, { done: load.doneToday, total: load.total }),
-    };
-  }
-  return { text: dict.memberClear, spoken: dict.memberClear };
+function captionFor(share: ReturnType<typeof shareForDay>, dict: { memberClear: string; memberShare: string }) {
+  if (share.total > 0) return format(dict.memberShare, { done: share.done, total: share.total });
+  return dict.memberClear;
 }
 
 /**
  * A parent's circle. With status photos it wears the story ring: turning and glowing while there's
  * one this parent hasn't seen, gray once all are seen. Without, the ring shows their tasks for today.
  */
-function MemberCircle({ member, self, load }: { member: Member; self: string; load: ReturnType<typeof loadForMember> | null }) {
+function MemberCircle({ member, self, share }: { member: Member; self: string; share: ReturnType<typeof shareForDay> | null }) {
   const { dict } = useI18n();
   const stories = useStories((s) => s.stories);
   const views = useStories((s) => s.views);
@@ -62,20 +44,19 @@ function MemberCircle({ member, self, load }: { member: Member; self: string; lo
     if (canPost) void capture();
   };
 
-  const ringColor = load && load.open === 0 ? "var(--green)" : member.color;
-  const face =
-    theirs.length > 0 ? (
-      <span className="relative flex size-12 items-center justify-center">
-        <span aria-hidden data-fresh={fresh || undefined} className="story-ring absolute inset-0 rounded-full" />
-        <Avatar member={member} size={40} />
-      </span>
-    ) : load && load.total > 0 ? (
-      <ProgressRing value={load.progress} size={48} stroke={2.5} color={ringColor}>
-        <Avatar member={member} size={38} />
-      </ProgressRing>
-    ) : (
-      <Avatar member={member} size={44} />
-    );
+  const ringColor = share && share.done === share.total ? "var(--green)" : member.color;
+  const face = fresh ? (
+    <span className="relative flex size-[50px] items-center justify-center">
+      <span aria-hidden data-fresh className="story-ring absolute inset-0 rounded-full" />
+      <Avatar member={member} size={40} />
+    </span>
+  ) : share && share.total > 0 ? (
+    <ProgressRing value={share.progress} size={50} stroke={3.5} color={ringColor}>
+      <Avatar member={member} size={40} />
+    </ProgressRing>
+  ) : (
+    <Avatar member={member} size={44} />
+  );
 
   return (
     <div className="relative">
@@ -122,21 +103,16 @@ export function HouseholdMembers({
     <section aria-label={dict.today.household}>
       <ul className="flex flex-wrap items-center gap-x-5 gap-y-3">
         {[...members].sort((a, b) => (a.id === self ? -1 : b.id === self ? 1 : 0)).map((member) => {
-          const load = today ? loadForMember(tasks, member.id, today) : null;
-          const caption = load ? captionFor(load, dict.today) : null;
+          const share = today ? shareForDay(tasks, member.id, today) : null;
+          const caption = share ? captionFor(share, dict.today) : null;
           return (
             <li key={member.id} className="flex min-w-0 items-center gap-2.5">
-              <MemberCircle member={member} self={self} load={load} />
+              <MemberCircle member={member} self={self} share={share} />
               <div className="min-w-0 leading-tight">
                 <p className="truncate text-[15px] font-semibold">
                   <bdi>{member.name.trim().split(/\s+/)[0]}</bdi>
                 </p>
-                {caption && (
-                  <p className="truncate text-[13px] tabular-nums text-label/60">
-                    {caption.text}
-                    {caption.spoken !== caption.text && <span className="sr-only">, {caption.spoken}</span>}
-                  </p>
-                )}
+                {caption && <p className="truncate text-[13px] tabular-nums text-label/60">{caption}</p>}
               </div>
             </li>
           );

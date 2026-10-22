@@ -93,6 +93,8 @@
     "undo": "ביטול",
     "invite": "הזמנה",
     "inviteLabel": "הזמנת ההורה השני לבית",
+    "storyMarkOne": "משימה אחת",
+    "storyMark": "{count} משימות",
     "storyLeftOne": "נשארה לכם משימה אחת להיום",
     "storyLeft": "נשארו לכם {count} משימות להיום",
     "storyDone": "הכול בוצע היום",
