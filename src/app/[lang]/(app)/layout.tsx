@@ -4,6 +4,7 @@ import { StoryComposer, StorySync, StoryViewer } from "@/components/stories/stor
 import { ConnectionBanner } from "@/components/shell/connection-banner";
 import { HouseholdSync } from "@/components/shell/household-sync";
 import { InstallPrompt } from "@/components/shell/install";
+import { LaunchDoor } from "@/components/shell/launch-door";
 import { OnboardingGate } from "@/components/shell/onboarding-gate";
 import { ScrollEdges } from "@/components/shell/scroll-edges";
 import { SheetDepth } from "@/components/shell/sheet-depth";
@@ -14,6 +15,7 @@ import { TabBar } from "@/components/shell/tab-bar";
 export default function AppLayout({ children }: LayoutProps<"/[lang]">) {
   return (
     <OnboardingGate>
+    <LaunchDoor>
     <div className="flex min-h-dvh">
       <HouseholdSync />
       <ConnectionBanner />
@@ -30,6 +32,7 @@ export default function AppLayout({ children }: LayoutProps<"/[lang]">) {
       <StoryComposer />
       <StoryViewer />
     </div>
+    </LaunchDoor>
     </OnboardingGate>
   );
 }

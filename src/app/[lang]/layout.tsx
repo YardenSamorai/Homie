@@ -3,7 +3,7 @@ import { Heebo } from "next/font/google";
 import { locales, localeDirection } from "@/i18n/config";
 import { getDictionary, getLocale } from "@/i18n/get-dictionary";
 import splashScreens from "@/lib/splash-screens.json";
-import { themeScript } from "@/lib/theme-script";
+import { launchScript, themeScript } from "@/lib/theme-script";
 import { Providers } from "../providers";
 import "../globals.css";
 
@@ -47,6 +47,7 @@ export default async function RootLayout({ children }: LayoutProps<"/[lang]">) {
     <html lang={locale} dir={localeDirection[locale]} className={`${heebo.variable} h-full`} suppressHydrationWarning>
       <body className="min-h-full" suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: launchScript }} />
         <Providers locale={locale} dict={dict}>
           {children}
         </Providers>

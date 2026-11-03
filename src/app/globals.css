@@ -258,6 +258,25 @@ html[data-keyboard] {
   }
 }
 
+/*
+ * Until the front-door launch draws its first frame the screen is plain background, the same as the native
+ * splash, so the app never flashes up before the door opens. Fades on its own in case the launch never starts.
+ */
+html[data-launch] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--bg);
+  animation: launch-cover 0.3s ease-out 4.5s forwards;
+}
+@keyframes launch-cover {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
 /* Like a native tab bar, the bottom bar stays behind the keyboard: it fades as the keyboard slides over it. */
 .keyboard-hides {
   transition: opacity 0.2s ease-out;
