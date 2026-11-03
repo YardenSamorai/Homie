@@ -1,3 +1,4 @@
+import type { Aisle } from "./aisles";
 import type { DayKey } from "./dates";
 
 export type ShoppingItem = {
@@ -7,6 +8,8 @@ export type ShoppingItem = {
   note: string | null;
   /** A photo of the exact product, private to the house. */
   photoPath: string | null;
+  /** Supermarket aisle; empty until the dictionary, the house's memory or the AI places it. */
+  category?: Aisle | null;
   addedBy: string;
   checkedAt: string | null;
 };

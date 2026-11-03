@@ -4,15 +4,25 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useAuth } from "./auth/session";
 import { addDays, type DayKey } from "./dates";
+import { knownAisle, type Aisle } from "./aisles";
 import { itemKey } from "./groceries";
 import type { HouseEvent, ShoppingItem } from "./household";
 import { completeTask, uncompleteTask, type Member, type Task } from "./tasks";
 import { announce } from "./supabase/activity";
 import { compressImage, removeShoppingPhoto, uploadShoppingPhoto } from "./supabase/media";
-import { removeEvent, removeShoppingItem, removeTask, saveEvent, saveShoppingItem, saveTask } from "./supabase/lists";
+import {
+  rememberAisle,
+  removeEvent,
+  removeShoppingItem,
+  removeTask,
+  saveEvent,
+  saveShoppingItem,
+  saveTask,
+} from "./supabase/lists";
 
 type NewTask = Pick<Task, "title" | "assigneeId" | "dueDate" | "recurrence">;
-export type NewShoppingItem = Pick<ShoppingItem, "name" | "note"> & { photo?: File | null };
+/** `aisle`: a parent chose it, so the house remembers it for this product. Otherwise it's found by itself. */
+export type NewShoppingItem = Pick<ShoppingItem, "name" | "note"> & { photo?: File | null; aisle?: Aisle };
 /** What adding did: a new row, or the same item found already on the list (still to buy, or back from the cart). */
 export type AddedItem = { id: string; outcome: "added" | "exists" | "restored"; noteChanged: boolean };
 /** A removed row and where it stood, so an undo puts it back in place. */
@@ -31,7 +41,12 @@ type HouseholdState = {
   tasks: Task[];
   shopping: ShoppingItem[];
   events: HouseEvent[];
+  /** Where this house puts each product, by item key: the AI's answers and the parents' own choices. */
+  aisleMemory: Record<string, Aisle>;
   syncSelf: (self: Member | null) => void;
+  setAisleMemory: (memory: Record<string, Aisle>) => void;
+  /** Puts items that have no aisle yet into the aisles found for their names (by item key). */
+  placeItems: (found: Record<string, Aisle>) => void;
   setRoster: (currentUserId: string, members: Member[]) => void;
   setMemberPhoto: (id: string, photoPath: string | null, photo: string | null) => void;
   replaceLists: (lists: { tasks: Task[]; shopping: ShoppingItem[]; events: HouseEvent[] }) => void;
@@ -66,6 +81,7 @@ export const useHousehold = create<HouseholdState>()(
       tasks: [],
       shopping: [],
       events: [],
+      aisleMemory: {},
 
       syncSelf: (self) =>
         set({
@@ -74,7 +90,23 @@ export const useHousehold = create<HouseholdState>()(
           tasks: [],
           shopping: [],
           events: [],
+          aisleMemory: {},
         }),
+
+      setAisleMemory: (memory) => set(({ aisleMemory }) => ({ aisleMemory: { ...aisleMemory, ...memory } })),
+
+      placeItems: (found) => {
+        const placed: ShoppingItem[] = [];
+        const shopping = get().shopping.map((item) => {
+          const aisle = item.category ? undefined : found[itemKey(item.name)];
+          if (!aisle) return item;
+          const next = { ...item, category: aisle };
+          placed.push(next);
+          return next;
+        });
+        set(({ aisleMemory }) => ({ shopping, aisleMemory: { ...aisleMemory, ...found } }));
+        for (const item of placed) void saveShoppingItem(item);
+      },
 
       setRoster: (currentUserId, members) => set({ currentUserId, members }),
 
@@ -157,12 +189,19 @@ export const useHousehold = create<HouseholdState>()(
 
       addShoppingItem: (item) => {
         const key = itemKey(item.name);
+        if (item.aisle) learnAisle(key, item.aisle);
         const match = get().shopping.find((row) => itemKey(row.name) === key);
         if (match) {
           const noteChanged = item.note !== null && item.note !== match.note;
           const back = match.checkedAt !== null;
-          if (noteChanged || back || item.photo) {
-            const next: ShoppingItem = { ...match, note: noteChanged ? item.note : match.note, checkedAt: null };
+          const moved = item.aisle !== undefined && item.aisle !== match.category;
+          if (noteChanged || back || item.photo || moved) {
+            const next: ShoppingItem = {
+              ...match,
+              note: noteChanged ? item.note : match.note,
+              category: item.aisle ?? match.category ?? null,
+              checkedAt: null,
+            };
             set(({ shopping }) => ({ shopping: shopping.map((row) => (row.id === match.id ? next : row)) }));
             const save = saveItemWithPhoto(next, item.photo);
             if (back) void save.then((ok) => ok && announce("shopping_added", next.id, next.name));
@@ -174,6 +213,7 @@ export const useHousehold = create<HouseholdState>()(
           name: item.name,
           note: item.note,
           photoPath: null,
+          category: item.aisle ?? aisleOf(item.name),
           addedBy: get().currentUserId,
           checkedAt: null,
         };
@@ -185,7 +225,11 @@ export const useHousehold = create<HouseholdState>()(
       updateShoppingItem: (id, patch) => {
         const before = get().shopping.find((item) => item.id === id);
         if (!before) return;
-        const next: ShoppingItem = { ...before, name: patch.name, note: patch.note };
+        if (patch.aisle) learnAisle(itemKey(patch.name), patch.aisle);
+        // A new name may be a different product: it's placed again unless a parent chose the aisle.
+        const renamed = itemKey(patch.name) !== itemKey(before.name);
+        const category = patch.aisle ?? (renamed ? aisleOf(patch.name) : (before.category ?? null));
+        const next: ShoppingItem = { ...before, name: patch.name, note: patch.note, category };
         set(({ shopping }) => ({ shopping: shopping.map((item) => (item.id === id ? next : item)) }));
         void saveItemWithPhoto(next, patch.photo, patch.photo !== undefined);
       },
@@ -232,7 +276,14 @@ export const useHousehold = create<HouseholdState>()(
       name: "homie-house",
       // Read after the first paint (HouseholdSync), so the server's empty first render matches the client's.
       skipHydration: true,
-      partialize: ({ currentUserId, members, tasks, shopping, events }) => ({ currentUserId, members, tasks, shopping, events }),
+      partialize: ({ currentUserId, members, tasks, shopping, events, aisleMemory }) => ({
+        currentUserId,
+        members,
+        tasks,
+        shopping,
+        events,
+        aisleMemory,
+      }),
     },
   ),
 );
@@ -262,6 +313,17 @@ export const useAddSheet = create<AddSheetState>()((set) => ({
   setOpen: (open) => set(open ? { open } : { open: false, edit: null }),
   setKind: (kind) => set({ kind }),
 }));
+
+/** The aisle a name goes to without asking anyone: what this house chose before, then the built-in dictionary. */
+export function aisleOf(name: string): Aisle | null {
+  return useHousehold.getState().aisleMemory[itemKey(name)] ?? knownAisle(name);
+}
+
+function learnAisle(key: string, aisle: Aisle) {
+  useHousehold.setState(({ aisleMemory }) => ({ aisleMemory: { ...aisleMemory, [key]: aisle } }));
+  const house = useAuth.getState().session?.householdId;
+  if (house) void rememberAisle(house, key, aisle).catch(() => {});
+}
 
 /** Sends the removal after the undo window; the photo goes only once the row is really gone. */
 function dropShoppingItem(item: ShoppingItem) {

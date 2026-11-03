@@ -198,7 +198,9 @@
     "photoChange": "Change photo",
     "photoRemove": "Remove photo",
     "prep": "What to prepare",
-    "prepPlaceholder": "Gift, cake, documents…"
+    "prepPlaceholder": "Gift, cake, documents…",
+    "aisle": "Category",
+    "aisleAuto": "Automatic"
   },
   "shopping": {
     "title": "Shopping",
@@ -243,7 +245,30 @@
     "cleared": "{count} items cleared",
     "alreadyOn": "Already on the list",
     "backOn": "Back on the list",
-    "quantityUpdated": "Quantity updated"
+    "quantityUpdated": "Quantity updated",
+    "aisles": {
+      "produce": "Fruit & vegetables",
+      "bakery": "Bread & bakery",
+      "meat": "Meat, poultry & fish",
+      "dairy": "Dairy & eggs",
+      "pantry": "Pantry",
+      "snacks": "Snacks & sweets",
+      "drinks": "Drinks",
+      "frozen": "Frozen",
+      "cleaning": "Cleaning & home",
+      "care": "Personal care",
+      "other": "Other"
+    },
+    "aislesNav": "Categories",
+    "aisleJump": "{name}, {count} left",
+    "aisleDone": "{name}, done",
+    "similarOn": "Looks like something on the list",
+    "similarTitle": "Looks like the same product",
+    "merge": "Merge",
+    "mergeNamed": "Merge {a} and {b}",
+    "merged": "Merged",
+    "keepApart": "Different",
+    "keepApartNamed": "{a} and {b} are different products"
   },
   "tasks": {
     "title": "Tasks",

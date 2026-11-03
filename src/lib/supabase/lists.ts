@@ -1,5 +1,6 @@
 "use client";
 
+import { isAisle, type Aisle } from "@/lib/aisles";
 import type { HouseEvent, ShoppingItem } from "@/lib/household";
 import type { Task } from "@/lib/tasks";
 import { createBrowserSupabase } from "./browser";
@@ -10,7 +11,7 @@ import { enqueue } from "./outbox";
 export async function loadHouseholdLists(householdId: string) {
   const db = createBrowserSupabase();
   const [shopping, tasks, events] = await Promise.all([
-    db.from("shopping_items").select("id, name, quantity_note, photo_path, added_by, checked_at, created_at").eq("household_id", householdId).order("created_at", { ascending: false }),
+    db.from("shopping_items").select("id, name, quantity_note, photo_path, category, added_by, checked_at, created_at").eq("household_id", householdId).order("created_at", { ascending: false }),
     db.from("tasks").select("id, title, assignee_id, due_date, recurrence, spawned_from_id, edited_at, completed_at").eq("household_id", householdId).is("deleted_at", null),
     db.from("events").select("id, title, date, time, prep_note, attendee_id, created_by").eq("household_id", householdId).is("deleted_at", null),
   ]);
@@ -23,6 +24,7 @@ export async function loadHouseholdLists(householdId: string) {
         name: row.name,
         note: row.quantity_note,
         photoPath: row.photo_path,
+        category: isAisle(row.category) ? row.category : null,
         addedBy: row.added_by,
         checkedAt: row.checked_at,
       }),
@@ -94,6 +96,40 @@ export function watchHouseholdMembers(householdId: string, onChange: () => void)
   return () => {
     void db.removeChannel(channel);
   };
+}
+
+/** Where this house puts each product it has bought before, by item key. Empty when it can't be read. */
+export async function loadAisleMemory(householdId: string): Promise<Record<string, Aisle>> {
+  const { data, error } = await createBrowserSupabase()
+    .from("shopping_categories")
+    .select("item_key, category")
+    .eq("household_id", householdId);
+  if (error) return {};
+  return Object.fromEntries((data ?? []).flatMap((row) => (isAisle(row.category) ? [[row.item_key, row.category]] : [])));
+}
+
+/** A parent put a product in an aisle: from now on it goes there, for both of them. */
+export async function rememberAisle(householdId: string, key: string, aisle: Aisle) {
+  if (!supabaseConfigured()) return;
+  await createBrowserSupabase()
+    .from("shopping_categories")
+    .upsert(
+      { household_id: householdId, item_key: key, category: aisle, source: "user", updated_at: new Date().toISOString() },
+      { onConflict: "household_id,item_key" },
+    );
+}
+
+/** Asks the server (the house's memory, then the AI) where these products go. Missing names stay unplaced. */
+export async function askAisles(names: string[]): Promise<Record<string, Aisle>> {
+  if (!supabaseConfigured() || names.length === 0) return {};
+  const response = await fetch("/api/shopping/aisles", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ names }),
+  });
+  if (!response.ok) return {};
+  const body = (await response.json().catch(() => ({}))) as { aisles?: Record<string, unknown> };
+  return Object.fromEntries(Object.entries(body.aisles ?? {}).filter((entry): entry is [string, Aisle] => isAisle(entry[1])));
 }
 
 /** Each change goes through the outbox: saved in order, kept while offline. Resolves true once it's on the server. */

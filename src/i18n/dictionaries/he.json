@@ -198,7 +198,9 @@
     "photoChange": "החלפת תמונה",
     "photoRemove": "הסרת התמונה",
     "prep": "מה צריך להכין",
-    "prepPlaceholder": "מתנה, עוגה, מסמכים…"
+    "prepPlaceholder": "מתנה, עוגה, מסמכים…",
+    "aisle": "קטגוריה",
+    "aisleAuto": "אוטומטי"
   },
   "shopping": {
     "title": "קניות",
@@ -243,7 +245,30 @@
     "cleared": "{count} פריטים נוקו",
     "alreadyOn": "כבר ברשימה",
     "backOn": "שוב ברשימה",
-    "quantityUpdated": "הכמות עודכנה"
+    "quantityUpdated": "הכמות עודכנה",
+    "aisles": {
+      "produce": "ירקות ופירות",
+      "bakery": "לחם ומאפים",
+      "meat": "בשר, עוף ודגים",
+      "dairy": "חלב וביצים",
+      "pantry": "מזווה",
+      "snacks": "חטיפים ומתוקים",
+      "drinks": "משקאות",
+      "frozen": "קפואים",
+      "cleaning": "ניקיון ובית",
+      "care": "טיפוח ופארם",
+      "other": "אחר"
+    },
+    "aislesNav": "קטגוריות",
+    "aisleJump": "{name}, נשארו {count}",
+    "aisleDone": "{name}, הושלם",
+    "similarOn": "דומה למשהו ברשימה",
+    "similarTitle": "נראה כמו אותו מוצר",
+    "merge": "איחוד",
+    "mergeNamed": "איחוד של {a} ו־{b}",
+    "merged": "אוחד",
+    "keepApart": "שונים",
+    "keepApartNamed": "{a} ו־{b} הם מוצרים שונים"
   },
   "tasks": {
     "title": "משימות",

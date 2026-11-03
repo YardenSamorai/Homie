@@ -3,13 +3,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Drawer } from "@base-ui/react/drawer";
 import { ImagePlus } from "lucide-react";
+import { AisleIcon } from "@/components/shopping/aisle-icon";
 import { useShoppingActions } from "@/components/shopping/shopping-actions";
 import { Avatar } from "@/components/ui/avatar";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/i18n/dictionary-provider";
 import type { DayKey } from "@/lib/dates";
-import { useAddSheet, useHousehold, type AddKind } from "@/lib/household-store";
+import { AISLES, isAisle, type Aisle } from "@/lib/aisles";
+import { itemKey } from "@/lib/groceries";
+import { aisleOf, useAddSheet, useHousehold, type AddKind } from "@/lib/household-store";
 import { usePrefs } from "@/lib/prefs-store";
 import type { Recurrence } from "@/lib/tasks";
 import { pickPhoto } from "@/lib/camera";
@@ -90,6 +93,13 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
   const [photoCleared, setPhotoCleared] = useState(false);
   const [savedPreview, setSavedPreview] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const seededAisle = editing?.kind === "shopping" && seed && "name" in seed ? (seed.category ?? null) : null;
+  const seededName = editing?.kind === "shopping" && seed && "name" in seed ? seed.name : null;
+  /** The aisle a parent chose here; until then it follows the name. */
+  const [pickedAisle, setPickedAisle] = useState<Aisle | null>(null);
+  const shownAisle =
+    pickedAisle ??
+    (seededName !== null && itemKey(title) === itemKey(seededName) ? seededAisle : title.trim() ? aisleOf(title) : null);
   const filePreview = useMemo(() => (photoFile ? URL.createObjectURL(photoFile) : null), [photoFile]);
   const photoPreview = photoCleared ? null : (filePreview ?? savedPreview);
 
@@ -123,8 +133,10 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
       else addTask(next);
     } else if (kind === "shopping") {
       const photo = photoFile ? photoFile : photoCleared ? null : undefined;
-      if (editing?.kind === "shopping") updateShoppingItem(editing.id, { name: clean, note: extra, ...(photo !== undefined ? { photo } : {}) });
-      else shoppingActions.add({ name: clean, note: extra, photo: photoFile });
+      const aisle = pickedAisle ?? undefined;
+      if (editing?.kind === "shopping") {
+        updateShoppingItem(editing.id, { name: clean, note: extra, aisle, ...(photo !== undefined ? { photo } : {}) });
+      } else shoppingActions.add({ name: clean, note: extra, photo: photoFile, aisle });
     } else if (editing?.kind === "event") {
       updateEvent(editing.id, { title: clean, date, time: allDay ? null : time, prep: extra, attendeeId });
     } else {
@@ -233,6 +245,27 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
                 {dict.add.photoRemove}
               </button>
             )}
+          </div>
+        )}
+
+        {kind === "shopping" && (
+          <div className={groupClass}>
+            <label className={rowClass}>
+              <span className="me-auto">{dict.add.aisle}</span>
+              {shownAisle && <AisleIcon aisle={shownAisle} size={26} />}
+              <select
+                value={shownAisle ?? ""}
+                onChange={(e) => setPickedAisle(isAisle(e.target.value) ? e.target.value : null)}
+                className={`${pickerClass} appearance-none`}
+              >
+                {!shownAisle && <option value="">{dict.add.aisleAuto}</option>}
+                {AISLES.map((value) => (
+                  <option key={value} value={value}>
+                    {dict.shopping.aisles[value]}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
         )}
 

@@ -8,7 +8,8 @@ import { supabaseConfigured } from "@/lib/supabase/env";
 import { onReturn } from "@/lib/on-return";
 import { loadPrefs, usePrefs } from "@/lib/prefs-store";
 import { avatarLinks } from "@/lib/supabase/media";
-import { loadHouseholdLists, watchHouseholdLists, watchHouseholdMembers } from "@/lib/supabase/lists";
+import { startAislePlacing } from "@/lib/aisle-placing";
+import { loadAisleMemory, loadHouseholdLists, watchHouseholdLists, watchHouseholdMembers } from "@/lib/supabase/lists";
 import { sending, startOutbox, withPending } from "@/lib/supabase/outbox";
 
 /** The signed-in parents of this household and their shared lists, kept live between both phones. */
@@ -121,6 +122,19 @@ export function HouseholdSync() {
       stopReturn();
     };
   }, [ready, session?.householdId, replaceLists]);
+
+  useEffect(() => {
+    if (!ready || !session?.householdId || !supabaseConfigured()) return;
+    let alive = true;
+    void loadAisleMemory(session.householdId).then((memory) => {
+      if (alive) useHousehold.getState().setAisleMemory(memory);
+    });
+    const stop = startAislePlacing();
+    return () => {
+      alive = false;
+      stop();
+    };
+  }, [ready, session?.householdId]);
 
   return null;
 }

@@ -91,7 +91,13 @@ async function send(op: Queued) {
   }
   if (op.table === "shopping_items") {
     const item = op.row;
-    const fields = { name: item.name, quantity_note: item.note, photo_path: item.photoPath ?? null, checked_at: item.checkedAt };
+    const fields = {
+      name: item.name,
+      quantity_note: item.note,
+      photo_path: item.photoPath ?? null,
+      category: item.category ?? null,
+      checked_at: item.checkedAt,
+    };
     const updated = await db.from("shopping_items").update(fields).eq("id", item.id).select("id");
     check(updated);
     if (updated.data?.length) return;

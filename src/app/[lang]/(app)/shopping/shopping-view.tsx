@@ -5,7 +5,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown, Plus, ShoppingBasket } from "lucide-react";
 import { PageStage } from "@/components/shell/page-stage";
 import { QuickAddItem } from "@/components/shopping/quick-add-item";
-import { rowId, useShoppingActions, useShoppingNotice } from "@/components/shopping/shopping-actions";
+import { AisleIcon } from "@/components/shopping/aisle-icon";
+import { rowId, useShoppingActions, useShoppingNotice, useSimilarPairs } from "@/components/shopping/shopping-actions";
 import { PhotoLight, StoreMode, useSignedPhotos } from "@/components/shopping/store-mode";
 import { Avatar } from "@/components/ui/avatar";
 import { CheckCircle } from "@/components/ui/check-circle";
@@ -18,6 +19,7 @@ import { UndoToast } from "@/components/ui/undo-toast";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
 import type { Dictionary } from "@/i18n/get-dictionary";
+import { AISLES } from "@/lib/aisles";
 import { itemKey } from "@/lib/groceries";
 import { completionHaptic } from "@/lib/haptics";
 import type { ShoppingItem } from "@/lib/household";
@@ -147,6 +149,12 @@ export function ShoppingView() {
     .sort((a, b) => (b.checkedAt ?? "").localeCompare(a.checkedAt ?? ""));
   const onList = new Set(toBuy.map((item) => itemKey(item.name)));
   const missingStaples = staples.filter((key) => !onList.has(itemKey(copy.staplesItems[key])));
+  // Aisles in the order the store walks you through them; an item still being placed waits under "other".
+  const groups = AISLES.flatMap((aisle) => {
+    const items = toBuy.filter((item) => (item.category ?? "other") === aisle);
+    return items.length > 0 ? [{ aisle, items }] : [];
+  });
+  const pairs = useSimilarPairs(toBuy);
 
   // What the other parent adds lights up as it arrives; the first list on screen is the baseline.
   const seen = useRef<Set<string> | null>(null);
@@ -179,7 +187,7 @@ export function ShoppingView() {
     <UndoToast
       toast={notice}
       label={notice?.label ?? ""}
-      undoLabel={copy.undo}
+      undoLabel={notice?.action ?? copy.undo}
       onUndo={
         notice?.undo
           ? () => {
@@ -274,6 +282,52 @@ export function ShoppingView() {
             {copy.store}
           </button>
         )}
+        <AnimatePresence initial={false}>
+          {pairs.length > 0 && (
+            <motion.section
+              key="similar"
+              aria-label={copy.similarTitle}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.24, ease: easeOut }}
+              className="overflow-hidden"
+            >
+              <div className="rounded-card bg-surface shadow-card">
+                <p className="px-4 pb-1 pt-3 text-[15px] font-semibold">{copy.similarTitle}</p>
+                <ul>
+                  <AnimatePresence initial={false}>
+                    {pairs.map(([a, b]) => (
+                      <motion.li key={`${a.id}-${b.id}`} {...rowMotion} className="overflow-hidden">
+                        <div className="flex min-h-12 items-center gap-2 pb-1 pe-2 ps-4">
+                          <span dir="auto" className="min-w-0 flex-1 truncate text-[17px]">
+                            {a.name} <span className="text-label-tertiary">·</span> {b.name}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => actions.keepApart(a, b)}
+                            aria-label={format(copy.keepApartNamed, { a: a.name, b: b.name })}
+                            className="min-h-11 shrink-0 rounded-full px-3 text-[15px] font-medium text-label-secondary transition-opacity active:opacity-60"
+                          >
+                            {copy.keepApart}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => actions.merge(a.id, b.id)}
+                            aria-label={format(copy.mergeNamed, { a: a.name, b: b.name })}
+                            className="min-h-9 shrink-0 rounded-full bg-[color-mix(in_oklab,var(--accent)_12%,transparent)] px-3.5 text-[15px] font-semibold text-accent transition-transform duration-150 ease-out active:scale-[0.97]"
+                          >
+                            {copy.merge}
+                          </button>
+                        </div>
+                      </motion.li>
+                    ))}
+                  </AnimatePresence>
+                </ul>
+              </div>
+            </motion.section>
+          )}
+        </AnimatePresence>
         {shopping.length === 0 ? (
           <div className="rounded-card bg-surface shadow-card">
             <EmptyState icon={ShoppingBasket} tint="var(--orange)" title={copy.empty} hint={copy.emptyHint} />
@@ -281,11 +335,24 @@ export function ShoppingView() {
         ) : (
           <ul className="overflow-hidden rounded-card bg-surface shadow-card">
             <AnimatePresence initial={false}>
-              {toBuy.map((item) => (
-                <motion.li key={item.id} {...rowMotion} className={`${separator} overflow-hidden`}>
-                  <ItemRow item={item} photoUrl={item.photoPath ? urls[item.photoPath] : undefined} onOpenPhoto={openPhoto} />
-                </motion.li>
-              ))}
+              {groups.flatMap(({ aisle, items }) => [
+                <motion.li key={`aisle-${aisle}`} {...rowMotion} className="overflow-hidden">
+                  <h2 className="flex min-h-11 items-center gap-2.5 px-4 pb-0.5 pt-3 text-[15px] font-semibold">
+                    <AisleIcon aisle={aisle} size={26} />
+                    {copy.aisles[aisle]}
+                    <span className="font-medium tabular-nums text-label-tertiary">{items.length}</span>
+                  </h2>
+                </motion.li>,
+                ...items.map((item, index) => (
+                  <motion.li
+                    key={item.id}
+                    {...rowMotion}
+                    className={`${separator} overflow-hidden ${index === items.length - 1 ? "after:hidden" : ""}`}
+                  >
+                    <ItemRow item={item} photoUrl={item.photoPath ? urls[item.photoPath] : undefined} onOpenPhoto={openPhoto} />
+                  </motion.li>
+                )),
+              ])}
               {bought.length > 0 && (
                 <motion.li
                   key="bought"
