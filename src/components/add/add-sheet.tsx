@@ -2,17 +2,22 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Drawer } from "@base-ui/react/drawer";
-import { ImagePlus } from "lucide-react";
+import { CalendarDays, ImagePlus } from "lucide-react";
+import Link from "next/link";
 import { AisleIcon } from "@/components/shopping/aisle-icon";
 import { useShoppingActions } from "@/components/shopping/shopping-actions";
 import { Avatar } from "@/components/ui/avatar";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { Sheet } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/i18n/dictionary-provider";
+import { format } from "@/i18n/format";
 import type { DayKey } from "@/lib/dates";
 import { AISLES, isAisle, type Aisle } from "@/lib/aisles";
 import { itemKey } from "@/lib/groceries";
+import type { SubstituteMode } from "@/lib/household";
 import { aisleOf, useAddSheet, useHousehold, type AddKind } from "@/lib/household-store";
+import { isUnit, readAmount, readNumber, UNITS, type Unit } from "@/lib/quantity";
 import { usePrefs } from "@/lib/prefs-store";
 import type { Recurrence } from "@/lib/tasks";
 import { pickPhoto } from "@/lib/camera";
@@ -33,7 +38,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => void }) {
-  const { dict } = useI18n();
+  const { dict, locale } = useI18n();
   const kind = useAddSheet((s) => s.kind);
   const setKind = useAddSheet((s) => s.setKind);
   const editing = useAddSheet((s) => s.edit);
@@ -47,6 +52,8 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
     updateTask,
     deleteTask,
     updateShoppingItem,
+    setStaple,
+    products,
     addEvent,
     updateEvent,
     deleteEvent,
@@ -100,6 +107,17 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
   const shownAisle =
     pickedAisle ??
     (seededName !== null && itemKey(title) === itemKey(seededName) ? seededAisle : title.trim() ? aisleOf(title) : null);
+  const item = editing?.kind === "shopping" && seed && "name" in seed ? seed : null;
+  const [quantity, setQuantity] = useState(() => (item?.quantity ? String(item.quantity) : ""));
+  const [unit, setUnit] = useState<Unit | null>(() => (item?.unit && item.unit !== "unit" ? item.unit : null));
+  const [substituteMode, setSubstituteMode] = useState<SubstituteMode | null>(() => item?.substituteMode ?? null);
+  const [substitute, setSubstitute] = useState(() => item?.substitute ?? "");
+  const [taskId, setTaskId] = useState<string | null>(() => item?.taskId ?? null);
+  const stapleBefore = Boolean(products[itemKey(title)]?.staple);
+  const [stapleChoice, setStapleChoice] = useState<boolean | null>(null);
+  const staple = stapleChoice ?? stapleBefore;
+  const forEvent = item?.eventId ? events.find((event) => event.id === item.eventId) : undefined;
+  const openTasks = tasks.filter((task) => !task.completedAt || task.id === taskId);
   const filePreview = useMemo(() => (photoFile ? URL.createObjectURL(photoFile) : null), [photoFile]);
   const photoPreview = photoCleared ? null : (filePreview ?? savedPreview);
 
@@ -134,9 +152,23 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
     } else if (kind === "shopping") {
       const photo = photoFile ? photoFile : photoCleared ? null : undefined;
       const aisle = pickedAisle ?? undefined;
+      // "2 חלב" typed into the name with the amount left empty is still two of milk.
+      const typed = quantity.trim() ? null : readAmount(clean);
+      const name = typed?.quantity ? typed.name : clean;
+      const amount = readNumber(quantity.replace(",", "."));
+      const fields = {
+        name,
+        note: extra,
+        quantity: typed?.quantity ?? (amount && amount > 0 ? amount : null),
+        unit: typed?.quantity ? typed.unit : unit,
+        substituteMode,
+        substitute: substituteMode === "specific" ? substitute.trim() || null : null,
+        taskId,
+      };
       if (editing?.kind === "shopping") {
-        updateShoppingItem(editing.id, { name: clean, note: extra, aisle, ...(photo !== undefined ? { photo } : {}) });
-      } else shoppingActions.add({ name: clean, note: extra, photo: photoFile, aisle });
+        updateShoppingItem(editing.id, { ...fields, aisle, ...(photo !== undefined ? { photo } : {}) });
+      } else shoppingActions.add({ ...fields, photo: photoFile, aisle });
+      if (staple !== Boolean(products[itemKey(name)]?.staple)) void setStaple(name, staple);
     } else if (editing?.kind === "event") {
       updateEvent(editing.id, { title: clean, date, time: allDay ? null : time, prep: extra, attendeeId });
     } else {
@@ -200,16 +232,30 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
             className={fieldClass}
           />
           {kind === "shopping" && (
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder={dict.add.itemNote}
-              aria-label={dict.add.itemNote}
-              maxLength={60}
-              className={fieldClass}
-            />
+            <>
+              <AmountRow quantity={quantity} unit={unit} onQuantity={setQuantity} onUnit={setUnit} />
+              <input
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder={dict.add.itemNoteHint}
+                aria-label={dict.add.itemNote}
+                maxLength={120}
+                className={fieldClass}
+              />
+            </>
           )}
         </div>
+
+        {forEvent && (
+          <Link
+            href={`/${locale}/calendar?day=${forEvent.date}`}
+            onClick={onDone}
+            className="flex min-h-12 items-center gap-3 rounded-xl bg-surface px-4 text-[17px] text-accent"
+          >
+            <CalendarDays aria-hidden size={20} strokeWidth={2} />
+            <span className="min-w-0 truncate">{format(dict.add.forEvent, { title: forEvent.title })}</span>
+          </Link>
+        )}
 
         {kind === "shopping" && (
           <div className="flex items-center gap-3">
@@ -266,6 +312,53 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
                 ))}
               </select>
             </label>
+            <label className={rowClass}>
+              <span className="me-auto">{dict.add.substitute}</span>
+              <select
+                value={substituteMode ?? ""}
+                onChange={(e) => setSubstituteMode((e.target.value || null) as SubstituteMode | null)}
+                className={`${pickerClass} appearance-none`}
+              >
+                <option value="">{dict.add.subUnset}</option>
+                <option value="allowed">{dict.shopping.subAllowed}</option>
+                <option value="none">{dict.shopping.subNone}</option>
+                <option value="specific">{dict.add.subSpecific}</option>
+              </select>
+            </label>
+            {substituteMode === "specific" && (
+              <input
+                value={substitute}
+                onChange={(e) => setSubstitute(e.target.value)}
+                placeholder={dict.add.subPlaceholder}
+                aria-label={dict.add.subSpecific}
+                maxLength={120}
+                className={fieldClass}
+              />
+            )}
+            <div className={rowClass}>
+              <span className="flex min-w-0 flex-col py-2.5">
+                <span>{dict.add.staple}</span>
+                <span className="text-[13px] text-label-secondary">{dict.add.stapleHint}</span>
+              </span>
+              <Switch checked={staple} onChange={setStapleChoice} label={dict.add.staple} />
+            </div>
+            {openTasks.length > 0 && (
+              <label className={rowClass}>
+                <span className="me-auto shrink-0">{dict.add.task}</span>
+                <select
+                  value={taskId ?? ""}
+                  onChange={(e) => setTaskId(e.target.value || null)}
+                  className={`${pickerClass} min-w-0 max-w-[60%] appearance-none truncate`}
+                >
+                  <option value="">{dict.add.taskNone}</option>
+                  {openTasks.map((task) => (
+                    <option key={task.id} value={task.id}>
+                      {task.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
         )}
 
@@ -415,22 +508,52 @@ export function AddSheet() {
   const { open, day, edit, setOpen } = useAddSheet();
   const today = useClock()?.today;
   return (
-    <Drawer.Root open={open} onOpenChange={setOpen}>
-      <Drawer.VirtualKeyboardProvider>
-        <Drawer.Portal>
-          <Drawer.Backdrop className="fixed inset-0 z-50 min-h-dvh bg-black opacity-[calc(0.3*(1-var(--drawer-swipe-progress)))] transition-opacity duration-[450ms] ease-[var(--ease-ios)] data-swiping:duration-0 data-starting-style:opacity-0 data-ending-style:opacity-0 data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)]" />
-          <Drawer.Viewport className="fixed inset-0 z-50 flex touch-none items-end justify-center">
-            <Drawer.Popup
-              data-keyboard-aware
-              className="relative flex max-h-[calc(100dvh_-_3rem_-_var(--keyboard))] min-h-[min(60dvh,calc(100dvh_-_3rem_-_var(--keyboard)))] w-full max-w-lg touch-none flex-col rounded-t-[28px] bg-sheet text-label shadow-[0_-8px_40px_rgb(40_30_20/0.16)] outline-none [transform:translateY(calc(var(--drawer-swipe-movement-y,0px)_-_var(--keyboard)))] transition-[transform,min-height,max-height] duration-[450ms] after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-dvh after:bg-sheet ease-[var(--ease-ios)] will-change-transform data-swiping:select-none data-starting-style:[transform:translateY(100%)] data-ending-style:[transform:translateY(100%)] data-ending-style:duration-[calc(var(--drawer-swipe-strength)*400ms)] motion-reduce:transition-opacity motion-reduce:data-starting-style:[transform:none] motion-reduce:data-starting-style:opacity-0 motion-reduce:data-ending-style:[transform:none] motion-reduce:data-ending-style:opacity-0">
-              <div aria-hidden className="mx-auto mb-1 mt-2 h-[5px] w-9 shrink-0 rounded-full bg-label-tertiary" />
-              {today && (
-                <AddForm key={edit ? `${edit.kind}-${edit.id}` : "new"} defaultDay={day ?? today} onDone={() => setOpen(false)} />
-              )}
-            </Drawer.Popup>
-          </Drawer.Viewport>
-        </Drawer.Portal>
-      </Drawer.VirtualKeyboardProvider>
-    </Drawer.Root>
+    <Sheet open={open} onOpenChange={setOpen}>
+      {today && <AddForm key={edit ? `${edit.kind}-${edit.id}` : "new"} defaultDay={day ?? today} onDone={() => setOpen(false)} />}
+    </Sheet>
+  );
+}
+
+/** The amount of a shopping item: a number and what it counts. Plain count when no unit is picked. */
+function AmountRow({
+  quantity,
+  unit,
+  onQuantity,
+  onUnit,
+}: {
+  quantity: string;
+  unit: Unit | null;
+  onQuantity: (value: string) => void;
+  onUnit: (unit: Unit | null) => void;
+}) {
+  const { dict } = useI18n();
+  return (
+    <div className={rowClass}>
+      <label htmlFor="item-amount" className="me-auto">
+        {dict.add.amount}
+      </label>
+      <input
+        id="item-amount"
+        inputMode="decimal"
+        value={quantity}
+        onChange={(e) => onQuantity(e.target.value)}
+        placeholder="—"
+        maxLength={8}
+        className="h-9 w-20 rounded-lg bg-fill text-center text-[17px] tabular-nums outline-none placeholder:text-label-tertiary"
+      />
+      <select
+        value={unit ?? ""}
+        onChange={(e) => onUnit(isUnit(e.target.value) ? e.target.value : null)}
+        aria-label={dict.add.unit}
+        className={`${pickerClass} appearance-none`}
+      >
+        <option value="">{dict.shopping.units.unit}</option>
+        {UNITS.filter((value) => value !== "unit").map((value) => (
+          <option key={value} value={value}>
+            {dict.shopping.units[value]}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }

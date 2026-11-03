@@ -109,6 +109,9 @@ const catalog: Record<Locale, string[]> = {
   ],
 };
 
+/** The same common grocery in both languages, side by side ("חלב" and "Milk"). */
+export const groceryPairs: [string, string][] = catalog.he.map((name, index) => [name, catalog.en[index]]);
+
 function normalize(value: string) {
   return value.trim().toLowerCase().replace(/[\u0591-\u05C7]/g, "");
 }

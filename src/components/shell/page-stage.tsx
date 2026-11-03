@@ -17,6 +17,12 @@ const seats = [
   { x: 22, y: 72, tilt: -2, float: 7.8, drift: { x: -5, y: 11, lean: -1.1 } },
 ];
 
+/** The short band's two seats, either side of the icon. */
+const compactSeats = [
+  { x: 19, y: 46, tilt: -2.5, float: 6.8, drift: { x: 4, y: 6, lean: 1 } },
+  { x: 81, y: 56, tilt: 2, float: 7.5, drift: { x: -4, y: 7, lean: -1.1 } },
+];
+
 const vars = (values: Record<string, string>) => values as CSSProperties;
 
 /**
@@ -28,12 +34,15 @@ export function PageStage({
   tint,
   count,
   chips,
+  compact = false,
 }: {
   icon: LucideIcon;
   /** The icon tile's gradient, top to bottom. */
   tint: [string, string];
   count: number;
   chips: StageChip[];
+  /** A short band without the cards, so a list that has things in it starts higher on the screen. */
+  compact?: boolean;
 }) {
   const { locale } = useI18n();
   const rtl = localeDirection[locale] === "rtl";
@@ -70,7 +79,9 @@ export function PageStage({
     <div
       ref={stage}
       aria-hidden
-      className="page-stage relative isolate -mx-4 h-[15.5rem] overflow-hidden select-none [mask-image:linear-gradient(to_bottom,transparent,black_14%,black_86%,transparent)] md:mx-0"
+      className={`page-stage relative isolate -mx-4 overflow-hidden select-none transition-[height] duration-500 ease-[var(--ease-ios)] [mask-image:linear-gradient(to_bottom,transparent,black_14%,black_86%,transparent)] motion-reduce:transition-none md:mx-0 ${
+        compact ? "h-[7.5rem]" : "h-[15.5rem]"
+      }`}
     >
       <div className="door-glow absolute inset-0 -z-10" />
 
@@ -92,7 +103,9 @@ export function PageStage({
         </span>
         <div className="door-mark-in absolute left-0 top-0 z-10 -translate-x-1/2 -translate-y-1/2" style={vars({ "--d": "0.05s" })}>
           <span
-            className="relative flex size-[76px] items-center justify-center rounded-[22px] text-white shadow-[0_1px_0_rgb(255_255_255/0.35)_inset,0_18px_40px_-12px_rgb(37_79_65/0.45),0_4px_12px_-4px_rgb(37_79_65/0.3)]"
+            className={`relative flex size-[76px] items-center justify-center rounded-[22px] text-white shadow-[0_1px_0_rgb(255_255_255/0.35)_inset,0_18px_40px_-12px_rgb(37_79_65/0.45),0_4px_12px_-4px_rgb(37_79_65/0.3)] transition-[scale] duration-500 ease-[var(--ease-ios)] motion-reduce:transition-none ${
+              compact ? "scale-[0.82]" : ""
+            }`}
             style={{ backgroundImage: `linear-gradient(to bottom, ${tint[0]}, ${tint[1]})` }}
           >
             <span className="absolute inset-0 rounded-[22px] bg-gradient-to-b from-white/25 to-transparent to-55%" />
@@ -115,8 +128,8 @@ export function PageStage({
       </div>
 
       <AnimatePresence>
-        {chips.slice(0, seats.length).map((chip, index) => {
-          const seat = seats[index];
+        {chips.slice(0, (compact ? compactSeats : seats).length).map((chip, index) => {
+          const seat = (compact ? compactSeats : seats)[index];
           const x = rtl ? 100 - seat.x : seat.x;
           const arrive = first ? 0.5 + index * 0.09 : 0;
           return (
@@ -146,7 +159,9 @@ export function PageStage({
                       "--fy": `${Math.round((50 - seat.y) * 0.6)}px`,
                     })}
                   >
-                    <div className="flex max-w-[10.5rem] items-center gap-2.5 rounded-[18px] bg-surface py-2 ps-2 pe-3.5 shadow-[0_1px_1px_rgb(40_30_20/0.04),0_14px_32px_-14px_rgb(40_30_20/0.26)] ring-1 ring-[light-dark(rgb(40_30_20/0.06),rgb(255_255_255/0.08))]">
+                    <div
+                      className={`flex items-center gap-2.5 ${compact ? "max-w-[8.5rem]" : "max-w-[10.5rem]"} rounded-[18px] bg-surface py-2 ps-2 pe-3.5 shadow-[0_1px_1px_rgb(40_30_20/0.04),0_14px_32px_-14px_rgb(40_30_20/0.26)] ring-1 ring-[light-dark(rgb(40_30_20/0.06),rgb(255_255_255/0.08))]`}
+                    >
                       {chip.visual}
                       <span className="flex min-w-0 flex-col">
                         <span dir="auto" className="truncate text-[14px] font-semibold leading-[1.2] tracking-[-0.01em] text-label">

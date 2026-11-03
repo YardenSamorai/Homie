@@ -2,13 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronDown, Plus, ShoppingBasket } from "lucide-react";
+import { ChevronDown, ListChecks, Plus, ShoppingBasket } from "lucide-react";
 import { PageStage } from "@/components/shell/page-stage";
+import { FinishSheet } from "@/components/shopping/finish-sheet";
+import { Askers, ItemMeta, useAmountText } from "@/components/shopping/item-meta";
+import { MergeSheet } from "@/components/shopping/merge-sheet";
+import { PlanSheet, useShortReason, useSuggestions } from "@/components/shopping/plan-sheet";
 import { QuickAddItem } from "@/components/shopping/quick-add-item";
 import { AisleIcon } from "@/components/shopping/aisle-icon";
-import { rowId, useShoppingActions, useShoppingNotice, useSimilarPairs } from "@/components/shopping/shopping-actions";
+import { rowId, useMergeSheet, useShoppingActions, useShoppingNotice, useSimilarPairs } from "@/components/shopping/shopping-actions";
 import { PhotoLight, StoreMode, useSignedPhotos } from "@/components/shopping/store-mode";
-import { Avatar } from "@/components/ui/avatar";
 import { CheckCircle } from "@/components/ui/check-circle";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
@@ -18,9 +21,8 @@ import { SyncCaption, SyncRetry } from "@/components/ui/sync-note";
 import { UndoToast } from "@/components/ui/undo-toast";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
-import type { Dictionary } from "@/i18n/get-dictionary";
-import { AISLES } from "@/lib/aisles";
-import { itemKey } from "@/lib/groceries";
+import { AISLES, knownAisle } from "@/lib/aisles";
+import { itemKey, type GroceryHint } from "@/lib/groceries";
 import { completionHaptic } from "@/lib/haptics";
 import type { ShoppingItem } from "@/lib/household";
 import { useAddSheet, useHousehold } from "@/lib/household-store";
@@ -38,6 +40,9 @@ const rowMotion = {
   transition: { layout: spring.gentle, default: { duration: 0.24, ease: easeOut } },
 };
 
+/** How many suggestions sit under the add field; the rest are a tap away in planning. */
+const CHIPS = 5;
+
 function ItemRow({
   item,
   photoUrl,
@@ -48,11 +53,9 @@ function ItemRow({
   onOpenPhoto?: (item: ShoppingItem, url: string) => void;
 }) {
   const { dict } = useI18n();
-  const { members, currentUserId, toggleShoppingItem } = useHousehold();
+  const toggleShoppingItem = useHousehold((s) => s.toggleShoppingItem);
   const showEdit = useAddSheet((s) => s.showEdit);
   const flash = useShoppingNotice((s) => s.flashed[item.id]);
-  // In a house of two, only the other parent's additions need a face.
-  const addedBy = item.addedBy !== currentUserId ? members.find((m) => m.id === item.addedBy) : undefined;
   const bought = item.checkedAt !== null;
 
   return (
@@ -88,7 +91,7 @@ function ItemRow({
         className={`relative flex min-w-0 flex-1 touch-manipulation select-none flex-col text-start transition-opacity duration-200 ${bought ? "opacity-60" : ""}`}
       >
         <StrikeText done={bought}>{item.name}</StrikeText>
-        {item.note && <span className="truncate text-[13px] text-label-secondary">{item.note}</span>}
+        <ItemMeta item={item} />
         <SyncCaption id={item.id} />
       </button>
       <SyncRetry id={item.id} label={item.name} />
@@ -102,42 +105,30 @@ function ItemRow({
           <img src={photoUrl} alt="" className="size-10 rounded-lg object-cover" />
         </button>
       )}
-      {addedBy && (
-        <span title={format(dict.shopping.addedBy, { name: addedBy.name })} className={`relative flex ${bought ? "opacity-60" : ""}`}>
-          <Avatar member={addedBy} size={24} />
-          <span className="sr-only">{format(dict.shopping.addedBy, { name: addedBy.name })}</span>
-        </span>
-      )}
+      <Askers item={item} dim={bought} />
     </div>
   );
 }
 
 const firstName = (name: string) => name.trim().split(/\s+/)[0] ?? name;
 
-const staples: (keyof Dictionary["shopping"]["staplesItems"])[] = [
-  "milk",
-  "bread",
-  "eggs",
-  "cheese",
-  "cottage",
-  "tomatoes",
-  "cucumbers",
-  "bananas",
-  "coffee",
-  "toiletPaper",
-  "dishSoap",
-];
-
 /**
- * The home's shopping list: a title that says what's left, the stage with it, one field to add, then the
- * list itself, what's left to buy on top and what's already in the cart gathered underneath.
+ * The home's shopping list: a title that says what's left, the stage with it, one field to add (a sentence
+ * of several products works too), a few suggestions, then the list itself, what's left to buy on top and
+ * what's already in the cart gathered underneath. Store mode, planning and finishing a trip open from here.
  */
 export function ShoppingView() {
   const { dict } = useI18n();
-  const { shopping, members, currentUserId } = useHousehold();
+  const { shopping, members, currentUserId, trips, aisleMemory } = useHousehold();
   const actions = useShoppingActions();
   const { notice, dismiss, flash } = useShoppingNotice();
+  const openMerge = useMergeSheet((s) => s.open);
+  const suggestions = useSuggestions();
+  const shortReason = useShortReason();
+  const amountText = useAmountText();
   const [store, setStore] = useState(false);
+  const [plan, setPlan] = useState(false);
+  const [finish, setFinish] = useState(false);
   const [showBought, setShowBought] = useState(true);
   const [photo, setPhoto] = useState<{ url: string; name: string } | null>(null);
   const urls = useSignedPhotos(shopping.flatMap((item) => (item.photoPath ? [item.photoPath] : [])));
@@ -148,13 +139,18 @@ export function ShoppingView() {
     .filter((item) => item.checkedAt)
     .sort((a, b) => (b.checkedAt ?? "").localeCompare(a.checkedAt ?? ""));
   const onList = new Set(toBuy.map((item) => itemKey(item.name)));
-  const missingStaples = staples.filter((key) => !onList.has(itemKey(copy.staplesItems[key])));
   // Aisles in the order the store walks you through them; an item still being placed waits under "other".
   const groups = AISLES.flatMap((aisle) => {
     const items = toBuy.filter((item) => (item.category ?? "other") === aisle);
     return items.length > 0 ? [{ aisle, items }] : [];
   });
   const pairs = useSimilarPairs(toBuy);
+
+  // What the house has typed or bought before: offered while typing, and trusted when splitting a sentence.
+  const pastLines = trips.flatMap((trip) => trip.items);
+  const history: GroceryHint[] = [...shopping, ...pastLines].map((line) => ({ name: line.name, note: amountText(line) ?? line.note }));
+  const houseNames = new Set([...history.map((hint) => itemKey(hint.name)), ...Object.keys(aisleMemory)]);
+  const known = (name: string) => houseNames.has(itemKey(name)) || knownAisle(name) !== null;
 
   // What the other parent adds lights up as it arrives; the first list on screen is the baseline.
   const seen = useRef<Set<string> | null>(null);
@@ -199,25 +195,39 @@ export function ShoppingView() {
       onDismiss={dismiss}
     />
   );
+  const sheets = (
+    <>
+      <MergeSheet />
+      <FinishSheet open={finish} onOpenChange={setFinish} onFinished={() => setStore(false)} />
+      <PlanSheet open={plan} onOpenChange={setPlan} />
+      {photo && <PhotoLight url={photo.url} name={photo.name} onClose={() => setPhoto(null)} />}
+      {toast}
+    </>
+  );
 
   if (store) {
     return (
       <>
         <StoreMode
-          items={toBuy}
+          items={shopping}
           urls={urls}
           onExit={() => setStore(false)}
+          onFinish={() => setFinish(true)}
           onCheck={(id) => {
             completionHaptic();
             actions.checkInStore(id);
           }}
+          onUncheck={(id) => useHousehold.getState().toggleShoppingItem(id)}
+          onMissing={actions.missing}
+          onFound={(id) => useHousehold.getState().setMissing(id, false)}
           onOpenPhoto={openPhoto}
         />
-        {photo && <PhotoLight url={photo.url} name={photo.name} onClose={() => setPhoto(null)} />}
-        {toast}
+        {sheets}
       </>
     );
   }
+
+  const chips = suggestions.slice(0, CHIPS);
 
   return (
     <>
@@ -227,12 +237,13 @@ export function ShoppingView() {
           icon={ShoppingBasket}
           tint={["#e9a77f", "#c26a44"]}
           count={toBuy.length}
+          compact={toBuy.length > 0}
           chips={toBuy.map((item) => {
             const adder = members.find((member) => member.id === item.addedBy);
             return {
               id: item.id,
               title: item.name,
-              note: item.note ?? (adder ? firstName(adder.name) : null),
+              note: amountText(item) ?? item.note ?? (adder ? firstName(adder.name) : null),
               visual: (
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-[10px] bg-[color-mix(in_oklab,var(--green)_14%,var(--surface))] text-green">
                   <ShoppingBasket size={17} strokeWidth={2.1} />
@@ -242,46 +253,69 @@ export function ShoppingView() {
           })}
         />
         <div className="flex flex-col gap-2.5">
-          <QuickAddItem
-            history={shopping.map((item) => ({ name: item.name, note: item.note }))}
-            onAdd={(name, note) => actions.add({ name, note })}
-          />
-          {missingStaples.length > 0 && (
+          <QuickAddItem history={history} known={known} onList={onList} onAdd={actions.addMany} />
+          {chips.length > 0 && (
             <div
               role="group"
-              aria-label={copy.staplesTitle}
+              aria-label={copy.suggestions}
               className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none] md:mx-0 md:flex-wrap md:px-0 [&::-webkit-scrollbar]:hidden"
             >
               <AnimatePresence initial={false} mode="popLayout">
-                {missingStaples.map((key) => (
-                  <motion.button
-                    key={key}
-                    type="button"
-                    layout
-                    exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15, ease: easeOut } }}
-                    transition={spring.gentle}
-                    onClick={() => actions.add({ name: copy.staplesItems[key], note: null })}
-                    aria-label={format(copy.addStaple, { name: copy.staplesItems[key] })}
-                    className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-full bg-surface ps-3 pe-3.5 text-[15px] font-medium text-label shadow-card ring-1 ring-hairline transition-[scale] duration-150 ease-out active:scale-[0.97]"
-                  >
-                    <Plus aria-hidden size={15} strokeWidth={2.5} className="text-green" />
-                    {copy.staplesItems[key]}
-                  </motion.button>
-                ))}
+                {chips.map((suggestion) => {
+                  const reason = shortReason(suggestion);
+                  return (
+                    <motion.button
+                      key={suggestion.key}
+                      type="button"
+                      layout
+                      exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15, ease: easeOut } }}
+                      transition={spring.gentle}
+                      onClick={() =>
+                        actions.add({ name: suggestion.name, note: suggestion.note, quantity: suggestion.quantity, unit: suggestion.unit })
+                      }
+                      aria-label={[format(copy.addStaple, { name: suggestion.name }), reason].filter(Boolean).join(", ")}
+                      className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-full bg-surface ps-3 pe-3.5 text-[15px] font-medium text-label shadow-card ring-1 ring-hairline transition-[scale] duration-150 ease-out active:scale-[0.97]"
+                    >
+                      <Plus aria-hidden size={15} strokeWidth={2.5} className="text-green" />
+                      <span dir="auto">{suggestion.name}</span>
+                      {reason && <span className="text-[13px] font-normal text-label-secondary">{reason}</span>}
+                    </motion.button>
+                  );
+                })}
+                <motion.button
+                  key="more"
+                  type="button"
+                  layout
+                  transition={spring.gentle}
+                  onClick={() => setPlan(true)}
+                  className="flex min-h-10 shrink-0 items-center rounded-full px-3 text-[15px] font-medium text-accent transition-opacity active:opacity-60"
+                >
+                  {copy.moreSuggestions}
+                </motion.button>
               </AnimatePresence>
             </div>
           )}
         </div>
-        {toBuy.length > 0 && (
+        <div className="flex gap-2.5">
+          {toBuy.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setStore(true)}
+              className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-full bg-surface text-[17px] font-semibold text-accent shadow-card ring-1 ring-hairline transition-transform duration-150 ease-out active:scale-[0.98]"
+            >
+              <ShoppingBasket aria-hidden size={18} strokeWidth={2.25} />
+              {copy.store}
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => setStore(true)}
-            className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-surface text-[17px] font-semibold text-accent shadow-card ring-1 ring-hairline transition-transform duration-150 ease-out active:scale-[0.98]"
+            onClick={() => setPlan(true)}
+            className={`flex min-h-12 items-center justify-center gap-2 rounded-full bg-surface px-5 text-[17px] font-semibold text-accent shadow-card ring-1 ring-hairline transition-transform duration-150 ease-out active:scale-[0.98] ${toBuy.length > 0 ? "" : "flex-1"}`}
           >
-            <ShoppingBasket aria-hidden size={18} strokeWidth={2.25} />
-            {copy.store}
+            <ListChecks aria-hidden size={18} strokeWidth={2.25} />
+            {copy.plan}
           </button>
-        )}
+        </div>
         <AnimatePresence initial={false}>
           {pairs.length > 0 && (
             <motion.section
@@ -305,7 +339,7 @@ export function ShoppingView() {
                           </span>
                           <button
                             type="button"
-                            onClick={() => actions.keepApart(a, b)}
+                            onClick={() => void actions.keepApart(a, b)}
                             aria-label={format(copy.keepApartNamed, { a: a.name, b: b.name })}
                             className="min-h-11 shrink-0 rounded-full px-3 text-[15px] font-medium text-label-secondary transition-opacity active:opacity-60"
                           >
@@ -313,7 +347,7 @@ export function ShoppingView() {
                           </button>
                           <button
                             type="button"
-                            onClick={() => actions.merge(a.id, b.id)}
+                            onClick={() => openMerge(a, b)}
                             aria-label={format(copy.mergeNamed, { a: a.name, b: b.name })}
                             className="min-h-9 shrink-0 rounded-full bg-[color-mix(in_oklab,var(--accent)_12%,transparent)] px-3.5 text-[15px] font-semibold text-accent transition-transform duration-150 ease-out active:scale-[0.97]"
                           >
@@ -379,10 +413,10 @@ export function ShoppingView() {
                     </h2>
                     <button
                       type="button"
-                      onClick={actions.clearBought}
+                      onClick={() => setFinish(true)}
                       className="relative min-h-8 px-1 text-[15px] font-medium text-accent transition-opacity before:absolute before:-inset-x-2 before:-inset-y-1.5 active:opacity-60"
                     >
-                      {copy.clearBought}
+                      {copy.finish}
                     </button>
                   </div>
                 </motion.li>
@@ -397,8 +431,7 @@ export function ShoppingView() {
           </ul>
         )}
       </div>
-      {photo && <PhotoLight url={photo.url} name={photo.name} onClose={() => setPhoto(null)} />}
-      {toast}
+      {sheets}
     </>
   );
 }

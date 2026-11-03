@@ -9,7 +9,7 @@ import { onReturn } from "@/lib/on-return";
 import { loadPrefs, usePrefs } from "@/lib/prefs-store";
 import { avatarLinks } from "@/lib/supabase/media";
 import { startAislePlacing } from "@/lib/aisle-placing";
-import { loadAisleMemory, loadHouseholdLists, watchHouseholdLists, watchHouseholdMembers } from "@/lib/supabase/lists";
+import { loadAisleMemory, loadHouseholdLists, loadShoppingExtras, watchHouseholdLists, watchHouseholdMembers } from "@/lib/supabase/lists";
 import { sending, startOutbox, withPending } from "@/lib/supabase/outbox";
 
 /** The signed-in parents of this household and their shared lists, kept live between both phones. */
@@ -98,7 +98,7 @@ export function HouseholdSync() {
         if (!alive || request !== latest) return;
         // A save that finished while this was loading isn't in this copy yet; its own event reloads again.
         if (sending()) return soon();
-        replaceLists(withPending(lists));
+        replaceLists(withPending(lists), householdId);
       } catch {
         // Offline or a dropped request: keep what's on screen; the next event or return reloads.
       }
@@ -109,15 +109,37 @@ export function HouseholdSync() {
       timer = setTimeout(() => void load(), 150);
     };
 
+    let latestExtras = 0;
+    let extrasTimer: ReturnType<typeof setTimeout> | undefined;
+    const loadExtras = async () => {
+      const request = ++latestExtras;
+      try {
+        const extras = await loadShoppingExtras(householdId);
+        if (alive && request === latestExtras) useHousehold.getState().replaceExtras(extras);
+      } catch {
+        // History and habits stay as they were on this phone.
+      }
+    };
+    const extrasSoon = () => {
+      clearTimeout(extrasTimer);
+      extrasTimer = setTimeout(() => void loadExtras(), 200);
+    };
+
     void load();
+    void loadExtras();
     const stopWatching = watchHouseholdLists(householdId, {
       onChange: soon,
+      onExtras: extrasSoon,
       knowsShoppingItem: (id) => useHousehold.getState().shopping.some((item) => item.id === id),
     });
-    const stopReturn = onReturn(soon);
+    const stopReturn = onReturn(() => {
+      soon();
+      extrasSoon();
+    });
     return () => {
       alive = false;
       clearTimeout(timer);
+      clearTimeout(extrasTimer);
       stopWatching();
       stopReturn();
     };

@@ -16,7 +16,9 @@ export function startAislePlacing() {
   let alive = true;
 
   const place = () => {
-    const { shopping, placeItems } = useHousehold.getState();
+    const { shopping, placeItems, listsLoaded } = useHousehold.getState();
+    // Until this session's list arrives, the rows on the phone may be stale: saving them could undo a change.
+    if (!listsLoaded) return;
     const unplaced = shopping.filter((item) => !item.category);
     if (unplaced.length === 0) return;
 
@@ -47,7 +49,7 @@ export function startAislePlacing() {
   };
   soon();
   const stop = useHousehold.subscribe((state, prev) => {
-    if (state.shopping !== prev.shopping || state.aisleMemory !== prev.aisleMemory) soon();
+    if (state.shopping !== prev.shopping || state.aisleMemory !== prev.aisleMemory || state.listsLoaded !== prev.listsLoaded) soon();
   });
   return () => {
     alive = false;

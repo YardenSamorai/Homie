@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:sql": "powershell -NoProfile -File scripts/test-sql.ps1 0012_smart_shopping",
     "app:sync": "cap sync ios",
     "app:assets": "capacitor-assets generate --ios --iconBackgroundColor #3f6655 --splashBackgroundColor #f8f7f2 --splashBackgroundColorDark #121614"
   },
@@ -31,6 +33,7 @@
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.5.3",
+    "@electric-sql/pglite": "^0.5.15",
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -38,6 +41,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
   }
 }

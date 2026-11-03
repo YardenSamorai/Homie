@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, ClipboardList, Plus } from "lucide-react";
+import Link from "next/link";
+import { CalendarDays, ClipboardList, Plus, ShoppingBasket } from "lucide-react";
 import { WeekTiles } from "@/components/calendar/week-tiles";
 import { EventRow } from "@/components/events/event-row";
 import { PageStage } from "@/components/shell/page-stage";
+import { PrepSheet } from "@/components/shopping/prep-sheet";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -33,8 +35,16 @@ export function CalendarView() {
   const setSharedDay = useSelectedDay((s) => s.setDay);
   const show = useAddSheet((s) => s.show);
   const showEdit = useAddSheet((s) => s.showEdit);
-  const [picked, setPicked] = useState<DayKey | null>(null);
+  // "?day=2026-11-08" (from a shopping item's event) opens on that day. Read on the client only; the first
+  // paint waits for the clock either way.
+  const [picked, setPicked] = useState<DayKey | null>(() => {
+    if (typeof window === "undefined") return null;
+    const day = new URLSearchParams(window.location.search).get("day");
+    return day && /^\d{4}-\d{2}-\d{2}$/.test(day) ? day : null;
+  });
   const [scope, setScope] = useState<Scope>("day");
+  const [prepFor, setPrepFor] = useState<HouseEvent | null>(null);
+  const shopping = useHousehold((s) => s.shopping);
   const selected = picked ?? today;
   const copy = dict.calendar;
 
@@ -204,18 +214,35 @@ export function CalendarView() {
             <ul className="overflow-hidden rounded-card bg-surface shadow-card">
               {toPrepare.map((event) => {
                 const days = diffDays(event.date, today);
+                const linked = shopping.filter((item) => item.eventId === event.id && !item.checkedAt).length;
                 return (
-                  <li key={event.id} className={separator}>
+                  <li key={event.id} className={`${separator} flex items-center`}>
                     <button
                       type="button"
                       onClick={() => {
                         setPicked(event.date);
                         setScope("day");
                       }}
-                      className="block w-full text-start transition-colors duration-150 active:bg-fill hover:bg-fill"
+                      className="block min-w-0 flex-1 text-start transition-colors duration-150 active:bg-fill hover:bg-fill"
                     >
                       <EventRow event={event} caption={days <= 7 ? relative.format(days, "day") : shortDate.format(fromDayKey(event.date))} />
                     </button>
+                    <div className="flex shrink-0 flex-col items-end gap-0.5 pe-3">
+                      <button
+                        type="button"
+                        onClick={() => setPrepFor(event)}
+                        aria-label={format(dict.shopping.prepFor, { title: event.title })}
+                        className="flex min-h-11 items-center gap-1.5 rounded-full bg-fill px-3 text-[15px] font-medium text-label transition-transform duration-150 ease-out active:scale-[0.97]"
+                      >
+                        <ShoppingBasket aria-hidden size={16} strokeWidth={2.25} className="text-green" />
+                        {dict.shopping.prepToShopping}
+                      </button>
+                      {linked > 0 && (
+                        <Link href={`/${locale}/shopping`} className="px-1 text-[13px] text-accent">
+                          {linked === 1 ? dict.shopping.prepLinkedOne : format(dict.shopping.prepLinked, { count: linked })}
+                        </Link>
+                      )}
+                    </div>
                   </li>
                 );
               })}
@@ -224,6 +251,7 @@ export function CalendarView() {
           </section>
         )}
       </div>
+      <PrepSheet event={prepFor} onOpenChange={(open) => !open && setPrepFor(null)} />
     </>
   );
 }

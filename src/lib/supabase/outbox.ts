@@ -17,10 +17,14 @@ export type Op =
   | { table: "tasks"; action: "save"; id: string; row: Task }
   | { table: "shopping_items"; action: "save"; id: string; row: ShoppingItem }
   | { table: "events"; action: "save"; id: string; row: HouseEvent }
-  | { table: "tasks" | "shopping_items" | "events"; action: "remove"; id: string };
+  | { table: "tasks" | "shopping_items" | "events"; action: "remove"; id: string }
+  /** Files the bought items under a trip. The id is the trip's, so a retry or a second tap finds the same trip. */
+  | { table: "shopping_trips"; action: "finish"; id: string; itemIds: string[] }
+  /** Same id as the finish, so an undo before the finish has left the phone simply replaces it. */
+  | { table: "shopping_trips"; action: "undo"; id: string };
 
 /** `after`: not sent before this time (ms), so an undo can still replace it while it waits. */
-type Queued = Op & { householdId: string; userId: string; state: "waiting" | "failed"; after?: number };
+export type Queued = Op & { householdId: string; userId: string; state: "waiting" | "failed"; after?: number };
 
 type OutboxState = {
   queue: Queued[];
@@ -52,19 +56,53 @@ export const useOutbox = create<OutboxState>()(
 export const useRowState = (id: string) => useOutbox((s) => s.queue.find((item) => item.id === id)?.state ?? null);
 
 class Offline extends Error {}
+/** The row was deleted (on the other phone, or merged away): this change must not bring it back. */
+class Gone extends Error {}
 
 type Result = { error: { message?: string; code?: string } | null; status?: number };
 
+/** Told when a change was dropped because its row is gone, so the screen lets go of it too. */
+const goneListeners = new Set<(table: Op["table"], id: string) => void>();
+export function onGone(listener: (table: Op["table"], id: string) => void) {
+  goneListeners.add(listener);
+  return () => void goneListeners.delete(listener);
+}
+
 /** No connection (retry by itself later) versus the server saying no (show it on the row). */
-function check({ error, status }: Result) {
+export function check({ error, status }: Result) {
   if (!error) return;
+  // HM410: deleted before (0012's tombstone). 23505: the id exists but this house can't see it.
+  if (error.code === "HM410" || error.code === "23505") throw new Gone();
   const network = status === 0 || /fetch|network|load failed|timed? ?out/i.test(error.message ?? "");
   if (network || (typeof navigator !== "undefined" && !navigator.onLine) || status === 401 || (status ?? 0) >= 500) throw new Offline();
   throw error;
 }
 
-async function send(op: Queued) {
-  const db = createBrowserSupabase();
+/** The columns a shopping item is saved with; the old `quantity_note` holds the free note. */
+export const shoppingFields = (item: ShoppingItem) => ({
+  name: item.name,
+  quantity: item.quantity ?? null,
+  unit: item.unit ?? null,
+  quantity_note: item.note,
+  photo_path: item.photoPath ?? null,
+  category: item.category ?? null,
+  checked_at: item.checkedAt,
+  checked_by: item.checkedAt ? (item.checkedBy ?? null) : null,
+  missing_at: item.missingAt ?? null,
+  substitute_mode: item.substituteMode ?? null,
+  substitute: item.substituteMode === "specific" ? (item.substitute ?? null) : null,
+  requested_by: item.requestedBy ?? [],
+  event_id: item.eventId ?? null,
+  task_id: item.taskId ?? null,
+});
+
+type Db = ReturnType<typeof createBrowserSupabase>;
+
+export async function send(op: Queued, db: Db = createBrowserSupabase()) {
+  if (op.action === "finish") {
+    return check(await db.rpc("finish_shopping_trip", { trip: op.id, item_ids: op.itemIds }));
+  }
+  if (op.action === "undo") return check(await db.rpc("undo_shopping_trip", { trip: op.id }));
   if (op.action === "remove") {
     const query =
       op.table === "shopping_items"
@@ -91,13 +129,7 @@ async function send(op: Queued) {
   }
   if (op.table === "shopping_items") {
     const item = op.row;
-    const fields = {
-      name: item.name,
-      quantity_note: item.note,
-      photo_path: item.photoPath ?? null,
-      category: item.category ?? null,
-      checked_at: item.checkedAt,
-    };
+    const fields = shoppingFields(item);
     const updated = await db.from("shopping_items").update(fields).eq("id", item.id).select("id");
     check(updated);
     if (updated.data?.length) return;
@@ -161,6 +193,12 @@ export async function flush() {
         }
       } catch (error) {
         if (error instanceof Offline) break;
+        if (error instanceof Gone) {
+          useOutbox.getState().done(op.id);
+          settle(op.id, false);
+          for (const listener of goneListeners) listener(op.table, op.id);
+          continue;
+        }
         useOutbox.getState().mark(op.id, "failed");
         settle(op.id, false);
       } finally {
@@ -208,8 +246,15 @@ export function withPending<T extends { tasks: Task[]; shopping: ShoppingItem[];
   const lay = <R extends { id: string }>(rows: R[], table: Op["table"]) => {
     let next = rows;
     for (const op of queue) {
+      // A trip still on its way has already taken its items off this phone's list.
+      if (op.action === "finish" && table === "shopping_items") {
+        const filed = new Set(op.itemIds);
+        next = next.filter((row) => !filed.has(row.id));
+        continue;
+      }
       if (op.table !== table) continue;
       if (op.action === "remove") next = next.filter((row) => row.id !== op.id);
+      else if (op.action === "finish" || op.action === "undo") continue;
       else {
         const row = op.row as unknown as R;
         if (next.some((known) => known.id === op.id)) next = next.map((known) => (known.id === op.id ? row : known));
