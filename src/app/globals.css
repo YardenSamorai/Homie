@@ -1,18 +1,24 @@
 @import "tailwindcss";
 
-/* Appearance is chosen in Settings and stored by src/lib/theme.ts; light is the default. */
-:root {
+/*
+ * A parent's look (src/lib/look.ts) is drawn by data-* attributes and a few variables on the page root, or on a
+ * preview inside Settings: every rule below matches any element carrying them, not only :root.
+ * Light is the default.
+ */
+:root,
+[data-theme="light"] {
   color-scheme: light;
 }
-:root[data-theme="dark"] {
+[data-theme="dark"] {
   color-scheme: dark;
 }
-:root[data-theme="system"] {
+[data-theme="system"] {
   color-scheme: light dark;
 }
 
 /* Every token resolves through light-dark(), so it follows the color-scheme set above. */
-:root {
+:root,
+[data-look] {
   /*
    * Apple's system hues, muted toward the hero's painted world (light / dark). Every one carries a white
    * glyph at 3:1 or better (check marks, initials, tiles); dark mode uses mid-tones rather than pastels so
@@ -69,8 +75,85 @@
   --shadow-card:
     0 1px 2px light-dark(rgb(37 79 65 / 0.04), transparent),
     0 10px 28px light-dark(rgb(37 79 65 / 0.06), transparent);
+  --app-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-heebo), system-ui, sans-serif;
+  /* Density: the space between a screen's sections and inside a list row. Rows never drop under 44px. */
+  --stack: 1.5rem;
+  --row-y: 0.625rem;
 }
 
+/*
+ * Themes: the page and its cards. "nature" is the palette above. Accents come from src/lib/look.ts as variables,
+ * so a theme sets only what sits behind them. Errors, warnings and success keep their own colors in every theme.
+ */
+[data-look="clean"] {
+  --bg: light-dark(#f5f5f4, #141414);
+  --surface: light-dark(#ffffff, #1e1e1f);
+  --surface-raised: light-dark(#ffffff, #262628);
+  --sheet: light-dark(#f5f5f4, #18181a);
+  --label: light-dark(#1c1c1e, #f2f2f3);
+  --label-secondary: light-dark(#66666b, #a3a3a8);
+  --label-tertiary: light-dark(rgb(102 102 107 / 0.55), rgb(163 163 168 / 0.45));
+  --separator: light-dark(#e6e6e8, rgb(255 255 255 / 0.1));
+  --segment-thumb: light-dark(#ffffff, #3a3a3d);
+  --material: light-dark(rgb(250 250 250 / 0.8), rgb(30 30 31 / 0.74));
+  --shadow-card: 0 1px 2px light-dark(rgb(0 0 0 / 0.04), transparent), 0 8px 24px light-dark(rgb(0 0 0 / 0.04), transparent);
+}
+[data-look="warm"] {
+  --bg: light-dark(#faf5ef, #17120f);
+  --surface: light-dark(#fffdfa, #221b17);
+  --surface-raised: light-dark(#fffdfa, #2c231e);
+  --sheet: light-dark(#faf5ef, #1b1512);
+  --label: light-dark(#2d221c, #f6efe9);
+  --label-secondary: light-dark(#76655a, #b9aaa0);
+  --label-tertiary: light-dark(rgb(118 101 90 / 0.55), rgb(185 170 160 / 0.45));
+  --separator: light-dark(#efe6dc, rgb(255 240 225 / 0.1));
+  --segment-thumb: light-dark(#fffdfa, #3a2f28);
+  --material: light-dark(rgb(252 248 242 / 0.8), rgb(34 27 23 / 0.74));
+  --shadow-card: 0 1px 2px light-dark(rgb(90 50 20 / 0.05), transparent), 0 10px 28px light-dark(rgb(90 50 20 / 0.07), transparent);
+}
+/* Night is made for reading in the dark: no pure white, softer separators, a touch more line height. */
+[data-look="night"] {
+  --bg: light-dark(#eef0f5, #0f1320);
+  --surface: light-dark(#ffffff, #181d2c);
+  --surface-raised: light-dark(#ffffff, #20263a);
+  --sheet: light-dark(#eef0f5, #131828);
+  --label: light-dark(#1b2033, #e8ebf3);
+  --label-secondary: light-dark(#5f667b, #a3aac0);
+  --label-tertiary: light-dark(rgb(95 102 123 / 0.55), rgb(163 170 192 / 0.45));
+  --separator: light-dark(#dfe3ec, rgb(220 230 255 / 0.09));
+  --segment-thumb: light-dark(#ffffff, #2a3149);
+  --material: light-dark(rgb(244 246 250 / 0.8), rgb(24 29 44 / 0.76));
+  --shadow-card: 0 1px 2px light-dark(rgb(20 30 60 / 0.05), transparent), 0 10px 28px light-dark(rgb(20 30 60 / 0.07), transparent);
+  line-height: 1.55;
+}
+
+[data-density="roomy"] {
+  --stack: 2rem;
+  --row-y: 0.875rem;
+}
+[data-density="compact"] {
+  --stack: 1rem;
+  --row-y: 0.3125rem;
+}
+
+/* Fonts with a full Hebrew and Latin set, all under the SIL Open Font License, loaded only when chosen. */
+[data-font="system"] {
+  --app-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-heebo), system-ui, sans-serif;
+}
+[data-font="heebo"] {
+  --app-font: var(--font-heebo), system-ui, sans-serif;
+}
+[data-font="rubik"] {
+  --app-font: var(--font-rubik), system-ui, sans-serif;
+}
+[data-font="assistant"] {
+  --app-font: var(--font-assistant), system-ui, sans-serif;
+}
+[data-font="frank"] {
+  --app-font: var(--font-frank), Georgia, serif;
+}
+
+/* Before looks moved into the account, the accent was one of these, chosen on the device. */
 :root[data-tint="coral"] {
   --accent: var(--tint-coral);
   --accent-contrast: light-dark(#ffffff, #2a140e);
@@ -104,7 +187,8 @@
   --sage-light: light-dark(#f0eaf4, #2c2434);
 }
 
-:root[data-bold="1"] body {
+:root[data-bold="1"] body,
+[data-preview][data-bold="1"] {
   font-weight: 500;
 }
 
@@ -171,6 +255,14 @@
       @slot;
     }
   }
+}
+
+@utility gap-stack {
+  gap: var(--stack);
+}
+
+@utility py-row {
+  padding-block: var(--row-y);
 }
 
 @utility pb-safe {
@@ -329,7 +421,7 @@ a,
 
 /*
  * Sign-in choreography, in CSS so it plays from the first paint, before any script loads.
- * The house settles (0–0.6s), the rings and moments around it arrive (0.45–1.3s), then the welcome (0.95–1.6s).
+ * The house settles (0׳’ג‚¬ג€0.6s), the rings and moments around it arrive (0.45׳’ג‚¬ג€1.3s), then the welcome (0.95׳’ג‚¬ג€1.6s).
  * Each element sets --d for its own delay.
  */
 .door-mark-in {
@@ -537,10 +629,11 @@ model-viewer::part(default-progress-bar) {
   }
 }
 
-body {
+body,
+[data-preview] {
   background: var(--bg);
   color: var(--label);
-  font-family: var(--font-sans);
+  font-family: var(--app-font);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -666,4 +759,208 @@ html[dir="ltr"] .align-ui {
 }
 html:not([data-scrolled]) .scroll-edge-top {
   opacity: 0;
+}
+
+/*
+ * Card style. Every card is drawn as rounded-card on bg-surface, so one rule styles them all. The style travels
+ * as variables, so a preview inside Settings shows its own style rather than the page's. Glass needs a backdrop
+ * filter and someone who hasn't asked for less transparency; otherwise it's solid.
+ */
+.rounded-card.bg-surface {
+  background-color: var(--card-fill, var(--surface));
+  box-shadow: var(--card-edge, 0 0 0 1px var(--hairline)), var(--card-shadow, var(--shadow-card));
+}
+[data-cards="solid"] {
+  --card-fill: var(--surface);
+  --card-edge: 0 0 0 1px var(--hairline);
+  --card-shadow: var(--shadow-card);
+  --card-blur: none;
+}
+[data-cards="outline"] {
+  --card-fill: color-mix(in oklab, var(--surface) 45%, var(--bg));
+  --card-edge: inset 0 0 0 1px light-dark(rgb(0 0 0 / 0.11), rgb(255 255 255 / 0.13));
+  --card-shadow: 0 0 0 0 transparent;
+  --card-blur: none;
+}
+[data-cards="glass"] {
+  --card-fill: var(--surface);
+  --card-edge: 0 0 0 1px var(--hairline);
+  --card-shadow: var(--shadow-card);
+  --card-blur: none;
+}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  [data-cards="glass"] {
+    --card-fill: color-mix(in oklab, var(--surface) 72%, transparent);
+    --card-edge: inset 0 0 0 1px light-dark(rgb(255 255 255 / 0.55), rgb(255 255 255 / 0.08));
+    --card-shadow: var(--shadow-card);
+    --card-blur: saturate(160%) blur(20px);
+  }
+  .rounded-card.bg-surface {
+    backdrop-filter: var(--card-blur, none);
+    -webkit-backdrop-filter: var(--card-blur, none);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  [data-cards="glass"] {
+    --card-fill: var(--surface);
+    --card-blur: none;
+  }
+}
+
+/*
+ * The background behind the screens (src/lib/look.ts). Drawn by a fixed layer behind everything, and by the
+ * same layer inside the preview. Forms, sheets and Settings sit on their own surfaces, so they stay readable.
+ */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  display: var(--backdrop-shown, none);
+  background: var(--backdrop, var(--bg));
+}
+#app-backdrop {
+  position: fixed;
+}
+[data-bg]:not([data-bg="glow"]) {
+  --atmosphere: none;
+}
+[data-bg="glow"] {
+  --atmosphere: block;
+}
+[data-bg="glow"],
+[data-bg="plain"] {
+  --backdrop-shown: none;
+}
+.atmosphere {
+  display: var(--atmosphere, block);
+}
+[data-bg="tint"],
+[data-bg="gradient"],
+[data-bg="sky"],
+[data-bg="photo"] {
+  --backdrop-shown: block;
+}
+[data-bg="tint"] {
+  --backdrop: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--accent) 14%, var(--bg)),
+    color-mix(in oklab, var(--accent) 6%, var(--bg)) 70%
+  );
+}
+[data-bg="gradient"][data-gradient="dawn"] {
+  --backdrop:
+    radial-gradient(120% 70% at 85% 0%, light-dark(#fbdcc6, #3b271d), transparent 65%),
+    radial-gradient(110% 80% at 10% 20%, light-dark(#f8e7ea, #2d1f26), transparent 70%), var(--bg);
+}
+[data-bg="gradient"][data-gradient="sea"] {
+  --backdrop:
+    radial-gradient(120% 70% at 85% 0%, light-dark(#d3e6f1, #15293a), transparent 65%),
+    radial-gradient(110% 80% at 10% 20%, light-dark(#dcefeb, #12282a), transparent 70%), var(--bg);
+}
+[data-bg="gradient"][data-gradient="meadow"] {
+  --backdrop:
+    radial-gradient(120% 70% at 85% 0%, light-dark(#dcebd6, #1a2b20), transparent 65%),
+    radial-gradient(110% 80% at 10% 20%, light-dark(#f2ecd6, #262619), transparent 70%), var(--bg);
+}
+[data-bg="gradient"][data-gradient="dusk"] {
+  --backdrop:
+    radial-gradient(120% 70% at 85% 0%, light-dark(#e1dcf3, #232043), transparent 65%),
+    radial-gradient(110% 80% at 10% 20%, light-dark(#f4dde4, #33202d), transparent 70%), var(--bg);
+}
+/* The sky follows the hour on this device, not the weather. */
+[data-bg="sky"] {
+  --backdrop: linear-gradient(to bottom, var(--sky-top), var(--sky-low) 48%, var(--bg) 88%);
+}
+[data-period="morning"] {
+  --sky-top: light-dark(#f7d8bf, #3a2a20);
+  --sky-low: light-dark(#fbeee0, #231d18);
+}
+[data-period="afternoon"] {
+  --sky-top: light-dark(#c9e0f0, #15293a);
+  --sky-low: light-dark(#e8f1f4, #121d24);
+}
+[data-period="evening"] {
+  --sky-top: light-dark(#f2c2a9, #3e2321);
+  --sky-low: light-dark(#f2dbe3, #2a1b25);
+}
+[data-period="night"] {
+  --sky-top: light-dark(#c5cdec, #0d1433);
+  --sky-low: light-dark(#e2e1f1, #131a31);
+}
+/* A slow glow across the sky, the only moving part. Still under reduced or gentle motion. */
+[data-bg="sky"] > .backdrop::after,
+[data-bg="sky"] > body > .backdrop::after {
+  content: "";
+  position: absolute;
+  inset: -20% -10% auto;
+  height: 70%;
+  background: radial-gradient(50% 50% at 50% 50%, light-dark(rgb(255 255 255 / 0.5), rgb(255 255 255 / 0.05)), transparent 70%);
+  animation: sky-drift 48s ease-in-out infinite alternate;
+}
+@keyframes sky-drift {
+  from {
+    transform: translate3d(-18%, 0, 0);
+  }
+  to {
+    transform: translate3d(18%, 4%, 0);
+  }
+}
+:is([data-motion="gentle"], [data-motion="none"]) .backdrop::after {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .backdrop::after {
+    animation: none;
+  }
+}
+/* A personal photo: framed by its focal point and zoom, softened and veiled so text over it stays readable. */
+[data-bg="photo"] {
+  --backdrop: var(--bg);
+}
+[data-bg="photo"] > .backdrop::before,
+[data-bg="photo"] > body > .backdrop::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--bg-blur, 0px) * -2);
+  background-image: var(--bg-photo, none);
+  background-size: cover;
+  background-position: var(--bg-x, 50%) var(--bg-y, 50%);
+  transform: scale(var(--bg-zoom, 1));
+  transform-origin: var(--bg-x, 50%) var(--bg-y, 50%);
+  filter: blur(var(--bg-blur, 0px));
+}
+[data-bg="photo"] > .backdrop::after,
+[data-bg="photo"] > body > .backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: color-mix(in oklab, var(--bg) var(--bg-veil, 60%), transparent);
+}
+/* Where the background reaches: Today only, or the four main screens. Never Settings or a form page. */
+html[data-bg-scope="today"]:not([data-page="today"]) > body,
+html:is([data-page="settings"], [data-page="other"]) > body {
+  --backdrop-shown: none;
+}
+
+/* Motion: "none" stills everything that isn't needed to follow what happened; the device setting always wins. */
+html[data-motion="none"] *,
+html[data-motion="none"] *::before,
+html[data-motion="none"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+html[data-motion="gentle"] :is(.door-float, .door-sway, .door-drift, .door-breathe, .stage-ring, .stage-ripple) {
+  animation: none;
+}
+html[data-motion="gentle"] .stage-ripple {
+  opacity: 0;
+}
+
+/* Drawings off: the big pictures above Tasks, Shopping and Calendar go, and the list moves up into their place. */
+html[data-art="0"] .page-stage {
+  display: none;
 }

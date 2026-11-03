@@ -22,7 +22,7 @@ export default function AppLayout({ children }: LayoutProps<"/[lang]">) {
       <HouseholdSync />
       <ConnectionBanner />
       <Sidebar />
-      <SheetDepth className="mx-auto w-full max-w-2xl flex-1 px-4 pb-32 pt-safe md:px-8 md:pb-12">{children}</SheetDepth>
+      <SheetDepth className="mx-auto w-full max-w-2xl flex-1 px-4 pb-32 pt-safe md:px-8 md:pb-12 has-[[data-wide-page]]:lg:max-w-6xl">{children}</SheetDepth>
       <ScrollEdges />
       <ScreenGuide />
       <InstallPrompt />

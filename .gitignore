@@ -46,3 +46,6 @@ next-env.d.ts
 
 # supabase cli
 /supabase/.temp/
+
+# local agent skills (the project's copies live in .cursor/skills)
+/.agents/

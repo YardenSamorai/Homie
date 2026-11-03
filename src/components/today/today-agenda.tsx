@@ -11,9 +11,25 @@ const card = "overflow-hidden rounded-card bg-surface shadow-card ring-1 ring-ha
 const rule = "relative after:absolute after:inset-x-0 after:top-0 after:ms-[5.4rem] after:h-px after:bg-separator first:after:hidden";
 
 /** What's still ahead today, in time order, home events and connected calendars together. */
-export function TodayAgenda({ entries, hidden, stale }: { entries: AgendaEntry[]; hidden: number; stale: boolean }) {
+export function TodayAgenda({
+  entries: all,
+  hidden: more,
+  stale,
+  compact = false,
+  fallback = null,
+}: {
+  entries: AgendaEntry[];
+  hidden: number;
+  stale: boolean;
+  /** Two rows at most; the rest wait behind the link to the calendar. */
+  compact?: boolean;
+  /** Drawn when nothing is left today, for a parent who keeps empty regions. */
+  fallback?: React.ReactNode;
+}) {
   const { locale, dict } = useI18n();
-  if (entries.length === 0) return null;
+  if (all.length === 0) return fallback;
+  const entries = compact ? all.slice(0, 2) : all;
+  const hidden = more + all.length - entries.length;
   return (
     <section aria-labelledby="later-today">
       <h2 id="later-today" className="px-1 text-[20px] font-bold tracking-[-0.01em]">

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Heebo } from "next/font/google";
+import { Assistant, Frank_Ruhl_Libre, Heebo, Rubik } from "next/font/google";
 import { locales, localeDirection } from "@/i18n/config";
 import { getDictionary, getLocale } from "@/i18n/get-dictionary";
 import splashScreens from "@/lib/splash-screens.json";
@@ -11,6 +11,11 @@ const heebo = Heebo({
   variable: "--font-heebo",
   subsets: ["hebrew", "latin"],
 });
+
+// A parent can choose one of these in Settings; a browser only downloads a face that's actually drawn.
+const rubik = Rubik({ variable: "--font-rubik", subsets: ["hebrew", "latin"], preload: false });
+const assistant = Assistant({ variable: "--font-assistant", subsets: ["hebrew", "latin"], preload: false });
+const frank = Frank_Ruhl_Libre({ variable: "--font-frank", subsets: ["hebrew", "latin"], preload: false });
 
 export async function generateStaticParams() {
   return locales.map((lang) => ({ lang }));
@@ -44,10 +49,16 @@ export default async function RootLayout({ children }: LayoutProps<"/[lang]">) {
   const dict = await getDictionary();
 
   return (
-    <html lang={locale} dir={localeDirection[locale]} className={`${heebo.variable} h-full`} suppressHydrationWarning>
+    <html
+      lang={locale}
+      dir={localeDirection[locale]}
+      className={`${heebo.variable} ${rubik.variable} ${assistant.variable} ${frank.variable} h-full`}
+      suppressHydrationWarning
+    >
       <body className="min-h-full" suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script dangerouslySetInnerHTML={{ __html: launchScript }} />
+        <div id="app-backdrop" className="backdrop" aria-hidden />
         <Providers locale={locale} dict={dict}>
           {children}
         </Providers>

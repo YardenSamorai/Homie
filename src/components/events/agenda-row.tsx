@@ -5,7 +5,10 @@ import { Fragment } from "react";
 import { SyncCaption } from "@/components/ui/sync-note";
 import { useI18n } from "@/i18n/dictionary-provider";
 import type { AgendaEntry } from "@/lib/agenda";
+import { useAuth } from "@/lib/auth/session";
+import { railColor } from "@/lib/calendar-colors";
 import { useAddSheet, useHousehold } from "@/lib/household-store";
+import { usePrefsOf } from "@/lib/prefs-store";
 import { PeopleMark } from "./people-mark";
 import { useCalendarSheet } from "./calendar-event-sheet";
 
@@ -20,7 +23,9 @@ export function AgendaRow({ entry, caption }: { entry: AgendaEntry; caption?: st
   const openImported = useCalendarSheet((s) => s.open);
   const members = useHousehold((s) => s.members);
   const only = entry.people.length === 1 ? members.find((member) => member.id === entry.people[0]) : undefined;
-  const rail = entry.busy ? "var(--separator)" : entry.kind === "calendar" && only ? only.color : "var(--teal)";
+  const userId = useAuth((s) => s.session?.userId);
+  const colors = usePrefsOf(userId, (prefs) => prefs.calendarColors);
+  const rail = railColor(entry, colors, only?.color ?? null);
   const item = entry.item;
   const source = item && !entry.busy && item.provider ? [dict.agenda.providers[item.provider], item.sourceName].filter(Boolean) : null;
 
@@ -80,7 +85,7 @@ export function AgendaRow({ entry, caption }: { entry: AgendaEntry; caption?: st
     </>
   );
 
-  const rowClass = "flex min-h-[56px] w-full items-stretch gap-3 px-4 py-2.5";
+  const rowClass = "flex min-h-[56px] w-full items-stretch gap-3 px-4 py-row";
   if (entry.event) {
     const event = entry.event;
     return (

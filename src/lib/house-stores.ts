@@ -4,6 +4,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CalendarItem } from "./agenda";
 import type { DayKey } from "./dates";
+import { forgetLook } from "./look-apply";
+import { usePrefs } from "./prefs-store";
 import type { HouseNote } from "./supabase/house-extras";
 
 /**
@@ -61,8 +63,10 @@ export const useCalendarItems = create<CalendarState>()(
   ),
 );
 
-/** Signing out or deleting the account: nothing read for this person stays on the device. */
+/** Signing out or deleting the account: nothing read for this person stays on the device, their look included. */
 export function forgetHouseExtras() {
   useHouseNote.getState().clear();
   useCalendarItems.getState().clear();
+  usePrefs.getState().forget();
+  forgetLook();
 }

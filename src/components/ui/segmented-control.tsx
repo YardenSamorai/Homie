@@ -18,7 +18,7 @@ export function SegmentedControl<T extends string>({
   const thumbId = useId();
 
   return (
-    <div role="radiogroup" aria-label={label} className="flex rounded-[9px] bg-fill p-0.5">
+    <div role="radiogroup" aria-label={label} className="isolate flex rounded-[9px] bg-fill p-0.5">
       {options.map((option) => {
         const selected = option.value === value;
         return (

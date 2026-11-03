@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/calendar
   const pending = openPending(request.cookies.get(OAUTH_COOKIE)?.value);
   const locale = pending?.locale ?? "he";
   const finish = (status: string, account?: string) => {
-    const target = new URL(`/${locale}/settings`, request.url);
+    const target = new URL(`/${locale}/settings/calendars`, request.url);
     target.searchParams.set("calendars", status);
     if (account) target.searchParams.set("account", account);
     target.hash = "calendars";

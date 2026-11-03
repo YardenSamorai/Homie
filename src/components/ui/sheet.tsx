@@ -58,7 +58,7 @@ export function SheetHeader({
 export function SheetBody({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <Drawer.Content
-      className={`flex min-h-0 flex-1 touch-auto flex-col gap-5 overflow-y-auto overscroll-contain px-4 pb-[max(var(--safe-bottom),20px)] ${className}`}
+      className={`flex min-h-0 flex-1 touch-auto flex-col gap-5 overflow-y-auto *:shrink-0 overscroll-contain px-4 pb-[max(var(--safe-bottom),20px)] ${className}`}
     >
       {children}
     </Drawer.Content>

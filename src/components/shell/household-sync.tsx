@@ -3,10 +3,11 @@
 import { useEffect } from "react";
 import { authApi } from "@/lib/auth/api";
 import { useAuth, useAuthReady } from "@/lib/auth/session";
+import { readableOn } from "@/lib/color";
 import { MEMBER_COLORS, useHousehold } from "@/lib/household-store";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { onReturn } from "@/lib/on-return";
-import { loadPrefs, usePrefs } from "@/lib/prefs-store";
+import { loadPrefs, usePrefs, usePrefsOf } from "@/lib/prefs-store";
 import { avatarLinks } from "@/lib/supabase/media";
 import { startAislePlacing } from "@/lib/aisle-placing";
 import { loadAisleMemory, loadHouseholdLists, loadShoppingExtras, watchHouseholdLists, watchHouseholdMembers } from "@/lib/supabase/lists";
@@ -27,8 +28,23 @@ export function HouseholdSync() {
   }, []);
 
   useEffect(() => {
-    if (ready && session?.userId) void loadPrefs(session.userId).catch(() => {});
+    if (!ready || !session?.userId) return;
+    const userId = session.userId;
+    const load = () => void loadPrefs(userId).catch(() => {});
+    load();
+    // Choices changed on another device arrive when the app comes back.
+    return onReturn(load);
   }, [ready, session?.userId]);
+
+  // The colors this parent chose for the people in the house, in their own view only.
+  const people = usePrefsOf(session?.userId, (prefs) => prefs.calendarColors.people);
+  const members = useHousehold((s) => s.members);
+  useEffect(() => {
+    // A chosen color is darkened as needed so the white initials on it stay readable.
+    const colorOf = (id: string, index: number) => (people[id] ? readableOn(people[id], ["#ffffff"], 3) : (MEMBER_COLORS[index] ?? MEMBER_COLORS[0]));
+    const colored = members.map((member, index) => ({ ...member, color: colorOf(member.id, index) }));
+    if (colored.some((member, index) => member.color !== members[index].color)) setRoster(useHousehold.getState().currentUserId, colored);
+  }, [people, members, setRoster]);
 
   useEffect(() => {
     if (!ready) return;

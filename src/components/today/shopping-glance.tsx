@@ -10,11 +10,11 @@ import { useAddSheet } from "@/lib/household-store";
 const PREVIEW = 3;
 
 /** The list in one glance: how much is waiting and the first few names, with the way in and a quick add. */
-export function ShoppingGlance({ items }: { items: ShoppingItem[] }) {
+export function ShoppingGlance({ items, compact = false, fallback = null }: { items: ShoppingItem[]; compact?: boolean; fallback?: React.ReactNode }) {
   const { locale, dict } = useI18n();
   const show = useAddSheet((s) => s.show);
   const waiting = items.filter((item) => !item.checkedAt).sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
-  if (waiting.length === 0) return null;
+  if (waiting.length === 0) return fallback;
   const names = waiting.slice(0, PREVIEW).map((item) => item.name);
   const rest = waiting.length - names.length;
 
@@ -31,10 +31,12 @@ export function ShoppingGlance({ items }: { items: ShoppingItem[] }) {
           <span className="text-[16px] font-semibold">
             {waiting.length === 1 ? dict.today.shoppingOne : format(dict.today.shoppingLeft, { count: waiting.length })}
           </span>
-          <span className="line-clamp-2 text-[14px] leading-snug text-label-secondary [overflow-wrap:anywhere]">
-            <bdi>{names.join(dict.agenda.listJoin)}</bdi>
-            {rest > 0 && ` ${format(dict.agenda.andMore, { count: rest })}`}
-          </span>
+          {!compact && (
+            <span className="line-clamp-2 text-[14px] leading-snug text-label-secondary [overflow-wrap:anywhere]">
+              <bdi>{names.join(dict.agenda.listJoin)}</bdi>
+              {rest > 0 && ` ${format(dict.agenda.andMore, { count: rest })}`}
+            </span>
+          )}
         </span>
       </Link>
       <button

@@ -15,8 +15,8 @@ import { useAuth } from "@/lib/auth/session";
 import { useHousehold } from "@/lib/household-store";
 import { forgetHouseExtras } from "@/lib/house-stores";
 import { isNativeApp } from "@/lib/native";
-import { morningHours, notifyKinds } from "@/lib/prefs";
-import { usePrefs } from "@/lib/prefs-store";
+import { notifyKinds } from "@/lib/prefs";
+import { usePrefs, usePrefsOf } from "@/lib/prefs-store";
 import { forgetPush } from "@/lib/push/client";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import { supabaseConfigured } from "@/lib/supabase/env";
@@ -25,52 +25,30 @@ import { ConfirmPanel } from "./confirm-panel";
 const row = "flex min-h-12 items-center justify-between gap-3 px-4";
 const first = (name: string) => name.trim().split(/\s+/)[0] ?? name;
 
-/** Which of the other parent's actions reach this phone, and the morning summary. The bell keeps everything. */
+/** Which of the other parent's actions reach this phone. The bell keeps everything. */
 export function NotificationPrefs() {
   const { dict } = useI18n();
   const userId = useAuth((s) => s.session?.userId) ?? "";
-  const prefs = usePrefs((s) => s.prefs);
+  const prefs = usePrefsOf(userId, (p) => p);
   const update = usePrefs((s) => s.update);
   const copy = dict.prefs;
 
   return (
-    <>
-      <Card title={copy.notifyTitle}>
-        <ul className="divide-y divide-separator">
-          {notifyKinds.map((kind) => (
-            <li key={kind} className={row}>
-              <span className="text-[17px]">{copy.kinds[kind]}</span>
-              <Switch
-                checked={prefs.notify[kind]}
-                label={copy.kinds[kind]}
-                onChange={(on) => update(userId, "notify", { ...prefs.notify, [kind]: on })}
-              />
-            </li>
-          ))}
-        </ul>
-        <p className="px-4 pb-3 pt-1 text-[13px] leading-snug text-label-secondary">{copy.notifyHint}</p>
-      </Card>
-      <Card title={copy.morningTitle}>
-        <div className={row}>
-          <span className="text-[17px]">{copy.morningOn}</span>
-          <Switch checked={prefs.morning.on} label={copy.morningOn} onChange={(on) => update(userId, "morning", { ...prefs.morning, on })} />
-        </div>
-        {prefs.morning.on && (
-          <div className="flex items-center justify-between gap-3 border-t border-separator px-4 py-2.5">
-            <span className="shrink-0 text-[17px]">{copy.morningAt}</span>
-            <div className="w-48">
-              <SegmentedControl
-                label={copy.morningAt}
-                value={String(prefs.morning.hour)}
-                onChange={(hour) => update(userId, "morning", { ...prefs.morning, hour: Number(hour) })}
-                options={morningHours.map((hour) => ({ value: String(hour), label: `${String(hour).padStart(2, "0")}:00` }))}
-              />
-            </div>
-          </div>
-        )}
-        <p className="px-4 pb-3 pt-1 text-[13px] leading-snug text-label-secondary">{copy.morningHint}</p>
-      </Card>
-    </>
+    <Card title={copy.notifyTitle}>
+      <ul className="divide-y divide-separator">
+        {notifyKinds.map((kind) => (
+          <li key={kind} className={row}>
+            <span className="text-[17px]">{copy.kinds[kind]}</span>
+            <Switch
+              checked={prefs.notify[kind]}
+              label={copy.kinds[kind]}
+              onChange={(on) => update(userId, "notify", { ...prefs.notify, [kind]: on })}
+            />
+          </li>
+        ))}
+      </ul>
+      <p className="px-4 pb-3 pt-1 text-[13px] leading-snug text-label-secondary">{copy.notifyHint}</p>
+    </Card>
   );
 }
 
@@ -78,7 +56,7 @@ export function NotificationPrefs() {
 export function NewTaskDefaults() {
   const { dict } = useI18n();
   const userId = useAuth((s) => s.session?.userId) ?? "";
-  const prefs = usePrefs((s) => s.prefs);
+  const prefs = usePrefsOf(userId, (p) => p);
   const update = usePrefs((s) => s.update);
   const partner = useHousehold((s) => s.members.find((member) => member.id !== s.currentUserId));
   const copy = dict.prefs;
@@ -209,7 +187,7 @@ export function DeleteAccount() {
   };
 
   return (
-    <div className="border-t border-separator">
+    <Card title={dict.settingsNav.dangerZone}>
       {!open && (
         <button type="button" onClick={() => setOpen(true)} className="min-h-12 w-full px-4 text-start text-[17px] font-medium text-danger active:bg-fill">
           {copy.deleteAccount}
@@ -226,7 +204,21 @@ export function DeleteAccount() {
           onCancel={() => setOpen(false)}
         />
       </div>
-    </div>
+    </Card>
+  );
+}
+
+/** What Homie keeps about this parent's own choices, and the full policy. */
+export function PrivacyCard() {
+  const { locale, dict } = useI18n();
+  return (
+    <Card title={dict.settingsNav.privacyTitle}>
+      <p className="px-4 pt-3 text-[15px] leading-snug text-label-secondary">{dict.settingsNav.privacyBody}</p>
+      <Link href={`/${locale}/privacy`} className={`${row} mt-1 border-t border-separator text-[17px] active:bg-fill`}>
+        {dict.prefs.privacy}
+        <ChevronLeft aria-hidden size={18} className="text-label-tertiary ltr:-scale-x-100" />
+      </Link>
+    </Card>
   );
 }
 

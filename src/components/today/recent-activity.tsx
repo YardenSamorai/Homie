@@ -15,15 +15,15 @@ const SHOWN = 2;
  * The last thing or two the other parent did today or yesterday, from the bell's own feed.
  * The viewer's own doings aren't news.
  */
-export function RecentActivity({ selfId, today }: { selfId: string; today: DayKey }) {
+export function RecentActivity({ selfId, today, compact = false, fallback = null }: { selfId: string; today: DayKey; compact?: boolean; fallback?: React.ReactNode }) {
   const { dict } = useI18n();
   const items = useActivity((s) => s.items);
   const show = useActivity((s) => s.show);
   const members = useHousehold((s) => s.members);
   const ago = useAgo();
   const since = addDays(today, -1);
-  const recent = items.filter((item) => item.actorId !== selfId && toDayKey(new Date(item.createdAt)) >= since).slice(0, SHOWN);
-  if (recent.length === 0) return null;
+  const recent = items.filter((item) => item.actorId !== selfId && toDayKey(new Date(item.createdAt)) >= since).slice(0, compact ? 1 : SHOWN);
+  if (recent.length === 0) return fallback;
 
   return (
     <section aria-labelledby="recent-activity">

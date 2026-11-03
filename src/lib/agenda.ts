@@ -20,6 +20,8 @@ export type CalendarRow = {
   prep: string | null;
   link: string | null;
   match_key: string | null;
+  /** Which calendar it came from, as a hash (0014); for coloring by calendar. Missing before 0014. */
+  calendar_key?: string | null;
 };
 
 /** One thing on the calendar, from one or more connected calendars that agree it's the same meeting. */
@@ -41,6 +43,7 @@ export type CalendarItem = {
   fixed: boolean;
   prep: string | null;
   link: string | null;
+  calendarKey: string | null;
 };
 
 const toItem = (row: CalendarRow): CalendarItem => ({
@@ -61,6 +64,7 @@ const toItem = (row: CalendarRow): CalendarItem => ({
   fixed: row.fixed,
   prep: row.prep,
   link: row.link,
+  calendarKey: row.calendar_key ?? null,
 });
 
 /**

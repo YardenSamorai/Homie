@@ -15,6 +15,8 @@ export type ApnsMessage = {
   collapseId: string;
   /** The red number on the app icon; left as it is when missing. */
   badge?: number;
+  /** Replaces what's already shown (same collapseId) without a sound: the next line of a burst, not a new buzz. */
+  quiet?: boolean;
 };
 export type ApnsResult = "sent" | "gone" | "failed";
 
@@ -84,7 +86,7 @@ function post(host: string, deviceToken: string, keys: Keys, message: ApnsMessag
       JSON.stringify({
         aps: {
           alert: { title: message.title, body: message.body },
-          sound: "default",
+          ...(message.quiet ? {} : { sound: "default" }),
           "thread-id": "activity",
           ...(message.badge !== undefined ? { badge: message.badge } : {}),
         },

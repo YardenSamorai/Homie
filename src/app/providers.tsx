@@ -4,11 +4,11 @@ import { MotionConfig } from "motion/react";
 import { DictionaryProvider } from "@/i18n/dictionary-provider";
 import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/get-dictionary";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { registerServiceWorker } from "@/lib/install";
 import { startNativeShell } from "@/lib/native";
 import { reportErrors } from "@/lib/report-errors";
-import { useThemeColorSync } from "@/lib/theme";
+import { PageMarker, useLook, useLookSync } from "@/lib/theme";
 
 export function Providers({
   locale,
@@ -19,7 +19,8 @@ export function Providers({
   dict: Dictionary;
   children: React.ReactNode;
 }) {
-  useThemeColorSync();
+  useLookSync();
+  const motion = useLook().motion;
   useEffect(() => {
     void startNativeShell();
     registerServiceWorker();
@@ -27,7 +28,10 @@ export function Providers({
   }, []);
   return (
     <DictionaryProvider locale={locale} dict={dict}>
-      <MotionConfig reducedMotion="user">{children}</MotionConfig>
+      <Suspense fallback={null}>
+        <PageMarker />
+      </Suspense>
+      <MotionConfig reducedMotion={motion === "none" ? "always" : "user"}>{children}</MotionConfig>
     </DictionaryProvider>
   );
 }

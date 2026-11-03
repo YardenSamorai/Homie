@@ -19,7 +19,7 @@ function guideId(pathname: string, locale: string): GuideId | null {
   if (path.startsWith("/tasks")) return "tasks";
   if (path.startsWith("/shopping")) return "shopping";
   if (path.startsWith("/calendar")) return "calendar";
-  if (path.startsWith("/settings")) return "settings";
+  if (path === "/settings") return "settings";
   return null;
 }
 

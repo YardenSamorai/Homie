@@ -1,57 +1,28 @@
 import type { Metadata } from "next";
-import { Card } from "@/components/ui/card";
+import { Suspense } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { getDictionary } from "@/i18n/get-dictionary";
-import { AppearancePicker } from "./appearance-picker";
-import { CalendarsCard } from "./calendars-card";
-import { HouseholdCard } from "./household-card";
-import { HouseholdName } from "./household-name";
-import { InviteCard } from "./invite-card";
-import { GuideReplay } from "@/components/shell/guide-replay";
-import { NotificationsCard } from "@/components/shell/activity";
-import { InstallCard } from "@/components/shell/install";
-import { LanguagePicker } from "./language-picker";
-import { AboutCard, DeleteAccount, MyName, NewTaskDefaults, NotificationPrefs } from "./preferences";
-import { ProfilePhoto } from "./profile-photo";
-import { SignOut } from "./sign-out";
+import { ProfileContent } from "./contents";
+import { LegacyCalendarsRedirect } from "./legacy-redirect";
+import { SettingsList } from "./sections";
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: (await getDictionary()).settings.title };
+  return { title: (await getDictionary()).settingsNav.title };
 }
 
 export default async function SettingsPage() {
   const dict = await getDictionary();
-
   return (
     <>
-      <PageHeader title={dict.settings.title} subtitle={dict.settings.lead} />
-      <div className="flex flex-col gap-8">
-        <ProfilePhoto />
-        <MyName />
-        <Card title={dict.settings.homeName}>
-          <HouseholdName />
-        </Card>
-        <Card title={dict.settings.household}>
-          <HouseholdCard />
-        </Card>
-        <InviteCard />
-        <CalendarsCard />
-        <NotificationsCard />
-        <NotificationPrefs />
-        <NewTaskDefaults />
-        <Card title={dict.settings.appearance}>
-          <AppearancePicker />
-        </Card>
-        <Card title={dict.settings.language}>
-          <LanguagePicker />
-          <GuideReplay />
-        </Card>
-        <InstallCard />
-        <AboutCard />
-        <Card title={dict.settings.account}>
-          <SignOut />
-          <DeleteAccount />
-        </Card>
+      <Suspense>
+        <LegacyCalendarsRedirect />
+      </Suspense>
+      <div className="lg:hidden">
+        <PageHeader title={dict.settingsNav.title} subtitle={dict.settingsNav.lead} />
+        <SettingsList />
+      </div>
+      <div className="hidden lg:block">
+        <ProfileContent />
       </div>
     </>
   );

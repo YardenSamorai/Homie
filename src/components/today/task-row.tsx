@@ -67,7 +67,7 @@ export function TaskRow({
 
   return (
     <div
-      className={`flex min-h-[56px] items-center gap-3 py-2.5 ps-4 pe-3.5 transition-opacity duration-200 ${projected ? "opacity-55" : ""} ${done ? "opacity-75" : ""}`}
+      className={`flex min-h-[56px] items-center gap-3 py-row ps-4 pe-3.5 transition-opacity duration-200 ${projected ? "opacity-55" : ""} ${done ? "opacity-75" : ""}`}
     >
       {projected ? (
         <span aria-hidden className="flex size-[26px] shrink-0 items-center justify-center">

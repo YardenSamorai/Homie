@@ -1,12 +1,13 @@
-# Calls the morning summary every hour; the server sends to each parent at the hour they chose
-# in Settings, and clears status photos past their 24 hours. Vercel's free plan runs a job only once a day.
+# Calls the notification pass every 15 minutes: each parent's morning summary at the time and on the days they
+# chose, in their zone; the wrap-up when their quiet hours end; the digest. It also clears status photos past
+# their 24 hours. Vercel's free plan runs a job only once a day.
 #
 # Secret: CRON_SECRET, the same value as on Vercel.
 name: Morning summary
 
 on:
   schedule:
-    - cron: "2 * * * *"
+    - cron: "2,17,32,47 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -14,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Send this hour's summaries
+      - name: Send what's due now
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |

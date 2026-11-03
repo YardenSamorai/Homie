@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import en from "@/i18n/dictionaries/en.json";
 import he from "@/i18n/dictionaries/he.json";
 import { activityLine, activityPath, isActivityKind, type ActivityKind } from "@/lib/activity";
-import { notifyKindOf, readPrefs, type Prefs } from "@/lib/prefs";
+import { format } from "@/i18n/format";
+import { notifyKindOf, readPrefs, validTimeZone, type Prefs } from "@/lib/prefs";
+import { inQuiet, localTime } from "@/lib/routine";
 import { apnsKeys, sendApns } from "@/lib/push/apns";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -46,20 +48,32 @@ export async function POST(request: Request) {
     const { data } = await db.rpc("partner_push_devices");
     const all = (data ?? []) as { token: string; locale: string; user_id?: string }[];
     const name = profile?.display_name?.trim() || "Homie";
-    const recipients = await recipientsOf(db, all);
-    // Each parent chose in Settings what reaches their phone; the bell still shows everything.
-    const devices = all.filter((device) => !device.user_id || recipients.get(device.user_id)?.notify[notifyKindOf(kind)] !== false);
+    const [recipients, houseZone] = await Promise.all([recipientsOf(db, all), zoneOf(db, household)]);
+    const now = new Date();
+    // Each parent chose in Settings what reaches their phone; the bell still shows everything. Quiet hours and the
+    // digest hold the push back: the cron sums it up afterwards (/api/cron/morning).
+    const devices = all.filter((device) => {
+      const prefs = device.user_id ? recipients.get(device.user_id)?.prefs : undefined;
+      if (!prefs) return true;
+      if (!prefs.notify[notifyKindOf(kind)] || prefs.delivery === "digest") return false;
+      return !inQuiet(prefs.quiet, localTime(now, prefs.timezone ?? houseZone));
+    });
+    const burst = kind === "shopping_added" && devices.length > 0 ? await shoppingBurst(db, household, user.id, row.id) : null;
     const badges = await unreadFor(db, household, devices, recipients);
     const results = await Promise.all(
       devices.map(async (device) => {
         const locale = device.locale === "en" ? "en" : "he";
+        const copy = dictionaries[locale];
         const result = await sendApns(
           device.token,
           {
             title: name,
-            body: activityLine(dictionaries[locale].activity.kinds, kind, title),
+            body: burst?.more
+              ? format(copy.routine.push.shoppingBurst, { count: burst.titles.length, list: burst.titles.slice(-4).join(", ") })
+              : activityLine(copy.activity.kinds, kind, title),
             url: activityPath(locale, kind),
-            collapseId: row.id,
+            collapseId: burst?.collapseId ?? row.id,
+            quiet: Boolean(burst?.more),
             badge: device.user_id ? badges.get(device.user_id) : undefined,
           },
           keys,
@@ -75,7 +89,35 @@ export async function POST(request: Request) {
   return NextResponse.json({ id: row.id });
 }
 
-type Recipient = { seenAt: string | null; notify: Prefs["notify"] };
+type Recipient = { seenAt: string | null; prefs: Prefs | null };
+
+const BURST_MINUTES = 3;
+
+/**
+ * Items added to the list one after another: the first one buzzes, the rest replace it quietly with the whole
+ * run so far (same collapse id), so a parent filling the list doesn't send ten notifications.
+ */
+async function shoppingBurst(db: Db, household: string, actor: string, id: string) {
+  const since = new Date(Date.now() - BURST_MINUTES * 60_000).toISOString();
+  const { data } = await db
+    .from("activity")
+    .select("id, title")
+    .eq("household_id", household)
+    .eq("actor_id", actor)
+    .eq("kind", "shopping_added")
+    .gte("created_at", since)
+    .order("created_at", { ascending: true })
+    .limit(20);
+  const rows = (data ?? []) as { id: string; title: string }[];
+  const first = rows[0]?.id ?? id;
+  return { collapseId: `shop-${first}`, titles: rows.map((item) => item.title), more: rows.length > 1 };
+}
+
+async function zoneOf(db: Db, household: string) {
+  const { data } = await db.from("households").select("timezone").eq("id", household).maybeSingle();
+  const zone = (data as { timezone?: string } | null)?.timezone;
+  return validTimeZone(zone) ? zone : "Asia/Jerusalem";
+}
 
 /** The phones' owners: what they last saw in the bell and what they want to hear about. */
 async function recipientsOf(db: Db, devices: { user_id?: string }[]) {
@@ -87,7 +129,7 @@ async function recipientsOf(db: Db, devices: { user_id?: string }[]) {
   // A project without 0009 has no prefs yet: everyone hears about everything.
   rows ??= (await db.from("profiles").select("id, activity_seen_at").in("id", people)).data as Row[] | null;
   for (const row of rows ?? []) {
-    found.set(row.id, { seenAt: row.activity_seen_at, notify: readPrefs(row.prefs).notify });
+    found.set(row.id, { seenAt: row.activity_seen_at, prefs: "prefs" in row ? readPrefs(row.prefs) : null });
   }
   return found;
 }

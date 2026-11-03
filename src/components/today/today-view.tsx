@@ -1,7 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import Link from "next/link";
+import { ChevronLeft, Palette, SlidersHorizontal } from "lucide-react";
+import { format } from "@/i18n/format";
+import { useIncomingShare } from "@/lib/supabase/look-shares";
+import { defaultHomeLayout, type HomeRegion } from "@/lib/home-layout";
+import { usePrefs, usePrefsOf } from "@/lib/prefs-store";
 import { addDays, fromDayKey } from "@/lib/dates";
 import { agendaFor, concernsViewer, foldBusy, happeningNow, pickForToday, stillOn } from "@/lib/agenda";
 import { useHousehold, useSelectedDay } from "@/lib/household-store";
@@ -15,6 +21,7 @@ import { useI18n } from "@/i18n/dictionary-provider";
 import { ActivityBell } from "@/components/shell/activity";
 import { UndoToast } from "@/components/ui/undo-toast";
 import { DayTasks } from "./day-tasks";
+import { HomeLayoutSheet } from "./home-layout-sheet";
 import { HouseholdMembers } from "./household-members";
 import { NoteCard, NoteSheet, PinNoteButton } from "./house-note";
 import { RecentActivity } from "./recent-activity";
@@ -52,8 +59,20 @@ function StoryLine({ text, marks }: { text: string; marks: string[] }) {
   );
 }
 
+/** A region with nothing to show, kept in place by a parent who turned off hiding empty regions. */
+function EmptyRegion({ region }: { region: HomeRegion }) {
+  const { dict } = useI18n();
+  return (
+    <section aria-label={dict.homeLayout.regions[region]} className="rounded-card px-4 py-3 ring-1 ring-separator">
+      <p className="text-[15px] font-semibold text-label-secondary">{dict.homeLayout.regions[region]}</p>
+      <p className="text-[14px] leading-snug text-label-tertiary">{dict.homeLayout.empty[region]}</p>
+    </section>
+  );
+}
+
 /**
- * Home is today: a sentence, the note, the people, what's still coming, then the list.
+ * Home is today: a sentence, the note, the people, what's still coming, then the list, in the order this parent
+ * chose (src/lib/home-layout.ts).
  * Another day lives in the calendar. Sections with nothing to say aren't drawn. The greeting does not animate.
  */
 export function TodayView() {
@@ -72,6 +91,11 @@ export function TodayView() {
   const currentUser = members.find((member) => member.id === currentUserId) ?? members[0];
   const selfId = currentUser?.id ?? "";
   const [toast, setToast] = useState<{ id: string; title: string } | null>(null);
+  const [arranging, setArranging] = useState(false);
+  const { share } = useIncomingShare();
+  const layout = usePrefsOf(userId, (prefs) => prefs.home);
+  const updatePrefs = usePrefs((s) => s.update);
+  const shown = layout.order.filter((region) => !layout.hidden.includes(region));
 
   useEffect(() => {
     setSharedDay(today);
@@ -118,7 +142,7 @@ export function TodayView() {
   const pinned = noteShows(note, today) ? note : null;
 
   return (
-    <div className="relative isolate flex flex-col gap-6 pt-3 md:pt-10">
+    <div className="relative isolate flex flex-col gap-stack pt-3 md:pt-10">
       <AnimatePresence initial={false}>
         {period && (
           <motion.div
@@ -138,7 +162,7 @@ export function TodayView() {
         <div className="flex items-center justify-between gap-3">
           <p className="text-[14px] font-semibold text-label/60 first-letter:uppercase">{dateLine || "\u00a0"}</p>
           <div className="flex items-center gap-2">
-            {today && householdId && !pinned && <PinNoteButton />}
+            {today && householdId && !pinned && shown.includes("note") && <PinNoteButton />}
             <ActivityBell glass />
           </div>
         </div>
@@ -154,29 +178,81 @@ export function TodayView() {
         {story && <StoryLine text={story.text} marks={story.marks} />}
       </header>
 
-      {pinned && today && <NoteCard note={pinned} today={today} />}
-
-      {members.length > 0 && (
-        <HouseholdMembers
-          members={members}
-          self={selfId}
-          tasks={tasks}
-          today={today}
-          canInvite={members.length < 2 && householdId != null}
-        />
+      {share && (
+        <Link
+          href={`/${locale}/settings/appearance`}
+          className="flex min-h-12 items-center gap-3 rounded-card bg-surface px-4 py-row shadow-card transition-colors duration-150 active:bg-fill"
+        >
+          <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-full bg-fill text-accent">
+            <Palette size={17} />
+          </span>
+          <span className="min-w-0 flex-1 text-[15px] leading-snug">
+            {format(dict.share.todayBanner, { name: firstName(members.find((member) => member.id === share.from)?.name ?? dict.share.partnerFallback) })}
+          </span>
+          <ChevronLeft aria-hidden size={18} className="shrink-0 text-label-tertiary ltr:-scale-x-100" />
+        </Link>
       )}
 
-      {today && ofDay ? (
-        <>
-          <TodayAgenda entries={agenda.shown} hidden={agenda.hidden} stale={calendarFailed && items.length > 0} />
-          <DayTasks day={today} previousDay={today} today={today} tasks={tasks} members={members} onToggle={toggle} />
-          <ShoppingGlance items={shopping} />
-          <TomorrowPrep entries={tomorrow} />
-          {selfId && <RecentActivity selfId={selfId} today={today} />}
-        </>
-      ) : (
-        <div aria-hidden className="h-[240px]" />
+      {shown.length === 0 && (
+        <section className="flex flex-col items-start gap-2 rounded-card bg-surface p-5 shadow-card">
+          <h2 className="text-[17px] font-semibold">{dict.homeLayout.allHidden}</h2>
+          <p className="text-[15px] leading-snug text-label-secondary">{dict.homeLayout.allHiddenBody}</p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setArranging(true)}
+              className="min-h-11 rounded-full bg-accent px-4 text-[15px] font-semibold text-accent-contrast transition-transform duration-150 ease-out active:scale-[0.97]"
+            >
+              {dict.homeLayout.open}
+            </button>
+            <button
+              type="button"
+              onClick={() => void updatePrefs(userId ?? "", "home", defaultHomeLayout)}
+              className="min-h-11 rounded-full bg-fill px-4 text-[15px] font-semibold transition-transform duration-150 ease-out active:scale-[0.97]"
+            >
+              {dict.homeLayout.restore}
+            </button>
+          </div>
+        </section>
       )}
+
+      {shown.map((region) => {
+        const compact = layout.compact.includes(region);
+        const empty = layout.hideEmpty ? null : <EmptyRegion region={region} />;
+        switch (region) {
+          case "note":
+            return pinned && today ? <NoteCard key={region} note={pinned} today={today} /> : today ? <Fragment key={region}>{empty}</Fragment> : null;
+          case "members":
+            return members.length > 0 ? (
+              <HouseholdMembers key={region} members={members} self={selfId} tasks={tasks} today={today} canInvite={members.length < 2 && householdId != null} />
+            ) : null;
+          case "agenda":
+            return today && ofDay ? (
+              <TodayAgenda key={region} entries={agenda.shown} hidden={agenda.hidden} stale={calendarFailed && items.length > 0} compact={compact} fallback={empty} />
+            ) : null;
+          case "tasks":
+            return today && ofDay ? <DayTasks key={region} day={today} previousDay={today} today={today} tasks={tasks} members={members} onToggle={toggle} /> : null;
+          case "shopping":
+            return today ? <ShoppingGlance key={region} items={shopping} compact={compact} fallback={empty} /> : null;
+          case "tomorrow":
+            return today ? <TomorrowPrep key={region} entries={tomorrow} compact={compact} fallback={empty} /> : null;
+          case "activity":
+            return today && selfId ? <RecentActivity key={region} selfId={selfId} today={today} compact={compact} fallback={empty} /> : null;
+        }
+      })}
+      {!(today && ofDay) && <div aria-hidden className="h-[240px]" />}
+
+      {today && (
+        <button
+          type="button"
+          onClick={() => setArranging(true)}
+          className="flex min-h-11 items-center gap-2 self-center rounded-full px-4 text-[15px] font-medium text-label-secondary transition-colors duration-150 active:bg-fill"
+        >
+          <SlidersHorizontal aria-hidden size={16} />
+          {dict.homeLayout.open}
+        </button>
+      )}
+      <HomeLayoutSheet open={arranging} onOpenChange={setArranging} />
 
       <NoteSheet today={today} />
       <UndoToast toast={toast} label={dict.today.markedDone} undoLabel={dict.today.undo} onUndo={undo} onDismiss={dismissToast} />

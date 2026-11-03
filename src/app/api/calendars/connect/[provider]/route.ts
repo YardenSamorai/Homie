@@ -12,7 +12,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/calendar
   const { provider } = await ctx.params;
   const lang = request.nextUrl.searchParams.get("lang") ?? undefined;
   const locale = hasLocale(lang) ? lang : "he";
-  const back = (status: string) => NextResponse.redirect(new URL(`/${locale}/settings?calendars=${status}#calendars`, request.url));
+  const back = (status: string) => NextResponse.redirect(new URL(`/${locale}/settings/calendars?calendars=${status}#calendars`, request.url));
 
   if (!isProvider(provider)) return back("unknown");
   const setup = calendarSetup();

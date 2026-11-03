@@ -8,12 +8,12 @@ import type { AgendaEntry } from "@/lib/agenda";
 import { useAddSheet } from "@/lib/household-store";
 
 /** Tomorrow's events that need something ready, one line each. Nothing at all when there's nothing to prepare. */
-export function TomorrowPrep({ entries }: { entries: AgendaEntry[] }) {
+export function TomorrowPrep({ entries, compact = false, fallback = null }: { entries: AgendaEntry[]; compact?: boolean; fallback?: React.ReactNode }) {
   const { dict } = useI18n();
   const showEdit = useAddSheet((s) => s.showEdit);
   const openImported = useCalendarSheet((s) => s.open);
-  const withPrep = entries.filter((entry) => entry.prep && !entry.busy).slice(0, 3);
-  if (withPrep.length === 0) return null;
+  const withPrep = entries.filter((entry) => entry.prep && !entry.busy).slice(0, compact ? 1 : 3);
+  if (withPrep.length === 0) return fallback;
 
   return (
     <section aria-labelledby="tomorrow-prep" className="rounded-card bg-surface/70 px-4 py-3 ring-1 ring-hairline">

@@ -178,6 +178,39 @@ export async function removeShoppingPhoto(path: string | null) {
   await createBrowserSupabase().storage.from(bucket).remove([path]);
 }
 
+const backgroundLife = 7 * 24 * 3600;
+
+/** A week-long link to a parent's own background photo: kept on the device so the next open draws it before paint. */
+export async function backgroundLink(path: string) {
+  if (!supabaseConfigured()) return null;
+  const { data } = await createBrowserSupabase().storage.from(bucket).createSignedUrl(path, backgroundLife);
+  return data?.signedUrl ? { url: data.signedUrl, until: Date.now() + backgroundLife * 1000 } : null;
+}
+
+export type BackgroundUpload = { ok: true; path: string } | { ok: false; reason: "type" | "size" | "failed" | "offline" };
+
+/** The server checks the file, strips its metadata and redraws it as a smaller WebP (src/app/api/background). */
+export async function uploadBackground(photo: Blob): Promise<BackgroundUpload> {
+  if (!supabaseConfigured()) return { ok: false, reason: "failed" };
+  const form = new FormData();
+  form.append("photo", photo, "background");
+  try {
+    const response = await fetch("/api/background", { method: "POST", body: form });
+    const body = (await response.json().catch(() => ({}))) as { path?: string; error?: string };
+    if (response.ok && body.path) return { ok: true, path: body.path };
+    return { ok: false, reason: body.error === "type" || body.error === "size" ? body.error : "failed" };
+  } catch {
+    return { ok: false, reason: "offline" };
+  }
+}
+
+/** Removes background photos this parent no longer uses (everything but `keep`). */
+export async function removeBackgrounds(keep: string | null) {
+  try {
+    await fetch("/api/background", { method: "DELETE", headers: { "content-type": "application/json" }, body: JSON.stringify({ keep }) });
+  } catch {}
+}
+
 /** Links for the people's photos: fixed public ones, and signed ones only for photos from before 0008. */
 export async function avatarLinks(paths: string[]) {
   const legacy = paths.filter(legacyAvatar);
