@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { revokeTokens } from "@/lib/calendars/providers";
+import { sealingReady } from "@/lib/calendars/seal";
+import { loadTokens } from "@/lib/calendars/sync";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -25,6 +28,13 @@ export async function POST() {
   if (prepared.error) {
     console.error("[account] prepare failed", prepared.error.message);
     return NextResponse.json({ error: "generic" }, { status: 400 });
+  }
+
+  // Connected calendars: Google is told to drop the grant; the rows go with the account.
+  const { data: calendarAccounts } = await admin.from("calendar_accounts").select("id, provider").eq("user_id", user.id);
+  for (const account of calendarAccounts ?? []) {
+    const tokens = sealingReady() ? await loadTokens(admin, account.id) : null;
+    if (tokens) await revokeTokens(account.provider, tokens);
   }
 
   const files = async (bucket: string, folder: string) => {

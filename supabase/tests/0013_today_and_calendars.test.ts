@@ -77,6 +77,8 @@ describe("pinned house note", () => {
     expect(await failure(() => asUser(db, ids.a, () => db.query("select public.pin_house_note('Old', '2000-01-01', null)")))).toContain("past");
     const pinned = await asUser(db, ids.a, async () => (await db.query<{ version: string }>("select version from public.pin_house_note('Hi', null, null)")).rows[0]);
     await asUser(db, ids.b, () => db.query("select public.clear_house_note($1)", [pinned.version]));
+    const cleared = await asUser(db, ids.a, async () => (await db.query<{ body: string | null }>("select body from public.house_notes")).rows);
+    expect(cleared).toEqual([{ body: null }]);
     expect(await failure(() => asUser(db, ids.a, () => db.query("select public.pin_house_note('Hi again', null, $1)", [pinned.version])))).toContain("gone");
 
     await asUser(db, ids.a, () => db.query("select public.pin_house_note('Today only', null, null)"));

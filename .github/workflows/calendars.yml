@@ -1,0 +1,21 @@
+# Keeps connected calendars fresh in a quiet home: every 15 minutes the server reads, incrementally, the
+# calendars that haven't synced in that time. Opening the app refreshes the house's calendars as well.
+#
+# Secret: CRON_SECRET, the same value as on Vercel (shared with morning.yml).
+name: Calendar sync
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Sync calendars that are due
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl --fail --silent --show-error -H "Authorization: Bearer $CRON_SECRET" https://homie-taupe.vercel.app/api/cron/calendars

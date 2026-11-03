@@ -10,7 +10,6 @@ import { diffDays, type DayKey } from "@/lib/dates";
 import { easeOut } from "@/lib/motion";
 import { isProjectedOn, tasksOfDay, type Member, type Task } from "@/lib/tasks";
 import { useAddSheet, useHousehold } from "@/lib/household-store";
-import { WaitingRow } from "./later-today";
 import { TaskRow, type RowKind } from "./task-row";
 
 type Row = { task: Task; kind: RowKind; caption?: string };
@@ -18,6 +17,7 @@ type Row = { task: Task; kind: RowKind; caption?: string };
 /** How long a finished task stays where it was, checked and struck through, before it folds away. */
 const SETTLE_MS = 900;
 const DAY_LIMIT = 6;
+const CARRY_LIMIT = 3;
 
 const rowRule =
   "relative after:absolute after:inset-x-0 after:top-0 after:ms-[54px] after:h-px after:bg-separator first:after:hidden";
@@ -201,35 +201,28 @@ export function DayTasks({
               </button>
             </div>
 
-          {fromBefore.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <WaitingRow
-                count={fromBefore.length}
-                open={expanded.attention}
-                onToggle={() => setExpanded((e) => ({ ...e, attention: !e.attention }))}
-              />
-              <AnimatePresence initial={false}>
-                {expanded.attention && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.24, ease: easeOut }}
-                    className="overflow-hidden"
-                  >
-                    <div className={card}>
-                      <Rows
-                        rows={attention}
-                        members={members}
-                        showAssignee={showAssignee}
-                        onToggle={toggle}
-                        onPostpone={(task) => postponeTask(task.id, today)}
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+          {attention.length > 0 && (
+            <section aria-labelledby="carry-over" className="flex flex-col gap-2">
+              <h3 id="carry-over" className="flex items-center gap-1.5 px-1 text-[15px] font-semibold text-label-secondary">
+                {dict.today.carryOver}
+                <span className="text-[14px] font-medium tabular-nums text-label-tertiary">{fromBefore.length}</span>
+              </h3>
+              <div className={card}>
+                <Rows
+                  rows={expanded.attention ? attention : attention.slice(0, CARRY_LIMIT)}
+                  members={members}
+                  showAssignee={showAssignee}
+                  onToggle={toggle}
+                  onPostpone={(task) => postponeTask(task.id, today)}
+                />
+                <MoreButton
+                  shown={CARRY_LIMIT}
+                  total={attention.length}
+                  open={expanded.attention}
+                  onToggle={() => setExpanded((e) => ({ ...e, attention: !e.attention }))}
+                />
+              </div>
+            </section>
           )}
 
           {finished.length > 0 && (

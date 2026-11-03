@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { AppearancePicker } from "./appearance-picker";
+import { CalendarsCard } from "./calendars-card";
 import { HouseholdCard } from "./household-card";
 import { HouseholdName } from "./household-name";
 import { InviteCard } from "./invite-card";
@@ -34,6 +35,7 @@ export default async function SettingsPage() {
           <HouseholdCard />
         </Card>
         <InviteCard />
+        <CalendarsCard />
         <NotificationsCard />
         <NotificationPrefs />
         <NewTaskDefaults />

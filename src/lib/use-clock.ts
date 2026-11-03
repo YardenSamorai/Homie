@@ -27,3 +27,16 @@ export function useClock(): { today: DayKey; hour: number } | null {
   const [today, hour] = value.split("|");
   return { today, hour: Number(hour) };
 }
+
+const minuteSnapshot = () => {
+  const now = new Date();
+  return `${toDayKey(now)}|${now.getHours() * 60 + now.getMinutes()}`;
+};
+
+/** The day and the minute of it, for what has already ended ("next event"); re-renders once a minute. */
+export function useMinuteClock(): { today: DayKey; minutes: number } | null {
+  const value = useSyncExternalStore(subscribe, minuteSnapshot, () => null);
+  if (!value) return null;
+  const [today, minutes] = value.split("|");
+  return { today, minutes: Number(minutes) };
+}

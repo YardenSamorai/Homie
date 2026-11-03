@@ -1,7 +1,9 @@
 import { AddSheet } from "@/components/add/add-sheet";
+import { CalendarEventSheet } from "@/components/events/calendar-event-sheet";
 import { ActivitySheet, ActivitySync } from "@/components/shell/activity";
 import { StoryComposer, StorySync, StoryViewer } from "@/components/stories/stories";
 import { ConnectionBanner } from "@/components/shell/connection-banner";
+import { HouseExtrasSync } from "@/components/shell/house-extras-sync";
 import { HouseholdSync } from "@/components/shell/household-sync";
 import { InstallPrompt } from "@/components/shell/install";
 import { LaunchDoor } from "@/components/shell/launch-door";
@@ -27,6 +29,8 @@ export default function AppLayout({ children }: LayoutProps<"/[lang]">) {
       <TabBar />
       <AddSheet />
       <ActivitySync />
+      <HouseExtrasSync />
+      <CalendarEventSheet />
       <ActivitySheet />
       <StorySync />
       <StoryComposer />

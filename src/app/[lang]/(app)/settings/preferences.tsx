@@ -13,6 +13,7 @@ import { useActivity } from "@/lib/activity-store";
 import { authApi } from "@/lib/auth/api";
 import { useAuth } from "@/lib/auth/session";
 import { useHousehold } from "@/lib/household-store";
+import { forgetHouseExtras } from "@/lib/house-stores";
 import { isNativeApp } from "@/lib/native";
 import { morningHours, notifyKinds } from "@/lib/prefs";
 import { usePrefs } from "@/lib/prefs-store";
@@ -202,6 +203,7 @@ export function DeleteAccount() {
     await createBrowserSupabase().auth.signOut().catch(() => {});
     useHousehold.getState().syncSelf(null);
     useActivity.getState().clear();
+    forgetHouseExtras();
     useAuth.getState().signOut();
     router.replace(`/${locale}/login`);
   };

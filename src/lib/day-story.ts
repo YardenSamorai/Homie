@@ -23,6 +23,49 @@ export function laterEvents(events: HouseEvent[], day: DayKey, hour: number | nu
 }
 
 /**
+ * Today's line under the greeting, short enough never to cut a title: what's left to do, when the next thing is,
+ * and the shopping waiting, each only when there is one. "2 tasks today · Next event at 19:00".
+ * `next` is the viewer's next home event or meeting that hasn't ended (an imported one carries its own end).
+ */
+export function summarizeToday({
+  open,
+  done,
+  next,
+  shopping,
+  copy,
+}: {
+  open: number;
+  done: number;
+  next: { start: string | null; end: string | null; now: boolean } | null;
+  shopping: number;
+  copy: Copy;
+}): { text: string; marks: string[] } {
+  const parts: string[] = [];
+  const marks: string[] = [];
+  if (open > 0) {
+    parts.push(open === 1 ? copy.sumTasksOne : format(copy.sumTasks, { count: open }));
+    marks.push(open === 1 ? copy.storyMarkOne : format(copy.storyMark, { count: open }));
+  } else {
+    parts.push(done > 0 ? copy.sumTasksDone : copy.sumTasksNone);
+  }
+  if (next?.now && next.end) {
+    parts.push(format(copy.sumNowUntil, { time: next.end }));
+    marks.push(next.end);
+  } else if (next?.now && next.start) {
+    parts.push(format(copy.sumNowStarted, { time: next.start }));
+    marks.push(next.start);
+  } else if (next?.start) {
+    parts.push(format(copy.sumNext, { time: next.start }));
+    marks.push(next.start);
+  }
+  if (shopping > 0) {
+    parts.push(shopping === 1 ? copy.sumShopOne : format(copy.sumShop, { count: shopping }));
+    marks.push(shopping === 1 ? copy.sumShopMarkOne : format(copy.sumShopMark, { count: shopping }));
+  }
+  return { text: parts.join(" · "), marks };
+}
+
+/**
  * One spoken sentence for the day: what's left, and the next thing on the calendar.
  * The greeting already said hello — this is what the house is actually doing.
  */

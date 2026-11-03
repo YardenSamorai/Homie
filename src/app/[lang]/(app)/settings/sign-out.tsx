@@ -6,6 +6,7 @@ import { useI18n } from "@/i18n/dictionary-provider";
 import { useAuth } from "@/lib/auth/session";
 import { useActivity } from "@/lib/activity-store";
 import { useHousehold } from "@/lib/household-store";
+import { forgetHouseExtras } from "@/lib/house-stores";
 import { forgetPush } from "@/lib/push/client";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import { supabaseConfigured } from "@/lib/supabase/env";
@@ -26,6 +27,7 @@ export function SignOut() {
       await createBrowserSupabase().auth.signOut();
     }
     clearActivity();
+    forgetHouseExtras();
     syncSelf(null);
     signOut();
     router.replace(`/${locale}/login`);

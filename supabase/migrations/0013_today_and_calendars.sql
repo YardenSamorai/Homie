@@ -11,9 +11,11 @@ create sequence public.house_note_versions;
 
 -- One note per house. `until` is the last house day it shows; null keeps it until someone takes it down.
 -- Every write takes a fresh version from the sequence, so an edit made over a newer note is refused, never merged.
+-- Taking it down empties the body instead of deleting the row: realtime can't hold a delete to the house's own
+-- members, and the row's key is the house id.
 create table public.house_notes (
   household_id uuid primary key references public.households (id) on delete cascade,
-  body text not null check (char_length(btrim(body)) between 1 and 280),
+  body text check (body is null or char_length(btrim(body)) between 1 and 280),
   author_id uuid not null references public.profiles (id) on delete cascade,
   until date,
   version bigint not null default nextval('public.house_note_versions'),
@@ -58,7 +60,7 @@ begin
   if note_until is not null and note_until < today then raise exception 'past'; end if;
 
   select * into board from public.house_notes where household_id = house for update;
-  live := found and (board.until is null or board.until >= today);
+  live := found and board.body is not null and (board.until is null or board.until >= today);
   if live and seen_version is distinct from board.version then raise exception 'stale'; end if;
   if not live and seen_version is not null then raise exception 'gone'; end if;
 
@@ -82,10 +84,13 @@ declare
   house uuid := public.my_household_id();
 begin
   if auth.uid() is null or house is null then raise exception 'auth'; end if;
-  delete from public.house_notes where household_id = house and version = seen_version;
+  update public.house_notes
+    set body = null, until = null, author_id = auth.uid(),
+        version = nextval('public.house_note_versions'), updated_at = now()
+    where household_id = house and version = seen_version and body is not null;
   if not found and exists (
     select 1 from public.house_notes
-    where household_id = house and (until is null or until >= public.house_today(house))
+    where household_id = house and body is not null and (until is null or until >= public.house_today(house))
   ) then
     raise exception 'stale';
   end if;
@@ -179,6 +184,8 @@ create table public.calendar_events (
   declined uuid[] not null default '{}',
   link text,
   updated_at timestamptz not null default now(),
+  -- The run that last saw it. A full sync sweeps what it didn't see, and only once every page arrived.
+  seen_in uuid,
   unique (source_id, remote_id),
   check (end_day >= start_day),
   check (all_day or (starts_at is not null and ends_at is not null))

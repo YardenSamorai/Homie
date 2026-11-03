@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, ClipboardList, Plus, ShoppingBasket } from "lucide-react";
 import { WeekTiles } from "@/components/calendar/week-tiles";
+import { AgendaRow } from "@/components/events/agenda-row";
 import { EventRow } from "@/components/events/event-row";
 import { PageStage } from "@/components/shell/page-stage";
 import { PrepSheet } from "@/components/shopping/prep-sheet";
@@ -12,8 +13,12 @@ import { PageHeader } from "@/components/ui/page-header";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
+import { agendaFor, calendarRange, foldBusy, matchesFilter, type CalendarItem, type PeopleFilter } from "@/lib/agenda";
+import { useAuth } from "@/lib/auth/session";
 import { addDays, dayRange, diffDays, fromDayKey, weekStart, type DayKey } from "@/lib/dates";
+import { firstName } from "@/lib/day-story";
 import { PREP_WINDOW_DAYS, sortEvents, type HouseEvent } from "@/lib/household";
+import { useCalendarItems } from "@/lib/house-stores";
 import { useAddSheet, useHousehold, useSelectedDay } from "@/lib/household-store";
 import { useClock } from "@/lib/use-clock";
 
@@ -23,6 +28,7 @@ const separator =
   "relative after:absolute after:inset-x-0 after:bottom-0 after:ms-8 after:h-px after:bg-separator last:after:hidden";
 
 const UPCOMING_DAYS = 30;
+const NO_ITEMS: CalendarItem[] = [];
 
 /**
  * The home's calendar: a live title for what's picked, the stage with what's coming, then a day, its week,
@@ -31,10 +37,14 @@ const UPCOMING_DAYS = 30;
 export function CalendarView() {
   const { locale, dict } = useI18n();
   const today = useClock()?.today ?? null;
-  const { events } = useHousehold();
+  const { events, members, currentUserId: selfId } = useHousehold();
+  const userId = useAuth((s) => s.session?.userId ?? null);
+  const householdId = useAuth((s) => s.session?.householdId ?? null);
+  const owner = userId && householdId ? `${userId}:${householdId}` : null;
+  const items = useCalendarItems((s) => (s.owner === owner ? s.items : NO_ITEMS));
+  const [filter, setFilter] = useState<PeopleFilter>("all");
   const setSharedDay = useSelectedDay((s) => s.setDay);
   const show = useAddSheet((s) => s.show);
-  const showEdit = useAddSheet((s) => s.showEdit);
   // "?day=2026-11-08" (from a shopping item's event) opens on that day. Read on the client only; the first
   // paint waits for the clock either way.
   const [picked, setPicked] = useState<DayKey | null>(() => {
@@ -53,7 +63,6 @@ export function CalendarView() {
     return () => setSharedDay(null);
   }, [selected, setSharedDay]);
 
-  const marked = useMemo(() => new Set(events.map((e) => e.date)), [events]);
   const longDate = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long" });
   const dayName = new Intl.DateTimeFormat(locale, { weekday: "long" });
   const shortDate = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short" });
@@ -69,13 +78,17 @@ export function CalendarView() {
   }
 
   const weekDays = dayRange(weekStart(selected), 7);
-  const inScope = (event: HouseEvent) =>
-    scope === "day"
-      ? event.date === selected
-      : scope === "week"
-        ? event.date >= weekDays[0] && event.date <= weekDays[6]
-        : event.date >= today && event.date <= addDays(today, UPCOMING_DAYS);
-  const shown = events.filter(inScope).sort(sortEvents);
+  const scopeDays = scope === "day" ? [selected] : scope === "week" ? weekDays : dayRange(today, UPCOMING_DAYS + 1);
+  const memberIds = members.map((member) => member.id);
+  const groups = scopeDays
+    .map((date) => ({
+      date,
+      entries: foldBusy(agendaFor(date, events, items)).filter((entry) => matchesFilter(entry, filter, selfId, memberIds)),
+    }))
+    .filter((group) => scope === "day" || group.entries.length > 0);
+  const shownCount = groups.reduce((sum, group) => sum + group.entries.length, 0);
+  const loaded = calendarRange(today);
+  const pastLoaded = items.length > 0 && (scopeDays[0] < loaded.from || scopeDays[scopeDays.length - 1] > loaded.to);
 
   const offset = diffDays(selected, today);
   const when =
@@ -91,11 +104,11 @@ export function CalendarView() {
             ? copy.whenTomorrow
             : format(copy.whenOn, { day: dayName.format(fromDayKey(selected)) });
   const title =
-    shown.length === 0
+    shownCount === 0
       ? format(copy.countNone, { when })
-      : shown.length === 1
+      : shownCount === 1
         ? format(copy.countOne, { when })
-        : format(copy.countMany, { count: shown.length, when });
+        : format(copy.countMany, { count: shownCount, when });
   const freeTitle =
     scope === "upcoming" ? copy.freeUpcoming : scope === "week" ? copy.freeWeek : offset === 0 ? copy.freeToday : copy.freeDay;
 
@@ -103,7 +116,17 @@ export function CalendarView() {
     .filter((e) => e.date > today || (e.date === today && (!e.time || e.time.slice(0, 5) >= new Date().toTimeString().slice(0, 5))))
     .sort(sortEvents);
   const toPrepare = events.filter((e) => e.prep && e.date >= today && e.date <= addDays(today, PREP_WINDOW_DAYS)).sort(sortEvents);
-  const groups = scope === "day" ? [{ date: selected, events: shown }] : [...new Set(shown.map((e) => e.date))].map((date) => ({ date, events: shown.filter((e) => e.date === date) }));
+  const marked = new Set(weekDays.filter((day) => agendaFor(day, events, items).length > 0));
+  const filters: { key: string; value: PeopleFilter; label: string }[] =
+    members.length > 1
+      ? [
+          { key: "all", value: "all", label: dict.agenda.filterAll },
+          { key: "me", value: "me", label: dict.agenda.filterMe },
+          ...members.filter((member) => member.id !== selfId).map((member) => ({ key: member.id, value: { member: member.id }, label: firstName(member.name) })),
+          { key: "shared", value: "shared", label: dict.agenda.filterShared },
+        ]
+      : [];
+  const filterKey = typeof filter === "string" ? filter : filter.member;
   const dayLabel = (date: DayKey) => {
     const days = diffDays(date, today);
     return Math.abs(days) <= 1
@@ -162,8 +185,29 @@ export function CalendarView() {
           <WeekTiles today={today} selected={selected} marked={marked} onSelect={setPicked} />
         )}
 
+        {filters.length > 0 && (
+          <div role="group" aria-label={dict.agenda.filterLabel} className="-my-2 flex flex-wrap gap-2">
+            {filters.map((option) => {
+              const on = option.key === filterKey;
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setFilter(option.value)}
+                  className={`min-h-9 max-w-full rounded-full px-3.5 text-[15px] font-medium transition-[scale,background-color,color] duration-150 ease-out active:scale-[0.97] ${
+                    on ? "bg-label text-bg" : "bg-fill text-label"
+                  }`}
+                >
+                  <bdi className="block truncate">{option.label}</bdi>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div className="overflow-hidden rounded-card bg-surface shadow-card">
-          {shown.length === 0 ? (
+          {shownCount === 0 ? (
             <div className="flex flex-col items-center pb-8">
               {scope === "day" && <p className="w-full px-4 pt-3 text-start text-[13px] font-semibold text-label-secondary">{longDate.format(fromDayKey(selected))}</p>}
               <EmptyState icon={CalendarDays} tint="var(--teal)" title={freeTitle} hint={format(copy.freeHint, { when })} />
@@ -183,16 +227,9 @@ export function CalendarView() {
                   {scope === "day" ? longDate.format(fromDayKey(group.date)) : dayLabel(group.date)}
                 </h2>
                 <ul>
-                  {group.events.map((event) => (
-                    <li key={event.id} className={separator}>
-                      <button
-                        type="button"
-                        onClick={() => showEdit({ kind: "event", id: event.id })}
-                        aria-label={format(dict.add.editNamed, { title: event.title })}
-                        className="block w-full touch-manipulation select-none text-start active:bg-fill"
-                      >
-                        <EventRow event={event} />
-                      </button>
+                  {group.entries.map((entry) => (
+                    <li key={entry.key} className={separator}>
+                      <AgendaRow entry={entry} />
                     </li>
                   ))}
                 </ul>
@@ -200,6 +237,11 @@ export function CalendarView() {
             ))
           )}
         </div>
+        {pastLoaded && (
+          <p className="-mt-3 px-1 text-[13px] text-label-secondary">
+            {format(dict.agenda.loadedUntil, { date: shortDate.format(fromDayKey(loaded.to)) })}
+          </p>
+        )}
 
         {toPrepare.length > 0 && (
           <section aria-labelledby="prepare-title" className="flex flex-col gap-2">
