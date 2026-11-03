@@ -103,6 +103,8 @@
     "storyLeftOther": "נשארו {count} משימות",
     "storyDoneOther": "הכול בוצע",
     "storyClearOther": "אין משימות ביום הזה",
+    "postpone": "מחר",
+    "postponeNamed": "להעביר את \"{title}\" למחר",
     "storyEventTimedWho": "ובשעה {time} {who} · {title}",
     "storyEventTimed": "ובשעה {time} {title}",
     "storyEventAllWho": "ו{who} · {title}",
@@ -121,7 +123,8 @@
   "events": {
     "title": "אירועים",
     "allDay": "כל היום",
-    "prep": "להכין"
+    "prep": "להכין",
+    "who": "מי הולך"
   },
   "calendar": {
     "title": "יומן",
@@ -188,29 +191,22 @@
     "eventTitle": "שם האירוע",
     "allDay": "כל היום",
     "time": "שעה",
+    "who": "מי הולך",
+    "whoNone": "אף אחד",
+    "photo": "תמונה",
+    "photoAdd": "הוספת תמונה",
+    "photoChange": "החלפת תמונה",
+    "photoRemove": "הסרת התמונה",
     "prep": "מה צריך להכין",
     "prepPlaceholder": "מתנה, עוגה, מסמכים…"
   },
   "shopping": {
     "title": "קניות",
-    "scopes": {
-      "all": "הכול",
-      "toBuy": "לקנות",
-      "bought": "נקנו"
-    },
-    "newItem": "פריט חדש",
-    "addItem": "הוספת פריט",
     "inCart": "{bought} מתוך {total} בסל",
     "titleLeftOne": "פריט אחד לקנות",
     "titleLeft": "{count} פריטים לקנות",
-    "titleBoughtNone": "עוד לא נקנה כלום",
-    "titleBoughtOne": "פריט אחד נקנה",
-    "titleBought": "{count} פריטים נקנו",
-    "emptyToBuy": "כל מה שברשימה כבר בסל.",
-    "emptyBought": "מה שתסמנו כנקנה יופיע כאן.",
-    "staples": "קבועים",
     "staplesTitle": "מה שתמיד נגמר",
-    "onList": "ברשימה",
+    "addStaple": "הוספת {name}",
     "staplesItems": {
       "milk": "חלב",
       "bread": "לחם",
@@ -233,7 +229,21 @@
     "mark": "סימון \"{name}\" כנקנה",
     "unmark": "ביטול הסימון של \"{name}\"",
     "addedBy": "נוסף על ידי {name}",
-    "allBought": "הכול נקנה"
+    "allBought": "הכול נקנה",
+    "store": "בסופר",
+    "storeDone": "סיום",
+    "storeEmpty": "הסל מלא",
+    "storeEmptyHint": "כל מה שהיה לקנות כבר בסל.",
+    "photo": "תמונה של {name}",
+    "closePhoto": "סגירה",
+    "undo": "ביטול",
+    "inBasket": "בסל",
+    "deleted": "נמחק מהרשימה",
+    "clearedOne": "פריט אחד נוקה",
+    "cleared": "{count} פריטים נוקו",
+    "alreadyOn": "כבר ברשימה",
+    "backOn": "שוב ברשימה",
+    "quantityUpdated": "הכמות עודכנה"
   },
   "tasks": {
     "title": "משימות",
@@ -472,7 +482,7 @@
     },
     "morningTitle": "סיכום בוקר",
     "morningOn": "סיכום של היום, בבוקר",
-    "morningHint": "המשימות והאירועים של היום, רק בימים שיש משהו.",
+    "morningHint": "המשפט של היום, בשעה שבחרת. רק כשיש משימות להיום, אירוע שעוד לא עבר, או משימה שלך שמחכה מאתמול.",
     "morningAt": "שעה",
     "newTaskTitle": "משימה חדשה",
     "assignee": "למי",
@@ -518,7 +528,7 @@
     "sections": [
       {
         "title": "מה נשמר",
-        "body": "כתובת האימייל שאיתה נכנסים, השם שבחרת, תמונת פרופיל אם הוספת, ותמונות מצב, שנמחקות אחרי 24 שעות. בנוסף: המשימות, הקניות והאירועים של הבית, וההעדפות שלך בהגדרות. אם הפעלת התראות, נשמר גם מזהה של המכשיר כדי לשלוח אליו."
+        "body": "כתובת האימייל שאיתה נכנסים, השם שבחרת, תמונת פרופיל אם הוספת, ותמונות מצב, שנמחקות אחרי 24 שעות. בנוסף: המשימות, הקניות והאירועים של הבית, תמונה של מוצר אם הוספתם אחת לפריט, וההעדפות שלך בהגדרות. אם הפעלת התראות, נשמר גם מזהה של המכשיר כדי לשלוח אליו."
       },
       {
         "title": "מי רואה את זה",

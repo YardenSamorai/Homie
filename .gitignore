@@ -43,3 +43,6 @@ next-env.d.ts
 
 # demo auth store (households and invites until Supabase)
 /.data/
+
+# supabase cli
+/supabase/.temp/

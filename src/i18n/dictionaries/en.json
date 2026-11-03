@@ -103,6 +103,8 @@
     "storyLeftOther": "{count} tasks left",
     "storyDoneOther": "Everything's done",
     "storyClearOther": "Nothing on this day",
+    "postpone": "Tomorrow",
+    "postponeNamed": "Move \"{title}\" to tomorrow",
     "storyEventTimedWho": "and at {time} {who} has {title}",
     "storyEventTimed": "and at {time}, {title}",
     "storyEventAllWho": "and {who} has {title}",
@@ -121,7 +123,8 @@
   "events": {
     "title": "Events",
     "allDay": "All day",
-    "prep": "To prepare"
+    "prep": "To prepare",
+    "who": "Who's going"
   },
   "calendar": {
     "title": "Calendar",
@@ -188,29 +191,22 @@
     "eventTitle": "Event name",
     "allDay": "All day",
     "time": "Time",
+    "who": "Who's going",
+    "whoNone": "No one",
+    "photo": "Photo",
+    "photoAdd": "Add a photo",
+    "photoChange": "Change photo",
+    "photoRemove": "Remove photo",
     "prep": "What to prepare",
     "prepPlaceholder": "Gift, cake, documents…"
   },
   "shopping": {
     "title": "Shopping",
-    "scopes": {
-      "all": "All",
-      "toBuy": "To buy",
-      "bought": "Bought"
-    },
-    "newItem": "New item",
-    "addItem": "Add an item",
     "inCart": "{bought} of {total} in the cart",
     "titleLeftOne": "1 item to buy",
     "titleLeft": "{count} items to buy",
-    "titleBoughtNone": "Nothing bought yet",
-    "titleBoughtOne": "1 item bought",
-    "titleBought": "{count} items bought",
-    "emptyToBuy": "Everything on the list is in the cart.",
-    "emptyBought": "Items you check off show up here.",
-    "staples": "Staples",
     "staplesTitle": "What always runs out",
-    "onList": "On the list",
+    "addStaple": "Add {name}",
     "staplesItems": {
       "milk": "Milk",
       "bread": "Bread",
@@ -233,7 +229,21 @@
     "mark": "Mark \"{name}\" as bought",
     "unmark": "Mark \"{name}\" as not bought",
     "addedBy": "Added by {name}",
-    "allBought": "All bought"
+    "allBought": "All bought",
+    "store": "At the store",
+    "storeDone": "Done",
+    "storeEmpty": "The cart is full",
+    "storeEmptyHint": "Everything that was left to buy is in the cart.",
+    "photo": "Photo of {name}",
+    "closePhoto": "Close",
+    "undo": "Undo",
+    "inBasket": "In the cart",
+    "deleted": "Deleted",
+    "clearedOne": "1 item cleared",
+    "cleared": "{count} items cleared",
+    "alreadyOn": "Already on the list",
+    "backOn": "Back on the list",
+    "quantityUpdated": "Quantity updated"
   },
   "tasks": {
     "title": "Tasks",
@@ -472,7 +482,7 @@
     },
     "morningTitle": "Morning Summary",
     "morningOn": "A summary of the day, in the morning",
-    "morningHint": "Today's tasks and events, only on days that have some.",
+    "morningHint": "The day's sentence, at the hour you pick. Only when there's a task for today, an event still ahead, or one of yours waiting from earlier.",
     "morningAt": "Time",
     "newTaskTitle": "New Task",
     "assignee": "For",
@@ -518,7 +528,7 @@
     "sections": [
       {
         "title": "What's stored",
-        "body": "The email you sign in with, the name you chose, a profile photo if you added one, and status photos, which are deleted after 24 hours. Also your home's tasks, shopping and events, and your choices in Settings. If you turned on notifications, an identifier for your device so they can reach it."
+        "body": "The email you sign in with, the name you chose, a profile photo if you added one, and status photos, which are deleted after 24 hours. Also your home's tasks, shopping and events, a product photo if you added one to an item, and your choices in Settings. If you turned on notifications, an identifier for your device so they can reach it."
       },
       {
         "title": "Who sees it",

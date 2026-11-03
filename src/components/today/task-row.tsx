@@ -22,6 +22,7 @@ export function TaskRow({
   showAssignee = true,
   onToggle,
   onOpen,
+  onPostpone,
 }: {
   task: Task;
   assignee: Member | undefined;
@@ -31,6 +32,8 @@ export function TaskRow({
   showAssignee?: boolean;
   onToggle: (task: Task) => void;
   onOpen?: (task: Task) => void;
+  /** Overdue rows only: move the due date to tomorrow. */
+  onPostpone?: (task: Task) => void;
 }) {
   const { dict } = useI18n();
   const done = kind === "done";
@@ -100,6 +103,16 @@ export function TaskRow({
         <div className="flex min-w-0 flex-1 flex-col">{body}</div>
       )}
 
+      {kind === "overdue" && onPostpone && (
+        <button
+          type="button"
+          onClick={() => onPostpone(task)}
+          aria-label={format(dict.today.postponeNamed, { title: task.title })}
+          className="min-h-11 shrink-0 rounded-full px-2.5 text-[15px] font-semibold text-accent transition-transform duration-150 ease-out active:scale-[0.97]"
+        >
+          {dict.today.postpone}
+        </button>
+      )}
       <SyncRetry id={task.id} label={task.title} />
       {assignee && showAssignee && (
         <span title={format(dict.today.assignedTo, { name: assignee.name })} className="shrink-0 rounded-full">

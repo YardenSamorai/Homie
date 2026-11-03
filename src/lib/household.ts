@@ -5,6 +5,8 @@ export type ShoppingItem = {
   name: string;
   /** Free-text quantity or note, e.g. "2 ליטר". */
   note: string | null;
+  /** A photo of the exact product, private to the house. */
+  photoPath: string | null;
   addedBy: string;
   checkedAt: string | null;
 };
@@ -17,6 +19,8 @@ export type HouseEvent = {
   time: string | null;
   /** What the household needs to get ready beforehand. */
   prep: string | null;
+  /** Who is going. Null means the house didn't say. */
+  attendeeId: string | null;
   createdBy: string;
 };
 

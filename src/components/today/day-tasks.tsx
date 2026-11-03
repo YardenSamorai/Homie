@@ -9,7 +9,7 @@ import { localeDirection } from "@/i18n/config";
 import { diffDays, type DayKey } from "@/lib/dates";
 import { easeOut } from "@/lib/motion";
 import { isProjectedOn, tasksOfDay, type Member, type Task } from "@/lib/tasks";
-import { useAddSheet } from "@/lib/household-store";
+import { useAddSheet, useHousehold } from "@/lib/household-store";
 import { WaitingRow } from "./later-today";
 import { TaskRow, type RowKind } from "./task-row";
 
@@ -31,11 +31,13 @@ function Rows({
   members,
   showAssignee,
   onToggle,
+  onPostpone,
 }: {
   rows: Row[];
   members: Member[];
   showAssignee: boolean;
   onToggle: (task: Task) => void;
+  onPostpone?: (task: Task) => void;
 }) {
   const showEdit = useAddSheet((s) => s.showEdit);
   return (
@@ -58,6 +60,7 @@ function Rows({
               assignee={members.find((m) => m.id === task.assigneeId)}
               onToggle={onToggle}
               onOpen={kind === "projected" ? undefined : (next) => showEdit({ kind: "task", id: next.id })}
+              onPostpone={kind === "overdue" ? onPostpone : undefined}
             />
           </motion.li>
         ))}
@@ -104,6 +107,7 @@ export function DayTasks({
 }) {
   const { locale, dict } = useI18n();
   const show = useAddSheet((s) => s.show);
+  const postponeTask = useHousehold((s) => s.postponeTask);
   const [settling, setSettling] = useState<ReadonlySet<string>>(new Set());
   const [expanded, setExpanded] = useState<{ attention: boolean; day: boolean; done: boolean }>({
     attention: false,
@@ -214,7 +218,13 @@ export function DayTasks({
                     className="overflow-hidden"
                   >
                     <div className={card}>
-                      <Rows rows={attention} members={members} showAssignee={showAssignee} onToggle={toggle} />
+                      <Rows
+                        rows={attention}
+                        members={members}
+                        showAssignee={showAssignee}
+                        onToggle={toggle}
+                        onPostpone={(task) => postponeTask(task.id, today)}
+                      />
                     </div>
                   </motion.div>
                 )}

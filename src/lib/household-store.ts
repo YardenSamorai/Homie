@@ -2,15 +2,25 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { DayKey } from "./dates";
+import { useAuth } from "./auth/session";
+import { addDays, type DayKey } from "./dates";
+import { itemKey } from "./groceries";
 import type { HouseEvent, ShoppingItem } from "./household";
 import { completeTask, uncompleteTask, type Member, type Task } from "./tasks";
 import { announce } from "./supabase/activity";
+import { compressImage, removeShoppingPhoto, uploadShoppingPhoto } from "./supabase/media";
 import { removeEvent, removeShoppingItem, removeTask, saveEvent, saveShoppingItem, saveTask } from "./supabase/lists";
 
 type NewTask = Pick<Task, "title" | "assigneeId" | "dueDate" | "recurrence">;
-type NewShoppingItem = Pick<ShoppingItem, "name" | "note">;
-type NewEvent = Pick<HouseEvent, "title" | "date" | "time" | "prep">;
+export type NewShoppingItem = Pick<ShoppingItem, "name" | "note"> & { photo?: File | null };
+/** What adding did: a new row, or the same item found already on the list (still to buy, or back from the cart). */
+export type AddedItem = { id: string; outcome: "added" | "exists" | "restored"; noteChanged: boolean };
+/** A removed row and where it stood, so an undo puts it back in place. */
+export type RemovedItem = { item: ShoppingItem; at: number };
+
+/** Removals wait this long before leaving the phone, longer than the undo toast stays. */
+const UNDO_HOLD_MS = 5000;
+type NewEvent = Pick<HouseEvent, "title" | "date" | "time" | "prep" | "attendeeId">;
 
 /** SPEC §8: first parent indigo, second pink. */
 export const MEMBER_COLORS = ["var(--indigo)", "var(--pink)"] as const;
@@ -28,12 +38,15 @@ type HouseholdState = {
   toggleTask: (task: Task, today: DayKey) => void;
   addTask: (task: NewTask) => void;
   updateTask: (id: string, patch: NewTask) => void;
+  /** Moves an overdue task to tomorrow. It stays open. */
+  postponeTask: (id: string, today: DayKey) => void;
   deleteTask: (id: string) => void;
   toggleShoppingItem: (id: string) => void;
-  clearBought: () => void;
-  addShoppingItem: (item: NewShoppingItem) => void;
+  clearBought: () => RemovedItem[];
+  addShoppingItem: (item: NewShoppingItem) => AddedItem;
   updateShoppingItem: (id: string, patch: NewShoppingItem) => void;
-  deleteShoppingItem: (id: string) => void;
+  deleteShoppingItem: (id: string) => RemovedItem | null;
+  restoreShoppingItems: (removed: RemovedItem[]) => void;
   addEvent: (event: NewEvent) => void;
   updateEvent: (id: string, patch: NewEvent) => void;
   deleteEvent: (id: string) => void;
@@ -106,6 +119,17 @@ export const useHousehold = create<HouseholdState>()(
         if (handedOver) void save.then((ok) => ok && announce("task_assigned", updated.id, updated.title));
       },
 
+      postponeTask: (id, today) => {
+        const task = get().tasks.find((item) => item.id === id);
+        if (!task?.dueDate || task.dueDate >= today || task.completedAt) return;
+        get().updateTask(id, {
+          title: task.title,
+          assigneeId: task.assigneeId,
+          dueDate: addDays(today, 1),
+          recurrence: task.recurrence,
+        });
+      },
+
       deleteTask: (id) => {
         set(({ tasks }) => ({ tasks: tasks.filter((task) => task.id !== id) }));
         void removeTask(id);
@@ -123,27 +147,67 @@ export const useHousehold = create<HouseholdState>()(
       },
 
       clearBought: () => {
-        const bought = get().shopping.filter((item) => item.checkedAt);
+        const removed = get()
+          .shopping.map((item, at) => ({ item, at }))
+          .filter(({ item }) => item.checkedAt);
         set(({ shopping }) => ({ shopping: shopping.filter((item) => !item.checkedAt) }));
-        for (const item of bought) void removeShoppingItem(item.id);
+        for (const { item } of removed) dropShoppingItem(item);
+        return removed;
       },
 
       addShoppingItem: (item) => {
-        const created: ShoppingItem = { ...item, id: crypto.randomUUID(), addedBy: get().currentUserId, checkedAt: null };
+        const key = itemKey(item.name);
+        const match = get().shopping.find((row) => itemKey(row.name) === key);
+        if (match) {
+          const noteChanged = item.note !== null && item.note !== match.note;
+          const back = match.checkedAt !== null;
+          if (noteChanged || back || item.photo) {
+            const next: ShoppingItem = { ...match, note: noteChanged ? item.note : match.note, checkedAt: null };
+            set(({ shopping }) => ({ shopping: shopping.map((row) => (row.id === match.id ? next : row)) }));
+            const save = saveItemWithPhoto(next, item.photo);
+            if (back) void save.then((ok) => ok && announce("shopping_added", next.id, next.name));
+          }
+          return { id: match.id, outcome: back ? "restored" : "exists", noteChanged };
+        }
+        const created: ShoppingItem = {
+          id: crypto.randomUUID(),
+          name: item.name,
+          note: item.note,
+          photoPath: null,
+          addedBy: get().currentUserId,
+          checkedAt: null,
+        };
         set(({ shopping }) => ({ shopping: [created, ...shopping] }));
-        void saveShoppingItem(created).then((ok) => ok && announce("shopping_added", created.id, created.name));
+        void saveItemWithPhoto(created, item.photo).then((ok) => ok && announce("shopping_added", created.id, created.name));
+        return { id: created.id, outcome: "added", noteChanged: false };
       },
 
       updateShoppingItem: (id, patch) => {
-        const shopping = get().shopping.map((item) => (item.id === id ? { ...item, ...patch } : item));
-        set({ shopping });
-        const updated = shopping.find((item) => item.id === id);
-        if (updated) void saveShoppingItem(updated);
+        const before = get().shopping.find((item) => item.id === id);
+        if (!before) return;
+        const next: ShoppingItem = { ...before, name: patch.name, note: patch.note };
+        set(({ shopping }) => ({ shopping: shopping.map((item) => (item.id === id ? next : item)) }));
+        void saveItemWithPhoto(next, patch.photo, patch.photo !== undefined);
       },
 
       deleteShoppingItem: (id) => {
-        set(({ shopping }) => ({ shopping: shopping.filter((item) => item.id !== id) }));
-        void removeShoppingItem(id);
+        const at = get().shopping.findIndex((item) => item.id === id);
+        if (at === -1) return null;
+        const item = get().shopping[at];
+        set(({ shopping }) => ({ shopping: shopping.filter((row) => row.id !== id) }));
+        dropShoppingItem(item);
+        return { item, at };
+      },
+
+      restoreShoppingItems: (removed) => {
+        const shopping = [...get().shopping];
+        for (const { item, at } of [...removed].sort((a, b) => a.at - b.at)) {
+          if (shopping.some((row) => row.id === item.id)) continue;
+          shopping.splice(Math.min(at, shopping.length), 0, item);
+          // Replaces the removal still waiting in the outbox, so the row never leaves the server.
+          void saveShoppingItem(item);
+        }
+        set({ shopping });
       },
 
       addEvent: (event) => {
@@ -198,6 +262,33 @@ export const useAddSheet = create<AddSheetState>()((set) => ({
   setOpen: (open) => set(open ? { open } : { open: false, edit: null }),
   setKind: (kind) => set({ kind }),
 }));
+
+/** Sends the removal after the undo window; the photo goes only once the row is really gone. */
+function dropShoppingItem(item: ShoppingItem) {
+  void removeShoppingItem(item.id, UNDO_HOLD_MS).then((ok) => {
+    const back = useHousehold.getState().shopping.some((row) => row.id === item.id);
+    if (ok && !back && item.photoPath) void removeShoppingPhoto(item.photoPath);
+  });
+}
+
+/** Uploads a product photo when one was picked, then saves the row. A failed photo never blocks the name. */
+async function saveItemWithPhoto(item: ShoppingItem, photo?: File | null, replace = Boolean(photo)) {
+  const saved = await saveShoppingItem(item);
+  if (!replace) return saved;
+  const house = useAuth.getState().session?.householdId;
+  try {
+    if (photo && !house) throw new Error("no house");
+    const photoPath = photo ? await uploadShoppingPhoto(house!, await compressImage(photo, { side: 1200 })) : null;
+    if (item.photoPath && item.photoPath !== photoPath) void removeShoppingPhoto(item.photoPath);
+    useHousehold.setState(({ shopping }) => ({
+      shopping: shopping.map((row) => (row.id === item.id ? { ...row, photoPath } : row)),
+    }));
+    await saveShoppingItem({ ...item, photoPath });
+  } catch {
+    // The name is already saved. The photo can be added again.
+  }
+  return saved;
+}
 
 /** The day selected on the Today screen, so "+" can default to it. */
 export const useSelectedDay = create<{ day: DayKey | null; setDay: (day: DayKey | null) => void }>()((set) => ({

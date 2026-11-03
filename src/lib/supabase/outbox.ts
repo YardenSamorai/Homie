@@ -19,7 +19,8 @@ export type Op =
   | { table: "events"; action: "save"; id: string; row: HouseEvent }
   | { table: "tasks" | "shopping_items" | "events"; action: "remove"; id: string };
 
-type Queued = Op & { householdId: string; userId: string; state: "waiting" | "failed" };
+/** `after`: not sent before this time (ms), so an undo can still replace it while it waits. */
+type Queued = Op & { householdId: string; userId: string; state: "waiting" | "failed"; after?: number };
 
 type OutboxState = {
   queue: Queued[];
@@ -90,14 +91,14 @@ async function send(op: Queued) {
   }
   if (op.table === "shopping_items") {
     const item = op.row;
-    const fields = { name: item.name, quantity_note: item.note, checked_at: item.checkedAt };
+    const fields = { name: item.name, quantity_note: item.note, photo_path: item.photoPath ?? null, checked_at: item.checkedAt };
     const updated = await db.from("shopping_items").update(fields).eq("id", item.id).select("id");
     check(updated);
     if (updated.data?.length) return;
     return check(await db.from("shopping_items").insert({ ...fields, id: item.id, household_id: op.householdId, added_by: item.addedBy }));
   }
   const event = op.row;
-  const fields = { title: event.title, date: event.date, time: event.time, prep_note: event.prep };
+  const fields = { title: event.title, date: event.date, time: event.time, prep_note: event.prep, attendee_id: event.attendeeId ?? null };
   const updated = await db.from("events").update(fields).eq("id", event.id).select("id");
   check(updated);
   if (updated.data?.length) return;
@@ -113,6 +114,20 @@ const settle = (id: string, saved: boolean) => {
 
 let flushing = false;
 let inFlight = 0;
+let later: ReturnType<typeof setTimeout> | undefined;
+
+const ready = (item: Queued) => item.state === "waiting" && !(item.after && item.after > Date.now());
+
+/** Wakes the outbox when the earliest held change is due. */
+function wakeForHeld() {
+  clearTimeout(later);
+  const due = useOutbox
+    .getState()
+    .queue.filter((item) => item.state === "waiting" && item.after)
+    .map((item) => item.after!);
+  if (due.length === 0) return;
+  later = setTimeout(() => void flush(), Math.max(0, Math.min(...due) - Date.now()) + 50);
+}
 
 /** Sends what's waiting, oldest first; stops at the first sign of no connection and tries again later. */
 export async function flush() {
@@ -121,7 +136,7 @@ export async function flush() {
   try {
     const session = useAuth.getState().session;
     for (;;) {
-      const op = useOutbox.getState().queue.find((item) => item.state === "waiting");
+      const op = useOutbox.getState().queue.find(ready);
       if (!op) break;
       // Queued under another account or house (signed out, removed): it can never be sent from here.
       if (op.userId !== session?.userId || op.householdId !== session?.householdId) {
@@ -148,14 +163,24 @@ export async function flush() {
     }
   } finally {
     flushing = false;
+    wakeForHeld();
   }
 }
 
-/** Queues a change and starts sending. Resolves when it's saved (possibly much later) or refused. */
-export function enqueue(op: Op): Promise<boolean> {
+/**
+ * Queues a change and starts sending. Resolves when it's saved (possibly much later) or refused.
+ * With `holdMs` it waits that long first; a newer change to the same row in that time replaces it.
+ */
+export function enqueue(op: Op, holdMs = 0): Promise<boolean> {
   const session = useAuth.getState().session;
   if (!supabaseConfigured() || !session?.householdId || !session.userId) return Promise.resolve(false);
-  const queued = { ...op, householdId: session.householdId, userId: session.userId, state: "waiting" } as Queued;
+  const queued = {
+    ...op,
+    householdId: session.householdId,
+    userId: session.userId,
+    state: "waiting",
+    ...(holdMs > 0 ? { after: Date.now() + holdMs } : {}),
+  } as Queued;
   useOutbox.getState().put(queued);
   const promise = new Promise<boolean>((resolve) => waiters.set(op.id, [...(waiters.get(op.id) ?? []), resolve]));
   void flush();
@@ -199,7 +224,7 @@ export function startOutbox() {
   document.addEventListener("visibilitychange", kick);
   // A connection that comes back without an "online" event (a captive portal, a flaky signal).
   const timer = window.setInterval(() => {
-    if (useOutbox.getState().queue.some((item) => item.state === "waiting")) kick();
+    if (useOutbox.getState().queue.some(ready)) kick();
   }, 15_000);
   return () => {
     window.removeEventListener("online", kick);

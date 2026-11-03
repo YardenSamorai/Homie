@@ -3,8 +3,9 @@
 import { Clock } from "lucide-react";
 import { useI18n } from "@/i18n/dictionary-provider";
 import { format } from "@/i18n/format";
+import { firstName } from "@/lib/day-story";
 import type { HouseEvent } from "@/lib/household";
-import { useAddSheet } from "@/lib/household-store";
+import { useAddSheet, useHousehold } from "@/lib/household-store";
 import type { Task } from "@/lib/tasks";
 
 const card = "w-[216px] shrink-0 snap-start rounded-[22px] bg-surface p-4 shadow-card ring-1 ring-hairline";
@@ -24,6 +25,7 @@ export function LaterToday({
 }) {
   const { dict } = useI18n();
   const showEdit = useAddSheet((s) => s.showEdit);
+  const members = useHousehold((s) => s.members);
   if (events.length === 0 && !yours) return null;
 
   return (
@@ -34,6 +36,8 @@ export function LaterToday({
       <div className="-me-4 mt-2 flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 pe-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {events.map((event) => {
           const time = event.time?.slice(0, 5);
+          const who = event.attendeeId ? members.find((member) => member.id === event.attendeeId) : null;
+          const detail = [who ? firstName(who.name) : null, event.prep].filter(Boolean).join(" · ");
           return (
             <button
               key={event.id}
@@ -47,7 +51,7 @@ export function LaterToday({
               <p dir="auto" className="align-ui mt-2.5 line-clamp-2 text-[17px] font-semibold leading-snug [overflow-wrap:anywhere]">
                 {event.title}
               </p>
-              <p className="mt-0.5 truncate text-[14px] text-label-secondary">{event.prep || "\u00a0"}</p>
+              <p className="mt-0.5 truncate text-[14px] text-label-secondary">{detail || "\u00a0"}</p>
             </button>
           );
         })}

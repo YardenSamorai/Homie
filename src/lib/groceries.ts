@@ -113,6 +113,9 @@ function normalize(value: string) {
   return value.trim().toLowerCase().replace(/[\u0591-\u05C7]/g, "");
 }
 
+/** Two names that mean the same item on the list: case, spacing and niqqud aside. */
+export const itemKey = (name: string) => normalize(name).replace(/\s+/g, " ");
+
 /** Names already used in this house come first, then common groceries. Exact echoes of the current fields are omitted. */
 export function grocerySuggestions(
   locale: Locale,

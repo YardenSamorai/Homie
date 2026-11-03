@@ -2,39 +2,26 @@ import { NextResponse } from "next/server";
 import en from "@/i18n/dictionaries/en.json";
 import he from "@/i18n/dictionaries/he.json";
 import { format } from "@/i18n/format";
+import { firstName, nextOpenEvent, tellDay } from "@/lib/day-story";
+import type { DayKey } from "@/lib/dates";
+import type { HouseEvent } from "@/lib/household";
 import { readPrefs } from "@/lib/prefs";
 import { apnsKeys, sendApns } from "@/lib/push/apns";
 import { createAdminSupabase } from "@/lib/supabase/admin";
 
 const dictionaries = { he, en } as const;
 
-type Task = { assignee_id: string; title: string; household_id: string };
-type Event = { title: string; time: string | null; household_id: string };
+type Task = { assignee_id: string; title: string; household_id: string; due_date: string };
+type Event = { title: string; time: string | null; household_id: string; attendee_id: string | null };
 
 /** Today's date and the hour in Israel, where the house is. */
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(new Date());
 const israelHour = () => Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Jerusalem", hour: "2-digit", hourCycle: "h23" }).format(new Date()));
 
-function summary(locale: "he" | "en", tasks: Task[], events: Event[]) {
-  const copy = dictionaries[locale].morning;
-  const parts: string[] = [];
-  if (tasks.length > 0) {
-    const shown = tasks.slice(0, 2).map((task) => task.title);
-    const list = tasks.length > 2 ? format(copy.more, { list: shown.join(", "), count: tasks.length - 2 }) : shown.join(", ");
-    parts.push(tasks.length === 1 ? format(copy.oneTask, { list }) : format(copy.manyTasks, { count: tasks.length, list }));
-  }
-  if (events.length === 1) {
-    const [event] = events;
-    parts.push(format(copy.oneEvent, { title: event.time ? `${event.title} ${event.time.slice(0, 5)}` : event.title }));
-  } else if (events.length > 1) {
-    parts.push(format(copy.manyEvents, { count: events.length }));
-  }
-  return parts.join(copy.join);
-}
-
 /**
- * Every hour (.github/workflows/morning.yml): each parent whose chosen hour it is, with tasks due today or
- * overdue or an event today, hears about it.
+ * Every hour (.github/workflows/morning.yml): each parent whose chosen hour it is hears the day's sentence
+ * when the house has a task due today or an event still ahead. If the only thing left is their own overdue
+ * task, they hear that instead. A quiet morning stays quiet.
  * The same pass clears status photos past their 24 hours, files and rows.
  */
 export async function GET(request: Request) {
@@ -73,9 +60,15 @@ export async function GET(request: Request) {
 
   const day = today();
   const [{ data: tasks }, { data: events }] = await Promise.all([
-    db.from("tasks").select("assignee_id, title, household_id").in("household_id", houses).is("completed_at", null).is("deleted_at", null).lte("due_date", day),
-    db.from("events").select("title, time, household_id").in("household_id", houses).eq("date", day).is("deleted_at", null).order("time"),
+    db.from("tasks").select("assignee_id, title, household_id, due_date").in("household_id", houses).is("completed_at", null).is("deleted_at", null).lte("due_date", day),
+    db.from("events").select("title, time, household_id, attendee_id").in("household_id", houses).eq("date", day).is("deleted_at", null),
   ]);
+
+  const attendeeIds = [...new Set(((events ?? []) as Event[]).flatMap((event) => (event.attendee_id ? [event.attendee_id] : [])))];
+  const { data: names } = attendeeIds.length
+    ? await db.from("profiles").select("id, display_name").in("id", attendeeIds)
+    : { data: [] };
+  const nameOf = new Map((names ?? []).map((row) => [row.id as string, (row.display_name as string | null) ?? ""]));
 
   let sent = 0;
   await Promise.all(
@@ -83,13 +76,42 @@ export async function GET(request: Request) {
       const person = device.user_id as string;
       const house = houseOf.get(person);
       if (!house) return;
-      const mine = ((tasks ?? []) as Task[]).filter((task) => task.household_id === house && task.assignee_id === person);
-      const ours = ((events ?? []) as Event[]).filter((event) => event.household_id === house);
-      if (mine.length === 0 && ours.length === 0) return;
+      const houseTasks = ((tasks ?? []) as Task[]).filter((task) => task.household_id === house);
+      const dueToday = houseTasks.filter((task) => task.due_date === day);
+      const overdueMine = houseTasks.filter((task) => task.assignee_id === person && task.due_date < day);
+      const ours = ((events ?? []) as Event[])
+        .filter((event) => event.household_id === house)
+        .map(
+          (event): HouseEvent => ({
+            id: event.title,
+            title: event.title,
+            date: day as DayKey,
+            time: event.time ? String(event.time).slice(0, 5) : null,
+            prep: null,
+            attendeeId: event.attendee_id,
+            createdBy: "",
+          }),
+        );
+      const next = nextOpenEvent(ours, day as DayKey, hour, true);
+      if (dueToday.length === 0 && !next && overdueMine.length === 0) return;
       const locale = device.locale === "en" ? "en" : "he";
+      const copy = dictionaries[locale].today;
+      const who = next?.attendeeId ? nameOf.get(next.attendeeId) : null;
+      const body =
+        dueToday.length > 0 || next
+          ? tellDay({
+              open: dueToday.length,
+              done: 0,
+              isToday: true,
+              event: next ? { title: next.title, time: next.time, who: who ? firstName(who) : null } : null,
+              copy,
+            }).text
+          : overdueMine.length === 1
+            ? copy.waitingEarlierOne
+            : format(copy.waitingEarlier, { count: overdueMine.length });
       const result = await sendApns(
         device.token as string,
-        { title: dictionaries[locale].morning.title, body: summary(locale, mine, ours), url: `/${locale}`, collapseId: `morning-${day}` },
+        { title: dictionaries[locale].morning.title, body, url: `/${locale}`, collapseId: `morning-${day}` },
         keys,
       );
       if (result === "sent") sent += 1;

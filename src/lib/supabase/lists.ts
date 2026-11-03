@@ -10,9 +10,9 @@ import { enqueue } from "./outbox";
 export async function loadHouseholdLists(householdId: string) {
   const db = createBrowserSupabase();
   const [shopping, tasks, events] = await Promise.all([
-    db.from("shopping_items").select("id, name, quantity_note, added_by, checked_at, created_at").eq("household_id", householdId).order("created_at", { ascending: false }),
+    db.from("shopping_items").select("id, name, quantity_note, photo_path, added_by, checked_at, created_at").eq("household_id", householdId).order("created_at", { ascending: false }),
     db.from("tasks").select("id, title, assignee_id, due_date, recurrence, spawned_from_id, edited_at, completed_at").eq("household_id", householdId).is("deleted_at", null),
-    db.from("events").select("id, title, date, time, prep_note, created_by").eq("household_id", householdId).is("deleted_at", null),
+    db.from("events").select("id, title, date, time, prep_note, attendee_id, created_by").eq("household_id", householdId).is("deleted_at", null),
   ]);
   const failed = shopping.error ?? tasks.error ?? events.error;
   if (failed) throw failed;
@@ -22,6 +22,7 @@ export async function loadHouseholdLists(householdId: string) {
         id: row.id,
         name: row.name,
         note: row.quantity_note,
+        photoPath: row.photo_path,
         addedBy: row.added_by,
         checkedAt: row.checked_at,
       }),
@@ -46,6 +47,7 @@ export async function loadHouseholdLists(householdId: string) {
         // Postgres sends "19:30:00"; the app shows and edits "19:30".
         time: row.time ? String(row.time).slice(0, 5) : null,
         prep: row.prep_note,
+        attendeeId: row.attendee_id,
         createdBy: row.created_by,
       }),
     ),
@@ -96,7 +98,7 @@ export function watchHouseholdMembers(householdId: string, onChange: () => void)
 
 /** Each change goes through the outbox: saved in order, kept while offline. Resolves true once it's on the server. */
 export const saveShoppingItem = (item: ShoppingItem) => enqueue({ table: "shopping_items", action: "save", id: item.id, row: item });
-export const removeShoppingItem = (id: string) => enqueue({ table: "shopping_items", action: "remove", id });
+export const removeShoppingItem = (id: string, holdMs = 0) => enqueue({ table: "shopping_items", action: "remove", id }, holdMs);
 export const saveTask = (task: Task) => enqueue({ table: "tasks", action: "save", id: task.id, row: task });
 export const removeTask = (id: string) => enqueue({ table: "tasks", action: "remove", id });
 export const saveEvent = (event: HouseEvent) => enqueue({ table: "events", action: "save", id: event.id, row: event });

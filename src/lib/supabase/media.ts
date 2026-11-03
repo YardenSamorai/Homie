@@ -164,6 +164,20 @@ export async function removeAvatar(userId: string, previous: string | null) {
   await removeAvatarFile(db, previous);
 }
 
+/** A product photo for the shopping list. A new file each time, so a replacement isn't a stale cache. */
+export async function uploadShoppingPhoto(householdId: string, photo: Blob) {
+  const db = createBrowserSupabase();
+  const path = `shopping/${householdId}/${crypto.randomUUID()}.jpg`;
+  const upload = await db.storage.from(bucket).upload(path, photo, { contentType: "image/jpeg", cacheControl: "31536000" });
+  if (upload.error) throw upload.error;
+  return path;
+}
+
+export async function removeShoppingPhoto(path: string | null) {
+  if (!path) return;
+  await createBrowserSupabase().storage.from(bucket).remove([path]);
+}
+
 /** Links for the people's photos: fixed public ones, and signed ones only for photos from before 0008. */
 export async function avatarLinks(paths: string[]) {
   const legacy = paths.filter(legacyAvatar);

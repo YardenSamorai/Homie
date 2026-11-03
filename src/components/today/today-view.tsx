@@ -88,7 +88,13 @@ export function TodayView() {
         open: ofDay.open.length,
         done: ofDay.done.length,
         isToday: true,
-        event: next ? { title: next.title, time: next.time, who: null } : null,
+        event: next
+          ? {
+              title: next.title,
+              time: next.time,
+              who: next.attendeeId ? firstName(members.find((member) => member.id === next.attendeeId)?.name ?? "") || null : null,
+            }
+          : null,
         copy: dict.today,
       })
     : null;

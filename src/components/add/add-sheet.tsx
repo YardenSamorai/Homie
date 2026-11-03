@@ -1,7 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Drawer } from "@base-ui/react/drawer";
+import { ImagePlus } from "lucide-react";
+import { useShoppingActions } from "@/components/shopping/shopping-actions";
 import { Avatar } from "@/components/ui/avatar";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +12,8 @@ import type { DayKey } from "@/lib/dates";
 import { useAddSheet, useHousehold, type AddKind } from "@/lib/household-store";
 import { usePrefs } from "@/lib/prefs-store";
 import type { Recurrence } from "@/lib/tasks";
+import { pickPhoto } from "@/lib/camera";
+import { signedUrls } from "@/lib/supabase/media";
 import { useClock } from "@/lib/use-clock";
 
 const kinds: AddKind[] = ["task", "shopping", "event"];
@@ -39,13 +43,12 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
     addTask,
     updateTask,
     deleteTask,
-    addShoppingItem,
     updateShoppingItem,
-    deleteShoppingItem,
     addEvent,
     updateEvent,
     deleteEvent,
   } = useHousehold();
+  const shoppingActions = useShoppingActions();
   const titleRef = useRef<HTMLInputElement>(null);
   const seed =
     editing?.kind === "task"
@@ -81,7 +84,30 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
   const [recurrence, setRecurrence] = useState<Recurrence>(() => (seed && "recurrence" in seed ? seed.recurrence : "none"));
   const [allDay, setAllDay] = useState(() => (seed && "time" in seed ? seed.time === null : false));
   const [time, setTime] = useState(() => (seed && "time" in seed && seed.time ? seed.time : "19:00"));
+  const [attendeeId, setAttendeeId] = useState<string | null>(() => (seed && "attendeeId" in seed ? seed.attendeeId : null));
+  const existingPhoto = seed && "photoPath" in seed ? seed.photoPath : null;
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoCleared, setPhotoCleared] = useState(false);
+  const [savedPreview, setSavedPreview] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const filePreview = useMemo(() => (photoFile ? URL.createObjectURL(photoFile) : null), [photoFile]);
+  const photoPreview = photoCleared ? null : (filePreview ?? savedPreview);
+
+  useEffect(() => {
+    if (!filePreview) return;
+    return () => URL.revokeObjectURL(filePreview);
+  }, [filePreview]);
+
+  useEffect(() => {
+    if (!existingPhoto) return;
+    let live = true;
+    void signedUrls([existingPhoto]).then((urls) => {
+      if (live) setSavedPreview(urls[existingPhoto] ?? null);
+    });
+    return () => {
+      live = false;
+    };
+  }, [existingPhoto]);
 
   const valid = title.trim().length > 0 && (kind !== "event" || date !== "");
 
@@ -96,12 +122,13 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
       if (editing?.kind === "task") updateTask(editing.id, next);
       else addTask(next);
     } else if (kind === "shopping") {
-      if (editing?.kind === "shopping") updateShoppingItem(editing.id, { name: clean, note: extra });
-      else addShoppingItem({ name: clean, note: extra });
+      const photo = photoFile ? photoFile : photoCleared ? null : undefined;
+      if (editing?.kind === "shopping") updateShoppingItem(editing.id, { name: clean, note: extra, ...(photo !== undefined ? { photo } : {}) });
+      else shoppingActions.add({ name: clean, note: extra, photo: photoFile });
     } else if (editing?.kind === "event") {
-      updateEvent(editing.id, { title: clean, date, time: allDay ? null : time, prep: extra });
+      updateEvent(editing.id, { title: clean, date, time: allDay ? null : time, prep: extra, attendeeId });
     } else {
-      addEvent({ title: clean, date, time: allDay ? null : time, prep: extra });
+      addEvent({ title: clean, date, time: allDay ? null : time, prep: extra, attendeeId });
     }
     onDone();
   };
@@ -113,7 +140,7 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
       return;
     }
     if (editing.kind === "task") deleteTask(editing.id);
-    else if (editing.kind === "shopping") deleteShoppingItem(editing.id);
+    else if (editing.kind === "shopping") shoppingActions.remove(editing.id);
     else deleteEvent(editing.id);
     onDone();
   };
@@ -171,6 +198,43 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
             />
           )}
         </div>
+
+        {kind === "shopping" && (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                void pickPhoto({ camera: false }).then((file) => {
+                  if (!file) return;
+                  setPhotoFile(file);
+                  setPhotoCleared(false);
+                });
+              }}
+              className="flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-xl bg-surface px-3 text-start text-[17px] transition-transform duration-150 ease-out active:scale-[0.98]"
+            >
+              {photoPreview ? (
+                <img src={photoPreview} alt="" className="size-12 shrink-0 rounded-lg object-cover" />
+              ) : (
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-fill text-accent">
+                  <ImagePlus aria-hidden size={22} strokeWidth={2} />
+                </span>
+              )}
+              <span>{photoPreview ? dict.add.photoChange : dict.add.photoAdd}</span>
+            </button>
+            {photoPreview && (
+              <button
+                type="button"
+                onClick={() => {
+                  setPhotoFile(null);
+                  setPhotoCleared(true);
+                }}
+                className="min-h-11 shrink-0 px-1 text-[15px] font-medium text-label-secondary"
+              >
+                {dict.add.photoRemove}
+              </button>
+            )}
+          </div>
+        )}
 
         {kind === "task" && (
           <>
@@ -250,6 +314,38 @@ function AddForm({ defaultDay, onDone }: { defaultDay: DayKey; onDone: () => voi
                   <input type="time" required value={time} onChange={(e) => setTime(e.target.value)} className={pickerClass} />
                 </label>
               )}
+            </div>
+            <div>
+              <SectionLabel>{dict.add.who}</SectionLabel>
+              <div role="radiogroup" aria-label={dict.add.who} className="flex gap-2">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={attendeeId === null}
+                  onClick={() => setAttendeeId(null)}
+                  style={attendeeId === null ? { boxShadow: "inset 0 0 0 2px var(--accent)" } : undefined}
+                  className={`flex min-h-12 flex-1 items-center justify-center rounded-xl bg-surface px-3 text-[17px] transition-[scale] duration-100 ease-out active:scale-[0.97] ${attendeeId === null ? "font-semibold" : ""}`}
+                >
+                  {dict.add.whoNone}
+                </button>
+                {members.map((member) => {
+                  const selected = member.id === attendeeId;
+                  return (
+                    <button
+                      key={member.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => setAttendeeId(member.id)}
+                      style={selected ? { boxShadow: `inset 0 0 0 2px ${member.color}` } : undefined}
+                      className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-surface px-3 text-[17px] transition-[scale] duration-100 ease-out active:scale-[0.97]"
+                    >
+                      <Avatar member={member} size={28} />
+                      <span className={`truncate ${selected ? "font-semibold" : ""}`}>{member.name.split(/\s+/)[0]}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div>
               <SectionLabel>{dict.add.prep}</SectionLabel>
