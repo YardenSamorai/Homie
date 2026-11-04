@@ -7,9 +7,11 @@ import { supabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
-  const { email, code } = (await request.json().catch(() => ({}))) as { email?: string; code?: string };
+  const body = (await request.json().catch(() => ({}))) as { email?: unknown; code?: unknown };
+  const email = typeof body.email === "string" ? body.email : "";
+  const code = typeof body.code === "string" ? body.code : "";
   if (!supabaseConfigured()) {
-    const result = verifyOtp(email ?? "", code ?? "");
+    const result = verifyOtp(email, code);
     if (!result.ok) {
       return NextResponse.json({ error: result.error, retryAfter: result.retryAfter }, { status: 400 });
     }
@@ -27,10 +29,10 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createServerSupabase();
-  if (isReviewEmail(email ?? "")) return reviewSignIn(supabase, email ?? "", code ?? "");
+  if (isReviewEmail(email)) return reviewSignIn(supabase, email, code);
   const { data, error } = await supabase.auth.verifyOtp({
-    email: (email ?? "").trim(),
-    token: (code ?? "").trim(),
+    email: email.trim(),
+    token: code.trim(),
     type: "email",
   });
   if (error || !data.user) {
