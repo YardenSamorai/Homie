@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { householdFor, verifyOtp } from "@/lib/auth/demo-server";
+import { checkReviewCode, isReviewEmail, prepareReviewSignIn } from "@/lib/auth/review";
 import { readAccount } from "@/lib/supabase/account";
+import { createAdminSupabase } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabase } from "@/lib/supabase/server";
 
@@ -25,6 +27,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = await createServerSupabase();
+  if (isReviewEmail(email ?? "")) return reviewSignIn(supabase, email ?? "", code ?? "");
   const { data, error } = await supabase.auth.verifyOtp({
     email: (email ?? "").trim(),
     token: (code ?? "").trim(),
@@ -40,4 +43,21 @@ export async function POST(request: Request) {
   await supabase.from("profiles").upsert({ id: data.user.id }, { onConflict: "id", ignoreDuplicates: true });
   const account = await readAccount(supabase, data.user);
   return NextResponse.json({ ...account, isNew: !account.displayName });
+}
+
+async function reviewSignIn(supabase: Awaited<ReturnType<typeof createServerSupabase>>, email: string, code: string) {
+  const check = checkReviewCode(code);
+  if (check !== "ok") return NextResponse.json({ error: check, retryAfter: check === "locked" ? 300 : undefined }, { status: 400 });
+  const admin = createAdminSupabase();
+  if (!admin) return NextResponse.json({ error: "invalid" }, { status: 400 });
+  try {
+    const token = await prepareReviewSignIn(admin, email.trim().toLowerCase());
+    const { data, error } = await supabase.auth.verifyOtp({ token_hash: token, type: "magiclink" });
+    if (error || !data.user) throw error ?? new Error("review session");
+    const account = await readAccount(supabase, data.user);
+    return NextResponse.json({ ...account, isNew: false });
+  } catch (error) {
+    console.error("[homie] review sign-in failed", error);
+    return NextResponse.json({ error: "invalid" }, { status: 400 });
+  }
 }

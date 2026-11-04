@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sendOtp } from "@/lib/auth/demo-server";
 import { OTP_RESEND_MS, emailPattern } from "@/lib/auth/constants";
+import { isReviewEmail } from "@/lib/auth/review";
 import { hasLocale } from "@/i18n/config";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -18,6 +19,7 @@ export async function POST(request: Request) {
   }
 
   if (!emailPattern.test(clean)) return NextResponse.json({ error: "email" }, { status: 400 });
+  if (isReviewEmail(clean)) return NextResponse.json({ resendAt: Date.now() + OTP_RESEND_MS });
 
   const lang = hasLocale(locale) ? locale : "he";
   const supabase = await createServerSupabase();
