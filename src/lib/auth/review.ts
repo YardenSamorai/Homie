@@ -70,11 +70,22 @@ async function buildHouse(admin: SupabaseClient, me: string, partner: string) {
     .single();
   if (error || !house) throw error ?? new Error("review house");
   const household = house.id as string;
+  try {
+    await fill(admin, household, me, partner);
+  } catch (failure) {
+    await admin.from("households").delete().eq("id", household);
+    throw failure;
+  }
+}
+
+async function fill(admin: SupabaseClient, household: string, me: string, partner: string) {
+  // Rows that leave a column out get its default, not null.
+  const rows = { defaultToNull: false };
   await must(
     admin.from("household_members").insert([
       { household_id: household, user_id: me, role: "admin", color: "#5a5f94" },
       { household_id: household, user_id: partner, role: "member", color: "#c48b9f" },
-    ]),
+    ], rows),
   );
   const today = day(0);
   const tomorrow = day(1);
@@ -85,14 +96,14 @@ async function buildHouse(admin: SupabaseClient, me: string, partner: string) {
       { household_id: household, title: "Book a dentist appointment", assignee_id: partner, due_date: today, created_by: me },
       { household_id: household, title: "Pick up the dry cleaning", assignee_id: partner, due_date: tomorrow, created_by: partner },
       { household_id: household, title: "Take out the recycling", assignee_id: me, due_date: today, created_by: partner, completed_at: new Date().toISOString(), completed_by: me },
-    ]),
+    ], rows),
   );
   await must(
     admin.from("events").insert([
       { household_id: household, title: "Parent-teacher meeting", date: today, time: "17:30", attendee_id: me, created_by: partner },
       { household_id: household, title: "Dinner with Mia and Leo", date: today, time: "19:30", created_by: me },
       { household_id: household, title: "Soccer practice", date: tomorrow, time: "08:00", prep_note: "Shin guards and a water bottle", attendee_id: partner, created_by: partner },
-    ]),
+    ], rows),
   );
   await must(
     admin.from("shopping_items").insert([
@@ -102,7 +113,7 @@ async function buildHouse(admin: SupabaseClient, me: string, partner: string) {
       { household_id: household, name: "Whole wheat bread", category: "bakery", added_by: me },
       { household_id: household, name: "Coffee beans", category: "pantry", quantity_note: "The dark roast", added_by: partner },
       { household_id: household, name: "Dish soap", category: "cleaning", added_by: me },
-    ]),
+    ], rows),
   );
   await must(admin.from("house_notes").insert({ household_id: household, body: "Grandma visits on Saturday, lunch at 1.", author_id: partner }));
 }
