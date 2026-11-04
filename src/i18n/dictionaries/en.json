@@ -773,12 +773,12 @@
   },
   "privacyPage": {
     "title": "Privacy Policy",
-    "updated": "Updated October 21, 2026",
+    "updated": "Updated November 4, 2026",
     "back": "Back",
     "sections": [
       {
         "title": "What's stored",
-        "body": "The email you sign in with, the name you chose, a profile photo if you added one, and status photos, which are deleted after 24 hours. Also your home's tasks, shopping and events, a product photo if you added one to an item, and your choices in Settings. If you turned on notifications, an identifier for your device so they can reach it."
+        "body": "The email you sign in with, the name you chose, a profile photo if you added one, and status photos, which are deleted after 24 hours. Also your home's tasks, shopping and events, a product photo if you added one to an item, and your choices in Settings, including a background photo if you chose one (private to you). If you turned on notifications, an identifier for your device so they can reach it. If you connected a Google or Outlook calendar, Homie only reads the calendars you picked and their events, and never writes to them. Only the person who connected decides what their partner sees."
       },
       {
         "title": "Who sees it",
@@ -786,11 +786,35 @@
       },
       {
         "title": "Where it's kept",
-        "body": "Data is kept in Supabase (database and photo storage), the site runs on Vercel, notifications go through Apple, and the sign-in code is sent by email through Gmail."
+        "body": "Data is kept in Supabase (database and photo storage), the site runs on Vercel, notifications go through Apple, and the sign-in code is sent by email through Gmail. To sort the shopping list by supermarket aisle, names of items Homie doesn't recognize are sent to OpenAI, without your name, email or anything else that identifies you. OpenAI doesn't use them for training."
       },
       {
         "title": "Deleting",
         "body": "You can delete your account anytime, in Settings under Account. Your account, photos and device identifiers are deleted for good. What's in the home stays with whoever lives there; if no one else does, the home is deleted with everything in it."
+      }
+    ]
+  },
+  "supportPage": {
+    "title": "Support",
+    "lead": "Something not working, or have an idea? Write to us, and we'll usually get back to you within a business day.",
+    "back": "Back",
+    "privacy": "Privacy Policy",
+    "sections": [
+      {
+        "title": "How do I add my partner?",
+        "body": "In Settings, under House and members, create an invite and send the link. Whoever opens it signs in with their own email and joins the home. Each home has up to two parents."
+      },
+      {
+        "title": "The sign-in code doesn't arrive",
+        "body": "Check your spam folder and that the email is spelled right. You can ask for a new code after a minute. A code works for 10 minutes, and a new one replaces the last."
+      },
+      {
+        "title": "Notifications don't arrive",
+        "body": "In the iPhone's Settings, under Homie, allow notifications. In Homie, under Notifications and routine, choose what you get, and check that quiet hours aren't on right now."
+      },
+      {
+        "title": "How do I delete my account?",
+        "body": "In Settings, under Account and privacy. Your account, photos and device identifiers are deleted for good. What's in the home stays with whoever lives there; if no one else does, the home is deleted with everything in it."
       }
     ]
   },
